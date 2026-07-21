@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /**
+   * Valores derivados EXACTAMENTE de lib/tokens.ts (hex → HSL). No inventar
+   * tonos aquí: si algo no cuadra con la paleta, corregir en lib/tokens.ts
+   * primero y luego re-derivar. UI clara — los colores PUROS de `data.*`
+   * viven solo dentro de paneles `chartBg` (ver StatCard/chart components),
+   * nunca en estas variables generales.
+   */
+  :root {
+    --background: 220 20% 97%; /* bg #F6F7F9 */
+    --foreground: 217 16% 16%; /* text #232830 */
+
+    --card: 0 0% 100%; /* surface2 #FFFFFF */
+    --card-foreground: 217 16% 16%; /* text #232830 */
+
+    --popover: 0 0% 100%; /* surface2 #FFFFFF */
+    --popover-foreground: 217 16% 16%; /* text #232830 */
+
+    --primary: 191 84% 52%; /* brand #1DC4EB */
+    --primary-foreground: 0 0% 100%; /* white — texto sobre botón cyan */
+
+    --secondary: 216 2% 94%; /* borderSoft #EEF0F3 */
+    --secondary-foreground: 217 16% 16%; /* text #232830 */
+
+    --muted: 216 2% 94%; /* borderSoft #EEF0F3 */
+    --muted-foreground: 214 7% 58%; /* muted #8B929B */
+
+    --accent: 194 85% 95%; /* brandTint #E7F8FD */
+    --accent-foreground: 192 89% 38%; /* brandInk #0B96B8 */
+
+    --destructive: 0 72% 51%; /* state.bad #DC2626 */
+    --destructive-foreground: 0 0% 100%; /* white */
+
+    --border: 214 14% 90%; /* border #E3E6EA */
+    --input: 214 14% 90%; /* border #E3E6EA */
+    --ring: 191 84% 52%; /* brand #1DC4EB */
+
+    /* Solo para uso dentro de paneles chartBg — ver lib/tokens.ts `data.*` */
+    --chart-1: 191 84% 52%; /* data.primary #1DC4EB */
+    --chart-2: 0 100% 50%; /* data.compare #FF0000 */
+    --chart-3: 136 100% 50%; /* data.good #00FF44 */
+    --chart-4: 36 100% 50%; /* data.warn #FF9900 */
+    --chart-5: 0 0% 72%; /* data.base #B7B7B7 */
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
