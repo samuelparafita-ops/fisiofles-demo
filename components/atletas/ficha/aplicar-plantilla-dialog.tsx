@@ -16,15 +16,14 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/shared/toast";
 import { cn } from "@/lib/utils";
-import { addDias, diaSemanaDeIso, hoyIso, toIso } from "@/components/atletas/ficha/fecha-utils";
+import { hoyIso } from "@/components/atletas/ficha/fecha-utils";
 import {
-  DIAS_SEMANA,
   accionCrear,
+  generarDesdePrograma,
+  generarDesdeSesion,
   useDispatch,
   usePlantillasPrograma,
   usePlantillasSesion,
-  type BloqueSemanal,
-  type Sesion,
 } from "@/lib/store";
 
 const selectClass =
@@ -60,63 +59,17 @@ export function AplicarPlantillaDialog({ atletaId }: { atletaId: string }) {
     if (!plantilla) return;
 
     if (tipo === "programa" && "semanas" in plantilla) {
-      const inicio = new Date(`${fechaInicio}T00:00:00`);
-      plantilla.semanas.forEach((semana, semanaIdx) => {
-        const inicioSemana = addDias(inicio, semanaIdx * 7);
-        const finSemana = addDias(inicioSemana, 6);
-        const sesionesCreadas: Sesion[] = semana.sesiones.map((s) => {
-          const offsetDia = DIAS_SEMANA.indexOf(s.dia);
-          const fecha = toIso(addDias(inicioSemana, offsetDia));
-          return {
-            id: `ses-${Date.now().toString(36)}-${semanaIdx}-${Math.random().toString(36).slice(2, 7)}`,
-            atletaId,
-            fecha,
-            dia: s.dia,
-            nombre: s.nombre,
-            ejercicios: s.ejercicios,
-            estado: s.estado,
-            notas: s.notas,
-          };
-        });
-        sesionesCreadas.forEach((s) => dispatch(accionCrear("sesiones", s)));
-
-        const bloque: BloqueSemanal = {
-          id: `bloque-${Date.now().toString(36)}-${semanaIdx}`,
-          atletaId,
-          nombre: `${plantilla.nombre} · Semana ${semanaIdx + 1}`,
-          fechaInicio: toIso(inicioSemana),
-          fechaFin: toIso(finSemana),
-          objetivo: plantilla.descripcion,
-          sesionIds: sesionesCreadas.map((s) => s.id),
-        };
-        dispatch(accionCrear("bloques", bloque));
-      });
+      const { sesiones, bloques } = generarDesdePrograma(plantilla, atletaId, fechaInicio);
+      sesiones.forEach((s) => dispatch(accionCrear("sesiones", s)));
+      bloques.forEach((b) => dispatch(accionCrear("bloques", b)));
       toast(
         "Plantilla aplicada",
         `${plantilla.nombre} ha generado ${plantilla.semanas.length} semana(s) de sesiones.`
       );
     } else if (tipo === "sesion" && "ejercicios" in plantilla) {
-      const nuevaSesion: Sesion = {
-        id: `ses-${Date.now().toString(36)}`,
-        atletaId,
-        fecha: fechaInicio,
-        dia: diaSemanaDeIso(fechaInicio),
-        nombre: plantilla.nombre,
-        ejercicios: plantilla.ejercicios,
-        estado: "programada",
-      };
-      dispatch(accionCrear("sesiones", nuevaSesion));
-
-      const bloque: BloqueSemanal = {
-        id: `bloque-${Date.now().toString(36)}`,
-        atletaId,
-        nombre: plantilla.nombre,
-        fechaInicio,
-        fechaFin: fechaInicio,
-        objetivo: plantilla.objetivo,
-        sesionIds: [nuevaSesion.id],
-      };
-      dispatch(accionCrear("bloques", bloque));
+      const { sesiones, bloques } = generarDesdeSesion(plantilla, atletaId, fechaInicio);
+      sesiones.forEach((s) => dispatch(accionCrear("sesiones", s)));
+      bloques.forEach((b) => dispatch(accionCrear("bloques", b)));
       toast("Plantilla aplicada", `${plantilla.nombre} se ha añadido el ${fechaInicio}.`);
     }
 

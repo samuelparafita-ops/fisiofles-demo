@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ChevronDown, ChevronUp, Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useEjercicios, type EjercicioProgramado } from "@/lib/store";
@@ -11,8 +12,9 @@ const campoClass =
 
 /**
  * Editor de la lista de ejercicios de una sesión — compartido por el diálogo
- * de detalle/edición (Calendario) y el de nueva sesión, para que "editar
- * aquí = editar allí" también aplique a esta pieza.
+ * de detalle/edición (Calendario), el de nueva sesión y las plantillas de
+ * /plantillas, para que "editar aquí = editar allí" también aplique a esta
+ * pieza. Incluye buscador sobre la librería de /ejercicios y reordenación.
  */
 export function EjerciciosSesionEditor({
   ejercicios,
@@ -22,6 +24,13 @@ export function EjerciciosSesionEditor({
   onChange: (next: EjercicioProgramado[]) => void;
 }) {
   const libreria = useEjercicios();
+  const [busqueda, setBusqueda] = useState("");
+
+  const libreriaFiltrada = useMemo(() => {
+    const q = busqueda.trim().toLowerCase();
+    if (!q) return libreria;
+    return libreria.filter((l) => l.nombre.toLowerCase().includes(q));
+  }, [busqueda, libreria]);
 
   function actualizar(i: number, patch: Partial<EjercicioProgramado>) {
     onChange(ejercicios.map((e, idx) => (idx === i ? { ...e, ...patch } : e)));
@@ -31,11 +40,19 @@ export function EjerciciosSesionEditor({
     onChange(ejercicios.filter((_, idx) => idx !== i));
   }
 
+  function mover(i: number, direccion: -1 | 1) {
+    const j = i + direccion;
+    if (j < 0 || j >= ejercicios.length) return;
+    const next = [...ejercicios];
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+  }
+
   function anadir() {
     onChange([
       ...ejercicios,
       {
-        ejercicioId: libreria[0]?.id ?? "",
+        ejercicioId: (libreriaFiltrada[0] ?? libreria[0])?.id ?? "",
         series: 3,
         repeticiones: "10",
         carga: "—",
@@ -54,79 +71,120 @@ export function EjerciciosSesionEditor({
 
   return (
     <div className="space-y-3">
+      {ejercicios.length > 0 && (
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-textDim" />
+          <input
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            placeholder="Buscar en la librería de ejercicios..."
+            aria-label="Buscar ejercicio"
+            className={cn(campoClass, "pl-8")}
+          />
+        </div>
+      )}
       {ejercicios.length === 0 && (
         <p className="text-sm text-textDim">Sin ejercicios todavía. Añade el primero.</p>
       )}
-      {ejercicios.map((ej, i) => (
-        <div key={i} className="rounded-lg border border-borderSoft bg-bg p-3">
-          <div className="flex items-start gap-2">
-            <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-[2fr_1fr_1fr_1fr]">
-              <select
-                value={ej.ejercicioId}
-                onChange={(e) => actualizar(i, { ejercicioId: e.target.value })}
-                className={cn(campoClass, "col-span-2 sm:col-span-1")}
-              >
-                {libreria.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.nombre}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                min={1}
-                value={ej.series}
-                onChange={(e) => actualizar(i, { series: Number(e.target.value) || 1 })}
-                placeholder="Series"
-                aria-label="Series"
-                className={campoClass}
-              />
-              <input
-                value={ej.repeticiones}
-                onChange={(e) => actualizar(i, { repeticiones: e.target.value })}
-                placeholder="Reps"
-                aria-label="Repeticiones"
-                className={campoClass}
-              />
-              <input
-                value={ej.carga}
-                onChange={(e) => actualizar(i, { carga: e.target.value })}
-                placeholder="Carga"
-                aria-label="Carga"
-                className={campoClass}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => quitar(i)}
-              className="shrink-0 rounded-md p-2 text-textDim transition-colors hover:bg-state-bad/10 hover:text-state-bad"
-              aria-label="Quitar ejercicio"
-            >
-              <Trash2 className="size-4" />
-            </button>
-          </div>
-          <div className="mt-2.5 flex flex-wrap gap-1.5">
-            {VARIABLES_MEDIBLES.map((v) => {
-              const activo = ej.variablesAMedir.includes(v);
-              return (
+      {ejercicios.map((ej, i) => {
+        const seleccionadoFueraDeFiltro =
+          busqueda.trim() && !libreriaFiltrada.some((l) => l.id === ej.ejercicioId)
+            ? libreria.find((l) => l.id === ej.ejercicioId)
+            : undefined;
+        return (
+          <div key={i} className="rounded-lg border border-borderSoft bg-bg p-3">
+            <div className="flex items-start gap-2">
+              <div className="flex shrink-0 flex-col items-center justify-center gap-0.5 pt-1">
                 <button
-                  key={v}
                   type="button"
-                  onClick={() => toggleVariable(i, v)}
-                  className={cn(
-                    "rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors",
-                    activo
-                      ? "border-brand bg-brand-tint text-brand-ink"
-                      : "border-borderSoft text-textDim hover:border-brand/50"
-                  )}
+                  onClick={() => mover(i, -1)}
+                  disabled={i === 0}
+                  className="rounded p-0.5 text-textDim transition-colors hover:text-brand-ink disabled:opacity-30"
+                  aria-label="Subir ejercicio"
                 >
-                  {v}
+                  <ChevronUp className="size-3.5" />
                 </button>
-              );
-            })}
+                <button
+                  type="button"
+                  onClick={() => mover(i, 1)}
+                  disabled={i === ejercicios.length - 1}
+                  className="rounded p-0.5 text-textDim transition-colors hover:text-brand-ink disabled:opacity-30"
+                  aria-label="Bajar ejercicio"
+                >
+                  <ChevronDown className="size-3.5" />
+                </button>
+              </div>
+              <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-[2fr_1fr_1fr_1fr]">
+                <select
+                  value={ej.ejercicioId}
+                  onChange={(e) => actualizar(i, { ejercicioId: e.target.value })}
+                  className={cn(campoClass, "col-span-2 sm:col-span-1")}
+                >
+                  {seleccionadoFueraDeFiltro && (
+                    <option value={seleccionadoFueraDeFiltro.id}>{seleccionadoFueraDeFiltro.nombre}</option>
+                  )}
+                  {libreriaFiltrada.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.nombre}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  min={1}
+                  value={ej.series}
+                  onChange={(e) => actualizar(i, { series: Number(e.target.value) || 1 })}
+                  placeholder="Series"
+                  aria-label="Series"
+                  className={campoClass}
+                />
+                <input
+                  value={ej.repeticiones}
+                  onChange={(e) => actualizar(i, { repeticiones: e.target.value })}
+                  placeholder="Reps"
+                  aria-label="Repeticiones"
+                  className={campoClass}
+                />
+                <input
+                  value={ej.carga}
+                  onChange={(e) => actualizar(i, { carga: e.target.value })}
+                  placeholder="Carga"
+                  aria-label="Carga"
+                  className={campoClass}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => quitar(i)}
+                className="shrink-0 rounded-md p-2 text-textDim transition-colors hover:bg-state-bad/10 hover:text-state-bad"
+                aria-label="Quitar ejercicio"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            </div>
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {VARIABLES_MEDIBLES.map((v) => {
+                const activo = ej.variablesAMedir.includes(v);
+                return (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => toggleVariable(i, v)}
+                    className={cn(
+                      "rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors",
+                      activo
+                        ? "border-brand bg-brand-tint text-brand-ink"
+                        : "border-borderSoft text-textDim hover:border-brand/50"
+                    )}
+                  >
+                    {v}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
       <Button type="button" variant="outline" size="sm" onClick={anadir}>
         <Plus className="size-3.5" />
         Añadir ejercicio
