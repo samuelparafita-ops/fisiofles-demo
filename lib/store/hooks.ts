@@ -36,6 +36,10 @@ export function useSesionesDelDia(fechaIso: string) {
   );
 }
 
+export function useSesiones() {
+  return useStore().state.sesiones;
+}
+
 /** Bloques del atleta con sus sesiones ya resueltas (compat con `ProgramacionView`). */
 export function useProgramacionDeAtleta(atletaId: string): BloqueSemanalConSesiones[] {
   const { bloques, sesiones } = useStore().state;
@@ -56,6 +60,10 @@ export function useProgramacionDeAtleta(atletaId: string): BloqueSemanalConSesio
 
 export function useCatalogoTests() {
   return useStore().state.catalogoTests;
+}
+
+export function useRegistrosTests() {
+  return useStore().state.registrosTests;
 }
 
 export function useRegistrosDeAtleta(atletaId: string) {
@@ -84,6 +92,10 @@ export function useFormulariosEnviosDeAtleta(atletaId: string) {
     () => formulariosEnvios.filter((f) => f.atletaId === atletaId),
     [formulariosEnvios, atletaId]
   );
+}
+
+export function useFormulariosEnvios() {
+  return useStore().state.formulariosEnvios;
 }
 
 export function useNotificaciones() {

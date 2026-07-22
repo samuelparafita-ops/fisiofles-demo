@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Dumbbell } from "lucide-react";
+import { CheckCircle2, ChevronDown, Dumbbell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEjercicios } from "@/lib/store";
 import type { Sesion } from "@/lib/store";
@@ -38,6 +38,15 @@ export function SesionAccordion({
           <span className="text-xs text-muted-foreground">
             {sesion.ejercicios.length} ejercicios
           </span>
+          {sesion.estado === "completada" && (
+            <span className="flex items-center gap-1 text-xs font-medium text-state-good">
+              <CheckCircle2 className="size-3.5" />
+              Completada
+            </span>
+          )}
+          {sesion.estado === "cancelada" && (
+            <span className="text-xs font-medium text-textDim">Cancelada</span>
+          )}
           <ChevronDown
             className={cn("size-4 text-textDim transition-transform", open && "rotate-180")}
           />

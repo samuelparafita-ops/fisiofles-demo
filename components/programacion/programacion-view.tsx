@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock } from "lucide-react";
+import { CheckCircle2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/shared/toast";
@@ -35,11 +35,16 @@ function WeekStrip({ bloque }: { bloque: BloqueSemanalConSesiones }) {
             </p>
             {sesion ? (
               <>
-                <p className="mt-1 line-clamp-2 text-xs font-medium text-textStrong">
-                  {sesion.nombre}
-                </p>
+                <div className="mt-1 flex items-center justify-center gap-1">
+                  <p className="line-clamp-2 text-xs font-medium text-textStrong">
+                    {sesion.nombre}
+                  </p>
+                  {sesion.estado === "completada" && (
+                    <CheckCircle2 className="size-3 shrink-0 text-state-good" />
+                  )}
+                </div>
                 <p className="mt-0.5 text-[11px] text-brand-ink">
-                  {sesion.ejercicios.length} ejerc.
+                  {sesion.estado === "cancelada" ? "Cancelada" : `${sesion.ejercicios.length} ejerc.`}
                 </p>
               </>
             ) : (
