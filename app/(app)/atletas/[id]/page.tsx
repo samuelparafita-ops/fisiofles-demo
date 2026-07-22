@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Activity, CalendarDays, ClipboardList, Dumbbell, UserRound, UserX } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,6 +30,8 @@ const TABS = [
   { value: "formularios", label: "Formularios", icon: ClipboardList },
 ];
 
+const TAB_VALUES = TABS.map((t) => t.value);
+
 export default function AtletaDetailPage({ params }: { params: { id: string } }) {
   const atleta = useAtleta(params.id);
   const sesiones = useSesiones();
@@ -36,6 +39,20 @@ export default function AtletaDetailPage({ params }: { params: { id: string } })
   const catalogoTests = useCatalogoTests();
   const formulariosEnvios = useFormulariosEnvios();
   const config = useConfig();
+
+  // Deep-link de notificaciones/hallazgos: `?tab=datos` abre esa pestaña al
+  // entrar. Controlado (no `defaultValue`) para reaccionar también si el
+  // usuario navega entre notificaciones del mismo atleta sin desmontar la
+  // página (mismo segmento dinámico, solo cambia la query string).
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [tab, setTab] = useState(() => (tabParam && TAB_VALUES.includes(tabParam) ? tabParam : "general"));
+
+  useEffect(() => {
+    if (tabParam && TAB_VALUES.includes(tabParam)) {
+      setTab(tabParam);
+    }
+  }, [tabParam]);
 
   const hallazgosAtleta = useMemo(() => {
     if (!atleta) return [];
@@ -72,13 +89,13 @@ export default function AtletaDetailPage({ params }: { params: { id: string } })
         vacioDescripcion="No hay hallazgos registrados para este atleta ahora mismo."
       />
 
-      <Tabs defaultValue="general">
+      <Tabs value={tab} onValueChange={setTab}>
         <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
           <TabsList className="w-max">
-            {TABS.map((tab) => (
-              <TabsTrigger key={tab.value} value={tab.value} className="shrink-0 gap-1.5">
-                <tab.icon className="size-3.5" />
-                {tab.label}
+            {TABS.map((t) => (
+              <TabsTrigger key={t.value} value={t.value} className="shrink-0 gap-1.5">
+                <t.icon className="size-3.5" />
+                {t.label}
               </TabsTrigger>
             ))}
           </TabsList>

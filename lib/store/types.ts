@@ -211,6 +211,10 @@ export type FormularioEnvio = {
 
 export type TipoNotificacion = "alerta" | "recordatorio" | "tarea";
 
+/** Misma escala que `SeveridadHallazgo` (lib/insights), duplicada aquí para no
+ * acoplar el store al motor de hallazgos — ver lib/notificaciones/desde-hallazgos.ts. */
+export type SeveridadNotificacion = "info" | "atencion" | "critico";
+
 export type Notificacion = {
   id: string;
   atletaId?: string;
@@ -221,6 +225,8 @@ export type Notificacion = {
   leida: boolean;
   completada: boolean;
   enlace: string;
+  /** Solo presente en notificaciones materializadas desde un hallazgo vivo. */
+  severidad?: SeveridadNotificacion;
 };
 
 // ---------------------------------------------------------------------------

@@ -1395,7 +1395,7 @@ export function buildSeed(): AppState {
       fecha: iso(0),
       leida: false,
       completada: false,
-      enlace: "/atletas/marcos-vidal",
+      enlace: "/atletas/marcos-vidal?tab=datos",
     },
     {
       id: id("notif"),
@@ -1406,7 +1406,7 @@ export function buildSeed(): AppState {
       fecha: iso(-14),
       leida: true,
       completada: false,
-      enlace: "/atletas/marcos-vidal",
+      enlace: "/atletas/marcos-vidal?tab=datos",
     },
     {
       id: id("notif"),
@@ -1417,7 +1417,7 @@ export function buildSeed(): AppState {
       fecha: iso(0),
       leida: false,
       completada: false,
-      enlace: "/atletas/pol-serra",
+      enlace: "/atletas/pol-serra?tab=datos",
     },
     {
       id: id("notif"),
@@ -1428,7 +1428,7 @@ export function buildSeed(): AppState {
       fecha: iso(-14),
       leida: false,
       completada: false,
-      enlace: "/atletas/marta-iglesias",
+      enlace: "/atletas/marta-iglesias?tab=datos",
     },
     {
       id: id("notif"),
@@ -1439,7 +1439,7 @@ export function buildSeed(): AppState {
       fecha: iso(0),
       leida: false,
       completada: false,
-      enlace: "/atletas/ruben-campos",
+      enlace: "/atletas/ruben-campos?tab=datos",
     },
     {
       id: id("notif"),
@@ -1450,7 +1450,7 @@ export function buildSeed(): AppState {
       fecha: iso(-1),
       leida: false,
       completada: false,
-      enlace: "/formularios",
+      enlace: "/atletas/pol-serra?tab=formularios",
     },
     {
       id: id("notif"),
@@ -1461,7 +1461,7 @@ export function buildSeed(): AppState {
       fecha: iso(-1),
       leida: false,
       completada: false,
-      enlace: "/formularios",
+      enlace: "/atletas/carla-domenech?tab=formularios",
     },
     {
       id: id("notif"),
@@ -1472,7 +1472,7 @@ export function buildSeed(): AppState {
       fecha: iso(-7),
       leida: false,
       completada: false,
-      enlace: "/atletas/nerea-otxoa",
+      enlace: "/atletas/nerea-otxoa?tab=datos",
     },
     {
       id: id("notif"),
