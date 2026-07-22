@@ -11,6 +11,43 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { RadarPerfil, AcwrChart, SimetriaBar, EvolucionLine } from "@/components/charts";
+
+const SAMPLE_PERFIL = [
+  { eje: "Fuerza explosiva" as const, inicial: 34, actual: 39, objetivo: 1.2 },
+  { eje: "Altura salto CMJ" as const, inicial: 36, actual: 41, objetivo: 1.0 },
+  { eje: "Fuerza máxima" as const, inicial: 1.6, actual: 1.9, objetivo: 1.0 },
+  { eje: "Velocidad máxima" as const, inicial: 6.9, actual: 7.2, objetivo: 0.8 },
+  { eje: "Agilidad-COD" as const, inicial: 2.5, actual: 2.35, objetivo: -0.5 },
+  { eje: "RSA" as const, inicial: 21, actual: 23, objetivo: 1.0 },
+];
+
+const SAMPLE_ACWR = [
+  { semana: "S1", agudo: 300 },
+  { semana: "S2", agudo: 320 },
+  { semana: "S3", agudo: 340 },
+  { semana: "S4", agudo: 360 },
+  { semana: "S5", agudo: 250 },
+  { semana: "S6", agudo: 480 },
+  { semana: "S7", agudo: 400 },
+  { semana: "S8", agudo: 420 },
+];
+
+const SAMPLE_SIMETRIAS = [
+  { test: "Fuerza cuádriceps", izq: 210, der: 245 },
+  { test: "Isquiotibiales", izq: 150, der: 210 },
+  { test: "Salto unipodal", izq: 38, der: 36 },
+  { test: "Hop test", izq: 88, der: 92 },
+];
+
+const SAMPLE_EVOLUCION = [
+  { fecha: "2026-06-01", dolor: 6, carga: 420, rpe: 7 },
+  { fecha: "2026-06-08", dolor: 4, carga: 460, rpe: 6 },
+  { fecha: "2026-06-15", dolor: 3, carga: 500, rpe: 6 },
+  { fecha: "2026-06-22", dolor: 2, carga: 480, rpe: 5 },
+  { fecha: "2026-06-29", dolor: 1, carga: 520, rpe: 5 },
+  { fecha: "2026-07-06", dolor: 0, carga: 540, rpe: 4 },
+];
 
 function Swatch({ name, hex }: { name: string; hex: string }) {
   return (
@@ -113,9 +150,20 @@ export default function StyleguidePage() {
           ]}
         />
         <SwatchGroup
+          title="dataLight — paleta de datos (tema fisiofles, por defecto)"
+          note="Serie de los 4 gráficos vía useChartColors(). Contraste AA (≥3:1) verificado sobre blanco."
+          swatches={[
+            { name: "dataLight.primary", hex: colors.dataLight.primary },
+            { name: "dataLight.compare", hex: colors.dataLight.compare },
+            { name: "dataLight.good", hex: colors.dataLight.good },
+            { name: "dataLight.warn", hex: colors.dataLight.warn },
+            { name: "dataLight.base", hex: colors.dataLight.base },
+          ]}
+        />
+        <SwatchGroup
           dark
-          title="Datos — puros (SOLO dentro de paneles chartBg)"
-          note="Nunca sobre fondo claro: sin contraste suficiente, fatigan la vista."
+          title="data — puros del Excel (reservado: tema clasico-excel)"
+          note="Ya no se usan por defecto. Activables desde Personalización (fase posterior) junto al panel chartBg."
           swatches={[
             { name: "data.primary", hex: colors.data.primary },
             { name: "data.compare", hex: colors.data.compare },
@@ -126,7 +174,7 @@ export default function StyleguidePage() {
         />
         <SwatchGroup
           dark
-          title="Cockpit — superficie de los paneles de gráfico"
+          title="Cockpit — superficie del tema clasico-excel"
           swatches={[
             { name: "chartBg", hex: colors.chartBg },
             { name: "chartGrid", hex: colors.chartGrid },
@@ -189,7 +237,6 @@ export default function StyleguidePage() {
             label="Simetría cuádriceps"
             value="97"
             unit="%"
-            valueColor="strong"
             variation={{ label: "+3% vs. objetivo", tone: "good", direction: "up" }}
           />
           <StatCard
@@ -200,82 +247,23 @@ export default function StyleguidePage() {
         </div>
       </section>
 
-      {/* Chart cockpit */}
+      {/* Gráficos v2 (claro) */}
       <section className="mt-14 space-y-4 border-t border-borderSoft pt-10">
         <h2 className="font-display text-lg font-bold text-textStrong">
-          Panel de gráfico (cockpit)
+          Gráficos v2 — ChartPanel claro
         </h2>
         <p className="text-sm text-muted-foreground">
-          Los paneles de gráfico son la única superficie donde viven los
-          colores puros de <code className="text-xs">data.*</code>. El resto
-          de la UI se mantiene clara.
+          Un único contenedor claro (<code className="text-xs">surface2</code> +{" "}
+          <code className="text-xs">borderSoft</code>), sin panel oscuro interior.
+          Datos de ejemplo — los colores de serie vienen de{" "}
+          <code className="text-xs">useChartColors()</code> (tema activo, por
+          defecto <code className="text-xs">dataLight</code>).
         </p>
-        <div className="rounded-xl border border-chartGrid bg-chartBg p-6">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-white">ACWR · últimas 8 semanas</p>
-            <span className="text-xs text-chartText">chartBg #181C20</span>
-          </div>
-          <div className="relative mt-6 h-32 border-b border-l border-chartGrid">
-            <div className="absolute inset-x-0 top-1/3 border-t border-dashed border-chartGrid" />
-            <svg
-              className="absolute inset-0 h-full w-full overflow-visible"
-              preserveAspectRatio="none"
-              viewBox="0 0 100 100"
-            >
-              <polyline
-                points="0,70 15,55 30,60 45,40 60,45 75,25 90,30 100,20"
-                fill="none"
-                stroke={colors.data.primary}
-                strokeWidth="2"
-                vectorEffect="non-scaling-stroke"
-              />
-              <polyline
-                points="0,50 15,50 30,50 45,50 60,50 75,50 90,50 100,50"
-                fill="none"
-                stroke={colors.data.base}
-                strokeDasharray="4 3"
-                strokeWidth="1.5"
-                vectorEffect="non-scaling-stroke"
-              />
-            </svg>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-4 text-xs text-chartText">
-            <span className="flex items-center gap-1.5">
-              <span
-                className="size-2 rounded-full"
-                style={{ background: colors.data.primary }}
-              />
-              Actual
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span
-                className="size-2 rounded-full"
-                style={{ background: colors.data.base }}
-              />
-              Base
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span
-                className="size-2 rounded-full"
-                style={{ background: colors.data.good }}
-              />
-              Zona óptima
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span
-                className="size-2 rounded-full"
-                style={{ background: colors.data.warn }}
-              />
-              Riesgo moderado
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span
-                className="size-2 rounded-full"
-                style={{ background: colors.data.compare }}
-              />
-              Déficit
-            </span>
-          </div>
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <RadarPerfil perfilFisico={SAMPLE_PERFIL} sexo="Hombre" />
+          <AcwrChart cargas={SAMPLE_ACWR} />
+          <SimetriaBar simetrias={SAMPLE_SIMETRIAS} />
+          <EvolucionLine evolucion={SAMPLE_EVOLUCION} />
         </div>
       </section>
 

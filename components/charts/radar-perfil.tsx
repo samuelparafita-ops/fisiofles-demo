@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Radar,
   RadarChart,
@@ -11,6 +12,7 @@ import {
   type TooltipContentProps,
 } from "recharts";
 import { colors } from "@/lib/tokens";
+import { useChartColors } from "@/lib/theme";
 import { perfilRadar, type Capacidad, type Sexo } from "@/lib/calculations";
 import { ChartPanel, LegendChip, ChartTooltipBox } from "./chart-panel";
 
@@ -29,7 +31,7 @@ function RadarTooltip({ active, payload, label }: TooltipContentProps) {
   if (!active || !payload?.length) return null;
   return (
     <ChartTooltipBox>
-      <p className="mb-1 font-medium text-white">{label}</p>
+      <p className="mb-1 font-medium text-textStrong">{label}</p>
       <div className="space-y-0.5">
         {payload.map((entry) => (
           <p key={entry.dataKey as string} style={{ color: entry.color }}>
@@ -44,8 +46,12 @@ function RadarTooltip({ active, payload, label }: TooltipContentProps) {
 /**
  * Perfil físico (radar) — z-score normalizado por sexo.
  * NO recalcula nada: llama a `perfilRadar()` de `lib/calculations/radar.ts`.
+ * Por defecto solo muestra Actual vs. Objetivo; "Inicial" es opcional (toggle).
  */
 export function RadarPerfil({ perfilFisico, sexo, className }: RadarPerfilProps) {
+  const [compararInicial, setCompararInicial] = useState(false);
+  const chartColors = useChartColors();
+
   const valoresIniciales = Object.fromEntries(
     perfilFisico.map((p) => [p.eje, p.inicial])
   ) as Partial<Record<Capacidad, number>>;
@@ -70,18 +76,36 @@ export function RadarPerfil({ perfilFisico, sexo, className }: RadarPerfilProps)
       title="Perfil físico"
       description="12 capacidades vs. población de referencia (z-score)"
       className={className}
+      action={
+        <button
+          type="button"
+          onClick={() => setCompararInicial((v) => !v)}
+          className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors"
+          style={{
+            borderColor: compararInicial ? chartColors.base : colors.borderSoft,
+            color: compararInicial ? chartColors.base : colors.textDim,
+            background: compararInicial ? `${chartColors.base}14` : "transparent",
+          }}
+        >
+          <span
+            className="inline-block size-2 rounded-full"
+            style={{ background: compararInicial ? chartColors.base : colors.border }}
+          />
+          Comparar con inicial
+        </button>
+      }
     >
       <div className="h-80 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={data} outerRadius="70%">
-            <PolarGrid stroke={colors.chartGrid} />
+            <PolarGrid stroke={colors.borderSoft} />
             <PolarAngleAxis
               dataKey="eje"
-              tick={{ fill: colors.chartText, fontSize: 10 }}
+              tick={{ fill: colors.textDim, fontSize: 10 }}
             />
             <PolarRadiusAxis
               domain={[-5, 3]}
-              tick={{ fill: colors.chartText, fontSize: 9 }}
+              tick={{ fill: colors.textDim, fontSize: 9 }}
               tickCount={5}
               axisLine={false}
             />
@@ -89,9 +113,10 @@ export function RadarPerfil({ perfilFisico, sexo, className }: RadarPerfilProps)
             <Radar
               name="Media"
               dataKey="Media"
-              stroke={colors.data.base}
+              stroke={chartColors.base}
+              strokeOpacity={0.6}
               fill="transparent"
-              strokeDasharray="4 3"
+              strokeDasharray="2 3"
               strokeWidth={1.5}
               dot={false}
               isAnimationActive={false}
@@ -99,39 +124,42 @@ export function RadarPerfil({ perfilFisico, sexo, className }: RadarPerfilProps)
             <Radar
               name="Objetivo"
               dataKey="Objetivo"
-              stroke={colors.data.good}
+              stroke={chartColors.good}
               fill="transparent"
               strokeDasharray="3 3"
               strokeWidth={1.5}
               dot={false}
               isAnimationActive={false}
             />
-            <Radar
-              name="Inicial"
-              dataKey="Inicial"
-              stroke={colors.data.base}
-              fill={colors.data.base}
-              fillOpacity={0.08}
-              strokeWidth={1.5}
-              dot={{ r: 2, fill: colors.data.base, strokeWidth: 0 }}
-            />
+            {compararInicial && (
+              <Radar
+                name="Inicial"
+                dataKey="Inicial"
+                stroke={chartColors.base}
+                fill={chartColors.base}
+                fillOpacity={0.08}
+                strokeWidth={1.5}
+                dot={{ r: 2, fill: chartColors.base, strokeWidth: 0 }}
+              />
+            )}
             <Radar
               name="Actual"
               dataKey="Actual"
-              stroke={colors.data.primary}
-              fill={colors.data.primary}
-              fillOpacity={0.25}
+              stroke={chartColors.primary}
+              fill={chartColors.primary}
+              fillOpacity={0.2}
               strokeWidth={2}
-              dot={{ r: 3, fill: colors.data.primary, strokeWidth: 0 }}
+              dot={{ r: 3, fill: chartColors.primary, strokeWidth: 0 }}
             />
           </RadarChart>
         </ResponsiveContainer>
       </div>
       <div className="mt-3 flex flex-wrap gap-4">
-        <LegendChip color={colors.data.base} label="Inicial" />
-        <LegendChip color={colors.data.primary} label="Actual" />
-        <LegendChip color={colors.data.base} label="Media (z=0)" dashed />
-        <LegendChip color={colors.data.good} label="Objetivo RTP" dashed />
+        <LegendChip color={chartColors.primary} label="Actual" />
+        <LegendChip color={chartColors.good} label="Objetivo RTP" dashed />
+        {compararInicial && (
+          <LegendChip color={chartColors.base} label="Inicial" />
+        )}
       </div>
     </ChartPanel>
   );

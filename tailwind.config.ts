@@ -79,6 +79,13 @@ const config: Config = {
           warn: "#FF9900",
           base: "#B7B7B7",
         },
+        dataLight: {
+          primary: "#0891B2",
+          compare: "#DC2626",
+          good: "#16A34A",
+          warn: "#D97706",
+          base: "#64748B",
+        },
         chartBg: "#181C20",
         chartGrid: "#2E343A",
         chartText: "#C9CED4",

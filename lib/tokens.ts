@@ -1,5 +1,6 @@
 /**
- * Design tokens — UI clara, paneles de gráfico oscuros ("cockpit").
+ * Design tokens — UI clara. Los gráficos apoyan directamente sobre superficie
+ * clara (ver ChartPanel v2); ya no hay panel "cockpit" oscuro por defecto.
  *
  * Fuente de verdad para colores fuera de Tailwind (Recharts, inline styles).
  * Extraídos con exactitud de la hoja de cálculo real del producto (perfil
@@ -7,11 +8,17 @@
  * en app/globals.css y como colores custom en tailwind.config.ts. Si cambias
  * un valor aquí, cambia también el equivalente en ambos.
  *
- * `data.*` son colores PUROS del Excel: úsalos SOLO dentro de paneles de
- * gráfico oscuros (sobre `chartBg`), nunca en superficies o texto general —
+ * `data.*` son colores PUROS del Excel: viven SOLO dentro del tema
+ * "clasico-excel" (panel oscuro `chartBg`, activable desde Personalización);
  * sobre fondo claro no tienen contraste suficiente y fatigan la vista.
+ * `dataLight.*` es la paleta de datos para fondo claro (tema "fisiofles" por
+ * defecto, y "oscuro" sobre superficies oscuras) — ver `lib/theme.ts`
+ * `useChartColors()`. Ningún gráfico debe importar `data.*` directamente:
+ * todos consumen colores vía ese hook.
  * `brand` es para acentos grandes / estado activo / panel oscuro; para texto
- * y enlaces cyan sobre fondo claro usa `brandInk`, que sí contrasta.
+ * y enlaces cyan sobre fondo claro usa `brandInk`, que sí contrasta. `brand`
+ * tampoco sirve para trazos/líneas de gráfico sobre blanco (~2:1, no pasa
+ * AA) — ahí usa `dataLight.primary` vía el hook.
  */
 
 export const colors = {
@@ -22,13 +29,27 @@ export const colors = {
   brandInk: "#0B96B8", // cyan oscuro · TEXTO y enlaces cyan sobre fondo claro (contrasta)
   brandDeep: "#0062FF", // azul · botones CTA (texto blanco encima)
 
-  // Datos — PUROS del Excel. SOLO dentro de paneles oscuros de gráfico (sobre chartBg).
+  // Datos — PUROS del Excel. SOLO dentro del tema "clasico-excel" (panel chartBg).
   data: {
     primary: "#1DC4EB", // serie "actual" / principal
     compare: "#FF0000", // comparación / lado con déficit
     good: "#00FF44", // zona óptima
     warn: "#FF9900", // riesgo moderado
     base: "#B7B7B7", // serie "base" de referencia (punteada)
+  },
+
+  // Datos — paleta para FONDO CLARO (tema "fisiofles" por defecto). Deriva de
+  // los mismos matices que `data.*` pero con luminosidad que contrasta AA
+  // sobre blanco. Acceder siempre vía `useChartColors()` (lib/theme.ts).
+  dataLight: {
+    primary: "#0891B2", // cyan legible sobre blanco (~3.7:1) — sustituye #1DC4EB como serie
+    compare: "#DC2626", // rojo (~4.8:1)
+    good: "#16A34A", // verde (~3.3:1)
+    warn: "#D97706", // naranja (~3.2:1)
+    // gris de referencia: el tono #94A3B8 propuesto en el mismo escalón que
+    // el resto (Tailwind slate-400) solo da ~2.6:1 sobre blanco y no pasa el
+    // mínimo AA de objetos gráficos (3:1) — se usa slate-500 (~4.8:1).
+    base: "#64748B",
   },
 
   // Superficie oscura de los gráficos (el "cockpit")

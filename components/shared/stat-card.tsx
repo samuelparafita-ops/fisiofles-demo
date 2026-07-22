@@ -13,7 +13,6 @@ interface StatCardProps {
   value: ReactNode;
   unit?: string;
   variation?: StatCardVariation;
-  valueColor?: "brand" | "strong";
   className?: string;
 }
 
@@ -28,7 +27,6 @@ export function StatCard({
   value,
   unit,
   variation,
-  valueColor = "brand",
   className,
 }: StatCardProps) {
   return (
@@ -42,12 +40,7 @@ export function StatCard({
         {label}
       </p>
       <div className="mt-2 flex items-baseline gap-1.5">
-        <span
-          className={cn(
-            "font-display text-3xl font-bold tracking-tight",
-            valueColor === "brand" ? "text-brand-ink" : "text-textStrong"
-          )}
-        >
+        <span className="font-display text-4xl font-bold tracking-tight text-textStrong md:text-5xl">
           {value}
         </span>
         {unit && (

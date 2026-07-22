@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Line,
   LineChart,
@@ -13,6 +13,7 @@ import {
   type TooltipContentProps,
 } from "recharts";
 import { colors } from "@/lib/tokens";
+import { useChartColors } from "@/lib/theme";
 import { ChartPanel, ChartTooltipBox } from "./chart-panel";
 
 export type EvolucionLineProps = {
@@ -21,12 +22,6 @@ export type EvolucionLineProps = {
 };
 
 type SerieKey = "dolor" | "carga" | "rpe";
-
-const SERIES: Record<SerieKey, { label: string; color: string }> = {
-  dolor: { label: "Dolor (0–10)", color: colors.data.compare },
-  carga: { label: "Carga (sRPE ÷ 100)", color: colors.data.primary },
-  rpe: { label: "RPE (0–10)", color: colors.data.warn },
-};
 
 function fmtFecha(iso: string) {
   const [, m, d] = iso.split("-");
@@ -37,11 +32,16 @@ function average(nums: number[]) {
   return nums.reduce((a, b) => a + b, 0) / nums.length;
 }
 
-function EvolucionTooltip({ active, payload, label }: TooltipContentProps) {
+function EvolucionTooltip({
+  active,
+  payload,
+  label,
+  series,
+}: TooltipContentProps & { series: Record<SerieKey, { label: string; color: string }> }) {
   if (!active || !payload?.length) return null;
   return (
     <ChartTooltipBox>
-      <p className="mb-1 font-medium text-white">{label}</p>
+      <p className="mb-1 font-medium text-textStrong">{label}</p>
       {payload.map((entry) => {
         const key = entry.dataKey as SerieKey;
         const raw = (entry.payload as { cargaRaw: number })["cargaRaw"];
@@ -49,7 +49,7 @@ function EvolucionTooltip({ active, payload, label }: TooltipContentProps) {
           key === "carga" ? `${raw} (${(entry.value as number).toFixed(1)} indexada)` : entry.value;
         return (
           <p key={key} style={{ color: entry.color }}>
-            {SERIES[key].label}: {valor}
+            {series[key].label}: {valor}
           </p>
         );
       })}
@@ -64,6 +64,16 @@ function EvolucionTooltip({ active, payload, label }: TooltipContentProps) {
  * valor bruto de carga.
  */
 export function EvolucionLine({ evolucion, className }: EvolucionLineProps) {
+  const chartColors = useChartColors();
+  const SERIES: Record<SerieKey, { label: string; color: string }> = useMemo(
+    () => ({
+      dolor: { label: "Dolor (0–10)", color: chartColors.compare },
+      carga: { label: "Carga (sRPE ÷ 100)", color: chartColors.primary },
+      rpe: { label: "RPE (0–10)", color: chartColors.warn },
+    }),
+    [chartColors]
+  );
+
   const [visibles, setVisibles] = useState<Set<SerieKey>>(
     new Set<SerieKey>(["dolor", "carga", "rpe"])
   );
@@ -97,7 +107,7 @@ export function EvolucionLine({ evolucion, className }: EvolucionLineProps) {
       description="Dolor, carga percibida y RPE por sesión"
       className={className}
       action={
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
           {(Object.keys(SERIES) as SerieKey[]).map((key) => {
             const activo = visibles.has(key);
             return (
@@ -126,30 +136,33 @@ export function EvolucionLine({ evolucion, className }: EvolucionLineProps) {
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
-            <CartesianGrid stroke={colors.chartGrid} strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid stroke={colors.borderSoft} strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="fecha"
-              tick={{ fill: colors.chartText, fontSize: 11 }}
-              axisLine={{ stroke: colors.chartGrid }}
+              tick={{ fill: colors.textDim, fontSize: 11 }}
+              axisLine={{ stroke: colors.borderSoft }}
               tickLine={false}
             />
             <YAxis
               domain={[0, 10]}
-              tick={{ fill: colors.chartText, fontSize: 11 }}
-              axisLine={{ stroke: colors.chartGrid }}
+              tick={{ fill: colors.textDim, fontSize: 11 }}
+              axisLine={{ stroke: colors.borderSoft }}
               tickLine={false}
               width={32}
             />
-            <Tooltip content={(props) => <EvolucionTooltip {...props} />} cursor={{ stroke: colors.chartGrid }} />
+            <Tooltip
+              content={(props) => <EvolucionTooltip {...props} series={SERIES} />}
+              cursor={{ stroke: colors.borderSoft }}
+            />
             {visibles.has("dolor") && (
               <ReferenceLine
                 y={0}
-                stroke={colors.data.compare}
+                stroke={SERIES.dolor.color}
                 strokeDasharray="2 3"
                 label={{
                   value: "Objetivo: sin dolor",
                   position: "insideBottomLeft",
-                  fill: colors.data.compare,
+                  fill: SERIES.dolor.color,
                   fontSize: 10,
                 }}
               />

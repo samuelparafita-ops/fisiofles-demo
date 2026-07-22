@@ -13,6 +13,7 @@ import {
   type TooltipContentProps,
 } from "recharts";
 import { colors } from "@/lib/tokens";
+import { useChartColors } from "@/lib/theme";
 import { cargaCronica, acwr, zonaAcwr, type UmbralesAcwr, type ZonaAcwr } from "@/lib/calculations";
 import { ChartPanel, LegendChip, ChartTooltipBox } from "./chart-panel";
 
@@ -32,13 +33,12 @@ const ZONA_LABEL: Record<ZonaAcwr, string> = {
   riesgo: "Riesgo",
 };
 
-const ZONA_COLOR: Record<ZonaAcwr, string> = {
-  insuficiente: colors.data.compare,
-  optima: colors.data.good,
-  riesgo: colors.data.warn,
-};
-
-function AcwrTooltip({ active, payload, label }: TooltipContentProps) {
+function AcwrTooltip({
+  active,
+  payload,
+  label,
+  zonaColor,
+}: TooltipContentProps & { zonaColor: Record<ZonaAcwr, string> }) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload as {
     agudo: number;
@@ -48,16 +48,16 @@ function AcwrTooltip({ active, payload, label }: TooltipContentProps) {
   };
   return (
     <ChartTooltipBox>
-      <p className="mb-1 font-medium text-white">{label}</p>
-      <p className="text-chartText">Carga aguda: {d.agudo}</p>
+      <p className="mb-1 font-medium text-textStrong">{label}</p>
+      <p className="text-textDim">Carga aguda: {d.agudo}</p>
       {d.cronica === null ? (
-        <p className="mt-1 text-chartText">
+        <p className="mt-1 text-textDim">
           Crónica no calculable aún (faltan semanas previas)
         </p>
       ) : (
         <>
-          <p className="text-chartText">Carga crónica: {d.cronica.toFixed(1)}</p>
-          <p style={{ color: d.zona ? ZONA_COLOR[d.zona] : colors.data.base }}>
+          <p className="text-textDim">Carga crónica: {d.cronica.toFixed(1)}</p>
+          <p style={{ color: d.zona ? zonaColor[d.zona] : colors.textDim }}>
             ACWR: {d.ratio?.toFixed(2)} · {d.zona ? ZONA_LABEL[d.zona] : "—"}
           </p>
         </>
@@ -71,6 +71,12 @@ function AcwrTooltip({ active, payload, label }: TooltipContentProps) {
  * NO recalcula nada: llama a `cargaCronica()` / `acwr()` / `zonaAcwr()`.
  */
 export function AcwrChart({ cargas, umbrales = UMBRALES_DEFECTO, className }: AcwrChartProps) {
+  const chartColors = useChartColors();
+  const ZONA_COLOR: Record<ZonaAcwr, string> = {
+    insuficiente: colors.state.bad,
+    optima: colors.state.good,
+    riesgo: colors.state.warn,
+  };
   const agudos = cargas.map((c) => c.agudo);
 
   const data = cargas.map((c, idx) => {
@@ -106,56 +112,59 @@ export function AcwrChart({ cargas, umbrales = UMBRALES_DEFECTO, className }: Ac
       <div className="h-80 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
-            <CartesianGrid stroke={colors.chartGrid} strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid stroke={colors.borderSoft} strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="semana"
-              tick={{ fill: colors.chartText, fontSize: 11 }}
-              axisLine={{ stroke: colors.chartGrid }}
+              tick={{ fill: colors.textDim, fontSize: 11 }}
+              axisLine={{ stroke: colors.borderSoft }}
               tickLine={false}
             />
             <YAxis
               domain={[0, yMax]}
               ticks={Array.from({ length: yMax / 0.5 + 1 }, (_, i) => i * 0.5)}
-              tick={{ fill: colors.chartText, fontSize: 11 }}
-              axisLine={{ stroke: colors.chartGrid }}
+              tick={{ fill: colors.textDim, fontSize: 11 }}
+              axisLine={{ stroke: colors.borderSoft }}
               tickLine={false}
               width={40}
             />
-            <ReferenceArea y1={0} y2={umbrales.bajo} fill={colors.data.compare} fillOpacity={0.08} />
-            <ReferenceArea y1={umbrales.bajo} y2={umbrales.alto} fill={colors.data.good} fillOpacity={0.08} />
-            <ReferenceArea y1={umbrales.alto} y2={yMax} fill={colors.data.warn} fillOpacity={0.08} />
-            <ReferenceLine y={umbrales.bajo} stroke={colors.chartGrid} strokeDasharray="4 3" />
-            <ReferenceLine y={umbrales.alto} stroke={colors.chartGrid} strokeDasharray="4 3" />
+            <ReferenceArea y1={0} y2={umbrales.bajo} fill={chartColors.compare} fillOpacity={0.07} />
+            <ReferenceArea y1={umbrales.bajo} y2={umbrales.alto} fill={chartColors.good} fillOpacity={0.07} />
+            <ReferenceArea y1={umbrales.alto} y2={yMax} fill={chartColors.warn} fillOpacity={0.07} />
+            <ReferenceLine y={umbrales.bajo} stroke={colors.border} strokeDasharray="4 3" />
+            <ReferenceLine y={umbrales.alto} stroke={colors.border} strokeDasharray="4 3" />
             {media !== null && (
               <ReferenceLine
                 y={media}
-                stroke={colors.data.base}
+                stroke={chartColors.base}
                 strokeDasharray="2 3"
                 label={{
                   value: "Media",
                   position: "insideBottomLeft",
-                  fill: colors.chartText,
+                  fill: colors.textDim,
                   fontSize: 10,
                 }}
               />
             )}
             <ReferenceLine
               y={objetivo}
-              stroke={colors.brand}
+              stroke={chartColors.primary}
               strokeDasharray="5 2"
               label={{
                 value: "Objetivo 1.0",
                 position: "insideTopLeft",
-                fill: colors.brand,
+                fill: chartColors.primary,
                 fontSize: 10,
               }}
             />
-            <Tooltip content={(props) => <AcwrTooltip {...props} />} cursor={{ stroke: colors.chartGrid }} />
+            <Tooltip
+              content={(props) => <AcwrTooltip {...props} zonaColor={ZONA_COLOR} />}
+              cursor={{ stroke: colors.borderSoft }}
+            />
             <Line
               dataKey="ratio"
-              stroke={colors.data.primary}
+              stroke={chartColors.primary}
               strokeWidth={2}
-              dot={{ r: 3, fill: colors.data.primary, strokeWidth: 0 }}
+              dot={{ r: 3, fill: chartColors.primary, strokeWidth: 0 }}
               activeDot={{ r: 5 }}
               connectNulls={false}
               isAnimationActive={false}
@@ -164,11 +173,11 @@ export function AcwrChart({ cargas, umbrales = UMBRALES_DEFECTO, className }: Ac
         </ResponsiveContainer>
       </div>
       <div className="mt-3 flex flex-wrap gap-4">
-        <LegendChip color={colors.data.primary} label="ACWR" />
-        <LegendChip color={colors.data.compare} label={`Insuficiente (<${umbrales.bajo})`} />
-        <LegendChip color={colors.data.good} label={`Óptima (${umbrales.bajo}–${umbrales.alto})`} />
-        <LegendChip color={colors.data.warn} label={`Riesgo (>${umbrales.alto})`} />
-        <LegendChip color={colors.brand} label="Objetivo" dashed />
+        <LegendChip color={chartColors.primary} label="ACWR" />
+        <LegendChip color={chartColors.compare} label={`Insuficiente (<${umbrales.bajo})`} />
+        <LegendChip color={chartColors.good} label={`Óptima (${umbrales.bajo}–${umbrales.alto})`} />
+        <LegendChip color={chartColors.warn} label={`Riesgo (>${umbrales.alto})`} />
+        <LegendChip color={chartColors.primary} label="Objetivo" dashed />
       </div>
     </ChartPanel>
   );

@@ -13,6 +13,7 @@ import {
   type TooltipContentProps,
 } from "recharts";
 import { colors } from "@/lib/tokens";
+import { useChartColors, type ChartColors } from "@/lib/theme";
 import { simetria, estadoSimetria, type EstadoSimetria, type UmbralesSimetria } from "@/lib/calculations";
 import { ChartPanel, ChartTooltipBox } from "./chart-panel";
 
@@ -27,9 +28,9 @@ export type SimetriaBarProps = {
 };
 
 const ESTADO_COLOR: Record<EstadoSimetria, string> = {
-  deficit: colors.data.compare,
-  aceptable: colors.data.warn,
-  optimo: colors.data.good,
+  deficit: colors.state.bad,
+  aceptable: colors.state.warn,
+  optimo: colors.state.good,
 };
 
 const ESTADO_LABEL: Record<EstadoSimetria, string> = {
@@ -47,7 +48,7 @@ function SimetriaTooltip({ active, payload }: TooltipContentProps) {
   const d = payload[0].payload as { lado: string; valor: number };
   return (
     <ChartTooltipBox>
-      <p className="text-white">
+      <p className="text-textStrong">
         {d.lado}: {fmtValor(d.valor)}
       </p>
     </ChartTooltipBox>
@@ -59,11 +60,13 @@ function SimetriaRow({
   izq,
   der,
   umbrales,
+  chartColors,
 }: {
   test: string;
   izq: number;
   der: number;
   umbrales: UmbralesSimetria;
+  chartColors: ChartColors;
 }) {
   const pct = simetria(izq, der);
   const estado = estadoSimetria(pct, umbrales);
@@ -77,11 +80,11 @@ function SimetriaRow({
 
   const dominio = fuerte * 1.2;
   const colorDebil =
-    estado === "deficit" ? colors.data.compare : estado === "aceptable" ? colors.data.warn : colors.data.base;
+    estado === "deficit" ? chartColors.compare : estado === "aceptable" ? chartColors.warn : chartColors.base;
 
   return (
-    <div className="flex items-center gap-4 border-t border-chartGrid py-3 first:border-t-0 first:pt-0">
-      <div className="w-32 shrink-0 text-xs font-medium text-chartText">{test}</div>
+    <div className="flex items-center gap-4 border-t border-borderSoft py-3 first:border-t-0 first:pt-0">
+      <div className="w-32 shrink-0 text-xs font-medium text-textDim">{test}</div>
       <div className="h-16 flex-1">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
@@ -93,27 +96,27 @@ function SimetriaRow({
             <YAxis
               type="category"
               dataKey="lado"
-              tick={{ fill: colors.chartText, fontSize: 10 }}
+              tick={{ fill: colors.textDim, fontSize: 10 }}
               axisLine={false}
               tickLine={false}
               width={56}
             />
             <ReferenceLine
               x={(umbrales.optimo / 100) * fuerte}
-              stroke={colors.brand}
+              stroke={chartColors.primary}
               strokeDasharray="4 3"
-              label={{ value: `${umbrales.optimo}%`, position: "top", fill: colors.brand, fontSize: 10 }}
+              label={{ value: `${umbrales.optimo}%`, position: "top", fill: chartColors.primary, fontSize: 10 }}
             />
-            <Tooltip content={(props) => <SimetriaTooltip {...props} />} cursor={{ fill: colors.chartGrid, opacity: 0.3 }} />
+            <Tooltip content={(props) => <SimetriaTooltip {...props} />} cursor={{ fill: colors.borderSoft, opacity: 0.5 }} />
             <Bar dataKey="valor" barSize={14} isAnimationActive={false}>
               {data.map((entry) => (
-                <Cell key={entry.lado} fill={entry.esDebil ? colorDebil : colors.data.primary} />
+                <Cell key={entry.lado} fill={entry.esDebil ? colorDebil : chartColors.primary} />
               ))}
               <LabelList
                 dataKey="valor"
                 position="right"
                 formatter={(v) => (typeof v === "number" ? fmtValor(v) : "")}
-                fill={colors.chartText}
+                fill={colors.textDim}
                 fontSize={10}
               />
             </Bar>
@@ -122,12 +125,12 @@ function SimetriaRow({
       </div>
       <div className="w-20 shrink-0 text-right">
         <p
-          className="font-display text-2xl font-bold leading-none"
+          className="font-display text-3xl font-bold leading-none tracking-tight"
           style={{ color: ESTADO_COLOR[estado] }}
         >
           {pct.toFixed(0)}%
         </p>
-        <p className="mt-1 text-[10px] uppercase tracking-wide text-chartText">
+        <p className="mt-1 text-[10px] uppercase tracking-wide text-textDim">
           {ESTADO_LABEL[estado]}
         </p>
       </div>
@@ -140,6 +143,7 @@ function SimetriaRow({
  * NO recalcula nada: llama a `simetria()` / `estadoSimetria()` por test.
  */
 export function SimetriaBar({ simetrias, umbrales = UMBRALES_DEFECTO, className }: SimetriaBarProps) {
+  const chartColors = useChartColors();
   const pcts = simetrias.map((s) => simetria(s.izq, s.der));
   const media = pcts.length > 0 ? pcts.reduce((a, b) => a + b, 0) / pcts.length : 0;
 
@@ -148,14 +152,7 @@ export function SimetriaBar({ simetrias, umbrales = UMBRALES_DEFECTO, className 
       title="Simetrías en test"
       description={`Índice de simetría bilateral (min/max) — objetivo ${umbrales.optimo}%`}
       className={className}
-      action={
-        <div className="text-right">
-          <p className="font-display text-lg font-bold text-textStrong">
-            {media.toFixed(0)}%
-          </p>
-          <p className="text-[11px] text-textDim">media · objetivo {umbrales.optimo}%</p>
-        </div>
-      }
+      metric={{ value: `${media.toFixed(0)}%`, label: `media · objetivo ${umbrales.optimo}%` }}
     >
       <div>
         {simetrias.map((s, i) => (
@@ -165,20 +162,21 @@ export function SimetriaBar({ simetrias, umbrales = UMBRALES_DEFECTO, className 
             izq={s.izq}
             der={s.der}
             umbrales={umbrales}
+            chartColors={chartColors}
           />
         ))}
       </div>
-      <div className="mt-3 flex flex-wrap gap-4 border-t border-chartGrid pt-3">
-        <span className="flex items-center gap-1.5 text-xs text-chartText">
-          <span className="inline-block size-2 rounded-full" style={{ background: colors.data.primary }} />
+      <div className="mt-3 flex flex-wrap gap-4 border-t border-borderSoft pt-3">
+        <span className="flex items-center gap-1.5 text-xs text-textDim">
+          <span className="inline-block size-2 rounded-full" style={{ background: chartColors.primary }} />
           Lado fuerte
         </span>
-        <span className="flex items-center gap-1.5 text-xs text-chartText">
-          <span className="inline-block size-2 rounded-full" style={{ background: colors.data.compare }} />
+        <span className="flex items-center gap-1.5 text-xs text-textDim">
+          <span className="inline-block size-2 rounded-full" style={{ background: chartColors.compare }} />
           Lado débil (déficit)
         </span>
-        <span className="flex items-center gap-1.5 text-xs text-chartText">
-          <span className="inline-block h-0.5 w-3" style={{ borderTop: `2px dashed ${colors.brand}` }} />
+        <span className="flex items-center gap-1.5 text-xs text-textDim">
+          <span className="inline-block h-0.5 w-3" style={{ borderTop: `2px dashed ${chartColors.primary}` }} />
           Objetivo {umbrales.optimo}%
         </span>
       </div>

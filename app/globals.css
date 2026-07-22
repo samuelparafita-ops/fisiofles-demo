@@ -39,12 +39,19 @@
     --input: 214 14% 90%; /* border #E3E6EA */
     --ring: 191 84% 52%; /* brand #1DC4EB */
 
-    /* Solo para uso dentro de paneles chartBg — ver lib/tokens.ts `data.*` */
+    /* Solo para uso dentro del tema "clasico-excel" — ver lib/tokens.ts `data.*` */
     --chart-1: 191 84% 52%; /* data.primary #1DC4EB */
     --chart-2: 0 100% 50%; /* data.compare #FF0000 */
     --chart-3: 136 100% 50%; /* data.good #00FF44 */
     --chart-4: 36 100% 50%; /* data.warn #FF9900 */
     --chart-5: 0 0% 72%; /* data.base #B7B7B7 */
+
+    /* Paleta de datos sobre fondo claro — ver lib/tokens.ts `dataLight.*` */
+    --data-light-primary: 192 91% 36%; /* dataLight.primary #0891B2 */
+    --data-light-compare: 0 72% 51%; /* dataLight.compare #DC2626 */
+    --data-light-good: 142 76% 36%; /* dataLight.good #16A34A */
+    --data-light-warn: 32 95% 44%; /* dataLight.warn #D97706 */
+    --data-light-base: 215 16% 47%; /* dataLight.base #64748B */
 
     --radius: 0.5rem;
   }
