@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, ChevronDown, Dumbbell } from "lucide-react";
+import { CheckCircle2, ChevronDown, Dumbbell, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEjercicios } from "@/lib/store";
 import type { Sesion } from "@/lib/store";
@@ -9,9 +9,12 @@ import type { Sesion } from "@/lib/store";
 export function SesionAccordion({
   sesion,
   defaultOpen = false,
+  onEditar,
 }: {
   sesion: Sesion;
   defaultOpen?: boolean;
+  /** Abre el mismo diálogo de edición que usa el tab Calendario. */
+  onEditar?: (sesion: Sesion) => void;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const ejercicios = useEjercicios();
@@ -46,6 +49,27 @@ export function SesionAccordion({
           )}
           {sesion.estado === "cancelada" && (
             <span className="text-xs font-medium text-textDim">Cancelada</span>
+          )}
+          {onEditar && (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditar(sesion);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  onEditar(sesion);
+                }
+              }}
+              className="rounded-md p-1.5 text-textDim transition-colors hover:bg-bg hover:text-brand-ink"
+              aria-label="Editar sesión"
+            >
+              <Pencil className="size-3.5" />
+            </span>
           )}
           <ChevronDown
             className={cn("size-4 text-textDim transition-transform", open && "rotate-180")}

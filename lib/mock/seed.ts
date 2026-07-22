@@ -1514,6 +1514,7 @@ export function buildSeed(): AppState {
     },
     metricasVisiblesDashboard: ["perfil-fisico", "acwr", "simetrias", "evolucion"],
     ordenDashboard: ["perfil-fisico", "acwr", "simetrias", "evolucion"],
+    vistaAtletas: "grid",
   };
 
   return {

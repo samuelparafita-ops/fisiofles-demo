@@ -1,10 +1,8 @@
 "use client";
 
-import { CheckCircle2, Lock } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/components/shared/toast";
-import { DIAS_SEMANA, type BloqueSemanalConSesiones } from "@/lib/store";
+import { DIAS_SEMANA, type BloqueSemanalConSesiones, type Sesion } from "@/lib/store";
 import { SesionAccordion } from "@/components/programacion/sesion-accordion";
 
 function fmtFecha(iso: string) {
@@ -57,33 +55,23 @@ function WeekStrip({ bloque }: { bloque: BloqueSemanalConSesiones }) {
   );
 }
 
-export function ProgramacionView({ bloque }: { bloque: BloqueSemanalConSesiones }) {
-  const toast = useToast();
-
+export function ProgramacionView({
+  bloque,
+  onEditarSesion,
+}: {
+  bloque: BloqueSemanalConSesiones;
+  /** Mismo diálogo de edición que usa el tab Calendario: editar aquí es editar allí. */
+  onEditarSesion?: (sesion: Sesion) => void;
+}) {
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-borderSoft bg-surface2 p-5 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="font-display text-base font-bold text-textStrong">{bloque.nombre}</p>
-            <p className="mt-0.5 text-xs text-textDim">
-              {fmtFecha(bloque.fechaInicio)} – {fmtFecha(bloque.fechaFin)}
-            </p>
-            <p className="mt-3 max-w-2xl text-sm text-text">{bloque.objetivo}</p>
-          </div>
-          <Button
-            variant="outline"
-            className="shrink-0"
-            onClick={() =>
-              toast(
-                "Disponible en la versión completa",
-                "La edición de programaciones no está incluida en esta demo."
-              )
-            }
-          >
-            <Lock className="size-3.5" />
-            Editar programación
-          </Button>
+        <div>
+          <p className="font-display text-base font-bold text-textStrong">{bloque.nombre}</p>
+          <p className="mt-0.5 text-xs text-textDim">
+            {fmtFecha(bloque.fechaInicio)} – {fmtFecha(bloque.fechaFin)}
+          </p>
+          <p className="mt-3 max-w-2xl text-sm text-text">{bloque.objetivo}</p>
         </div>
 
         <div className="mt-5">
@@ -93,7 +81,7 @@ export function ProgramacionView({ bloque }: { bloque: BloqueSemanalConSesiones 
 
       <div className="space-y-3">
         {bloque.sesiones.map((sesion, i) => (
-          <SesionAccordion key={sesion.id} sesion={sesion} defaultOpen={i === 0} />
+          <SesionAccordion key={sesion.id} sesion={sesion} defaultOpen={i === 0} onEditar={onEditarSesion} />
         ))}
       </div>
     </div>

@@ -237,12 +237,15 @@ export type UmbralesConfig = {
   dolorAlerta: number;
 };
 
+export type VistaAtletas = "grid" | "lista";
+
 export type Config = {
   tema: Tema;
   acento: string;
   umbrales: UmbralesConfig;
   metricasVisiblesDashboard: string[];
   ordenDashboard: string[];
+  vistaAtletas: VistaAtletas;
 };
 
 // ---------------------------------------------------------------------------

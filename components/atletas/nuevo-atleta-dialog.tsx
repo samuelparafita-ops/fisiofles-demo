@@ -15,7 +15,24 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/shared/toast";
-import { accionActualizar, accionCrear, useDispatch, type Atleta, type Sexo } from "@/lib/store";
+import { FASE_OPCIONES } from "@/components/atletas/fase-utils";
+import {
+  accionActualizar,
+  accionCrear,
+  useDispatch,
+  type Atleta,
+  type EstadoAtleta,
+  type Sexo,
+} from "@/lib/store";
+
+const selectClass =
+  "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
+
+const ESTADO_OPCIONES: { value: EstadoAtleta; label: string }[] = [
+  { value: "activo", label: "Activo" },
+  { value: "alta", label: "Alta" },
+  { value: "pausa", label: "Pausa" },
+];
 
 function slugify(texto: string): string {
   return texto
@@ -44,11 +61,18 @@ function inicialesDe(nombre: string): string {
 export function NuevoAtletaDialog({
   atleta,
   trigger,
+  open: openProp,
+  onOpenChange,
 }: {
   atleta?: Atleta;
-  trigger?: ReactNode;
+  /** `null` = sin disparador propio (diálogo controlado 100% desde fuera, ej. un menú contextual). */
+  trigger?: ReactNode | null;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 } = {}) {
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = onOpenChange ?? setOpenState;
   const toast = useToast();
   const dispatch = useDispatch();
   const editando = Boolean(atleta);
@@ -60,10 +84,34 @@ export function NuevoAtletaDialog({
     const deporte = String(form.get("deporte") || "").trim();
     const sexo = String(form.get("sexo") || "Mujer") as Sexo;
     const lesion = String(form.get("lesion") || "").trim();
+    const lesionDetalle = String(form.get("lesionDetalle") || "").trim();
     const fase = String(form.get("fase") || "").trim();
+    const estado = String(form.get("estado") || "activo") as EstadoAtleta;
+    const email = String(form.get("email") || "").trim();
+    const telefono = String(form.get("telefono") || "").trim();
+    const fechaNacimiento = String(form.get("fechaNacimiento") || "").trim();
+    const fechaInicioTratamiento = String(form.get("fechaInicioTratamiento") || "").trim();
+
+    const camposOpcionales = {
+      lesionDetalle: lesionDetalle || undefined,
+      email: email || undefined,
+      telefono: telefono || undefined,
+      fechaNacimiento: fechaNacimiento || undefined,
+      fechaInicioTratamiento: fechaInicioTratamiento || undefined,
+    };
 
     if (atleta) {
-      dispatch(accionActualizar("atletas", atleta.id, { nombre, deporte, sexo, lesion, fase }));
+      dispatch(
+        accionActualizar("atletas", atleta.id, {
+          nombre,
+          deporte,
+          sexo,
+          lesion,
+          fase,
+          estado,
+          ...camposOpcionales,
+        })
+      );
       toast("Atleta actualizado", `Los cambios de ${nombre} se han guardado.`);
     } else {
       const nuevoAtleta: Atleta = {
@@ -75,12 +123,13 @@ export function NuevoAtletaDialog({
         fase,
         semanaProceso: 1,
         avatarInitials: inicialesDe(nombre) || "??",
-        estado: "activo",
+        estado,
         notas: [],
         hitos: [],
         perfilFisico: [],
         acwr: [],
         evolucion: [],
+        ...camposOpcionales,
       };
       dispatch(accionCrear("atletas", nuevoAtleta));
       toast("Atleta creado", `${nombre} se ha añadido a la lista de atletas.`);
@@ -92,22 +141,24 @@ export function NuevoAtletaDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? (
-          <Button>
-            {editando ? <Pencil className="size-4" /> : <Plus className="size-4" />}
-            {editando ? "Editar" : "Nuevo atleta"}
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent>
+      {trigger !== null && (
+        <DialogTrigger asChild>
+          {trigger ?? (
+            <Button>
+              {editando ? <Pencil className="size-4" /> : <Plus className="size-4" />}
+              {editando ? "Editar" : "Nuevo atleta"}
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{editando ? "Editar atleta" : "Nuevo atleta"}</DialogTitle>
             <DialogDescription>
               {editando
                 ? "Los cambios se guardan en el store y se reflejan en toda la app."
-                : "Da de alta un atleta en el proceso de readaptación."}
+                : "Da de alta un atleta en el proceso de readaptación. Solo nombre, deporte, sexo, lesión y fase son obligatorios."}
             </DialogDescription>
           </DialogHeader>
 
@@ -139,32 +190,85 @@ export function NuevoAtletaDialog({
                   id="sexo"
                   name="sexo"
                   defaultValue={atleta?.sexo ?? "Mujer"}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className={selectClass}
                 >
                   <option value="Mujer">Mujer</option>
                   <option value="Hombre">Hombre</option>
                 </select>
               </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="lesion">Lesión</Label>
-              <Input
-                id="lesion"
-                name="lesion"
-                placeholder="Ej. Tendinopatía rotuliana"
-                defaultValue={atleta?.lesion}
-                required
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="lesion">Lesión</Label>
+                <Input
+                  id="lesion"
+                  name="lesion"
+                  placeholder="Ej. Tendinopatía rotuliana"
+                  defaultValue={atleta?.lesion}
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="fase">Fase del proceso</Label>
+                <select id="fase" name="fase" defaultValue={atleta?.fase ?? FASE_OPCIONES[0]} className={selectClass} required>
+                  {FASE_OPCIONES.map((f) => (
+                    <option key={f} value={f}>
+                      {f}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="fase">Fase del proceso</Label>
-              <Input
-                id="fase"
-                name="fase"
-                placeholder="Ej. Fase 1 · Evaluación inicial"
-                defaultValue={atleta?.fase}
-                required
+              <Label htmlFor="lesionDetalle">Detalle de la lesión (opcional)</Label>
+              <textarea
+                id="lesionDetalle"
+                name="lesionDetalle"
+                rows={2}
+                placeholder="Mecanismo, diagnóstico, cirugía..."
+                defaultValue={atleta?.lesionDetalle}
+                className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="email">Email (opcional)</Label>
+                <Input id="email" name="email" type="email" placeholder="atleta@example.com" defaultValue={atleta?.email} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="telefono">Teléfono (opcional)</Label>
+                <Input id="telefono" name="telefono" type="tel" placeholder="+34 600 000 000" defaultValue={atleta?.telefono} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="fechaNacimiento">Nacimiento (opcional)</Label>
+                <Input
+                  id="fechaNacimiento"
+                  name="fechaNacimiento"
+                  type="date"
+                  defaultValue={atleta?.fechaNacimiento}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="fechaInicioTratamiento">Inicio tratamiento (opcional)</Label>
+                <Input
+                  id="fechaInicioTratamiento"
+                  name="fechaInicioTratamiento"
+                  type="date"
+                  defaultValue={atleta?.fechaInicioTratamiento}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="estado">Estado</Label>
+              <select id="estado" name="estado" defaultValue={atleta?.estado ?? "activo"} className={selectClass}>
+                {ESTADO_OPCIONES.map((e) => (
+                  <option key={e.value} value={e.value}>
+                    {e.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
