@@ -2,23 +2,21 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/components/shared/toast";
-import { cn } from "@/lib/utils";
 import { hoyIso } from "@/components/atletas/ficha/fecha-utils";
+import { FormularioCamposPreview } from "@/components/formularios/formulario-campos-preview";
 import {
   accionActualizar,
+  accionCrear,
   useAtleta,
   useDispatch,
   type FormularioDef,
   type FormularioEnvio,
+  type RegistroTest,
+  type ValorCuestionario,
   type VariableDestino,
 } from "@/lib/store";
-
-const selectClass =
-  "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
 
 /**
  * Vista previa (~420px, ancho de móvil) de lo que rellenaría el atleta. Al
@@ -82,11 +80,35 @@ export function SimularRespuestaDialog({
       dispatch(accionActualizar("atletas", atleta.id, { evolucion: nuevaEvolucion }));
     }
 
+    // Formulario vinculado a un test PRO del catálogo: la respuesta también
+    // genera un RegistroTest (puntuación = media de los campos escala 0-10,
+    // llevada a 0-100), visible en el histórico de tests del atleta.
+    let generoRegistroTest = false;
+    if (formulario.testDefId) {
+      const camposEscala = formulario.campos.filter((c) => c.tipo === "escala-0-10");
+      if (camposEscala.length > 0) {
+        const media =
+          camposEscala.reduce((acc, c) => acc + (Number(respuestas[c.id]) || 0), 0) / camposEscala.length;
+        const valores: ValorCuestionario = { puntuacion: Math.round(media * 10) };
+        const nuevoRegistro: RegistroTest = {
+          id: `reg-${Date.now().toString(36)}`,
+          atletaId: atleta.id,
+          testId: formulario.testDefId,
+          fecha: hoy,
+          valores,
+        };
+        dispatch(accionCrear("registrosTests", nuevoRegistro));
+        generoRegistroTest = true;
+      }
+    }
+
     toast(
       "Respuesta registrada",
-      huboCambiosEvolucion
-        ? `${formulario.nombre} respondido — se ha añadido el punto a Evolución.`
-        : `${formulario.nombre} respondido.`
+      generoRegistroTest
+        ? `${formulario.nombre} respondido — se ha añadido el punto a Evolución y un nuevo registro de test.`
+        : huboCambiosEvolucion
+          ? `${formulario.nombre} respondido — se ha añadido el punto a Evolución.`
+          : `${formulario.nombre} respondido.`
     );
     onClose();
   }
@@ -102,61 +124,11 @@ export function SimularRespuestaDialog({
         <div className="max-h-[60vh] space-y-5 overflow-y-auto px-5 py-5">
           <p className="text-sm text-textDim">{formulario.descripcion}</p>
 
-          {formulario.campos.map((campo) => (
-            <div key={campo.id} className="space-y-2">
-              <Label>{campo.etiqueta}</Label>
-
-              {campo.tipo === "escala-0-10" && (
-                <div className="flex flex-wrap gap-1.5">
-                  {Array.from({ length: 11 }, (_, n) => n).map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      onClick={() => actualizarCampo(campo.id, String(n))}
-                      className={cn(
-                        "flex size-8 items-center justify-center rounded-full border text-xs font-semibold transition-colors",
-                        respuestas[campo.id] === String(n)
-                          ? "border-brand bg-brand text-white"
-                          : "border-borderSoft text-textDim hover:border-brand/50"
-                      )}
-                    >
-                      {n}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {campo.tipo === "numero" && (
-                <Input
-                  type="number"
-                  value={respuestas[campo.id] ?? ""}
-                  onChange={(e) => actualizarCampo(campo.id, e.target.value)}
-                />
-              )}
-
-              {campo.tipo === "texto" && (
-                <Input
-                  value={respuestas[campo.id] ?? ""}
-                  onChange={(e) => actualizarCampo(campo.id, e.target.value)}
-                />
-              )}
-
-              {campo.tipo === "seleccion" && (
-                <select
-                  value={respuestas[campo.id] ?? ""}
-                  onChange={(e) => actualizarCampo(campo.id, e.target.value)}
-                  className={selectClass}
-                >
-                  <option value="">Selecciona...</option>
-                  {campo.opciones?.map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-          ))}
+          <FormularioCamposPreview
+            campos={formulario.campos}
+            respuestas={respuestas}
+            onChange={actualizarCampo}
+          />
         </div>
 
         <div className="flex gap-2 border-t border-borderSoft px-5 py-4">
