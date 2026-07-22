@@ -4,7 +4,7 @@ import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/shared/toast";
-import { DIAS_SEMANA, type BloqueSemanal } from "@/lib/mock/programaciones";
+import { DIAS_SEMANA, type BloqueSemanalConSesiones } from "@/lib/store";
 import { SesionAccordion } from "@/components/programacion/sesion-accordion";
 
 function fmtFecha(iso: string) {
@@ -12,7 +12,7 @@ function fmtFecha(iso: string) {
   return `${d}/${m}`;
 }
 
-function WeekStrip({ bloque }: { bloque: BloqueSemanal }) {
+function WeekStrip({ bloque }: { bloque: BloqueSemanalConSesiones }) {
   return (
     <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
       {DIAS_SEMANA.map((dia) => {
@@ -52,7 +52,7 @@ function WeekStrip({ bloque }: { bloque: BloqueSemanal }) {
   );
 }
 
-export function ProgramacionView({ bloque }: { bloque: BloqueSemanal }) {
+export function ProgramacionView({ bloque }: { bloque: BloqueSemanalConSesiones }) {
   const toast = useToast();
 
   return (

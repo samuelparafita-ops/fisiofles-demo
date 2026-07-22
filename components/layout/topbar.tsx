@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { LogOut, Menu } from "lucide-react";
+import { LogOut, Menu, RotateCcw } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,11 +15,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { navItems, Wordmark } from "@/components/layout/sidebar";
+import { useToast } from "@/components/shared/toast";
+import { resetDemo, useDispatch } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export function Topbar() {
   const router = useRouter();
   const pathname = usePathname();
+  const dispatch = useDispatch();
+  const toast = useToast();
+
+  function handleReset() {
+    resetDemo(dispatch);
+    toast("Demo restablecida", "Todos los datos se han vuelto a sembrar desde cero.");
+  }
 
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:px-6">
@@ -80,6 +89,11 @@ export function Topbar() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Sesión demo</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={handleReset}>
+            <RotateCcw className="mr-2 size-4" />
+            Restablecer demo
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => router.push("/login")}>
             <LogOut className="mr-2 size-4" />

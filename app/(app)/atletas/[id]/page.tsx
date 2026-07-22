@@ -1,13 +1,23 @@
-import { CalendarDays, CalendarX, ClipboardList, ListChecks, ScanFace, UserX } from "lucide-react";
+"use client";
+
+import { CalendarDays, CalendarX, ClipboardList, ListChecks, Pencil, ScanFace, UserX } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { RadarPerfil, AcwrChart, SimetriaBar, EvolucionLine } from "@/components/charts";
 import { TestsTable } from "@/components/atletas/tests-table";
+import { NuevoAtletaDialog } from "@/components/atletas/nuevo-atleta-dialog";
 import { ProgramacionView } from "@/components/programacion/programacion-view";
-import { getAtleta } from "@/lib/mock/atletas";
-import { getProgramacion } from "@/lib/mock/programaciones";
+import {
+  simetriasDesdeRegistros,
+  useAtleta,
+  useCatalogoTests,
+  useConfig,
+  useProgramacionDeAtleta,
+  useRegistrosDeAtleta,
+} from "@/lib/store";
 import { simetria, cargaCronica, acwr, zonaAcwr } from "@/lib/calculations";
 
 const TABS = [
@@ -24,7 +34,11 @@ export default function AtletaDetailPage({
 }: {
   params: { id: string };
 }) {
-  const atleta = getAtleta(params.id);
+  const atleta = useAtleta(params.id);
+  const registros = useRegistrosDeAtleta(params.id);
+  const catalogo = useCatalogoTests();
+  const config = useConfig();
+  const bloques = useProgramacionDeAtleta(params.id);
 
   if (!atleta) {
     return (
@@ -36,36 +50,82 @@ export default function AtletaDetailPage({
     );
   }
 
-  const pctsSimetria = atleta.simetrias.map((s) => simetria(s.izq, s.der));
-  const simetriaMedia = pctsSimetria.reduce((a, b) => a + b, 0) / pctsSimetria.length;
+  const { umbrales } = config;
+  const umbralesSimetria = { aceptable: umbrales.simetriaAceptable, optimo: umbrales.simetriaObjetivo };
+  const umbralesAcwr = { bajo: umbrales.acwrBajo, alto: umbrales.acwrAlto };
+
+  const simetrias = simetriasDesdeRegistros(registros, catalogo);
+  const pctsSimetria = simetrias.map((s) => simetria(s.izq, s.der));
+  const simetriaMedia =
+    pctsSimetria.length > 0 ? pctsSimetria.reduce((a, b) => a + b, 0) / pctsSimetria.length : null;
 
   const agudos = atleta.acwr.map((c) => c.agudo);
   const ultimoIdx = agudos.length - 1;
-  const cronicaActual = cargaCronica(agudos, ultimoIdx);
-  const ratioActual = acwr(agudos[ultimoIdx], cronicaActual);
-  const zonaActual = ratioActual !== null ? zonaAcwr(ratioActual) : null;
+  const cronicaActual = ultimoIdx >= 0 ? cargaCronica(agudos, ultimoIdx) : null;
+  const ratioActual = ultimoIdx >= 0 ? acwr(agudos[ultimoIdx], cronicaActual) : null;
+  const zonaActual = ratioActual !== null ? zonaAcwr(ratioActual, umbralesAcwr) : null;
 
   const dolorActual = atleta.evolucion[atleta.evolucion.length - 1]?.dolor;
 
-  const programacion = getProgramacion(atleta.id);
-  const bloqueActual = programacion?.bloques[0];
+  const bloqueActual = bloques[0];
+
+  const PANELES: Record<string, JSX.Element> = {
+    "perfil-fisico":
+      atleta.perfilFisico.length > 0 ? (
+        <RadarPerfil key="perfil-fisico" perfilFisico={atleta.perfilFisico} sexo={atleta.sexo} />
+      ) : (
+        <EmptyState
+          key="perfil-fisico"
+          icon={ScanFace}
+          title="Perfil físico incompleto"
+          description="Este atleta todavía no tiene medidas suficientes para el radar de perfil físico."
+        />
+      ),
+    acwr: <AcwrChart key="acwr" cargas={atleta.acwr} umbrales={umbralesAcwr} />,
+    simetrias: <SimetriaBar key="simetrias" simetrias={simetrias} umbrales={umbralesSimetria} />,
+    evolucion: <EvolucionLine key="evolucion" evolucion={atleta.evolucion} />,
+  };
 
   return (
     <>
       <PageHeader
         title={atleta.nombre}
         description={`${atleta.lesion} · ${atleta.fase} · Semana ${atleta.semanaProceso}`}
+        actions={
+          <NuevoAtletaDialog
+            atleta={atleta}
+            trigger={
+              <Button variant="outline" size="icon" aria-label="Editar atleta">
+                <Pencil className="size-4" />
+              </Button>
+            }
+          />
+        }
       />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Simetría media"
-          value={simetriaMedia.toFixed(0)}
-          unit="%"
-          variation={{
-            label: simetriaMedia >= 90 ? "Óptimo" : simetriaMedia >= 85 ? "Aceptable" : "Déficit",
-            tone: simetriaMedia >= 90 ? "good" : simetriaMedia >= 85 ? "neutral" : "bad",
-          }}
+          value={simetriaMedia !== null ? simetriaMedia.toFixed(0) : "N/D"}
+          unit={simetriaMedia !== null ? "%" : undefined}
+          variation={
+            simetriaMedia !== null
+              ? {
+                  label:
+                    simetriaMedia >= umbrales.simetriaObjetivo
+                      ? "Óptimo"
+                      : simetriaMedia >= umbrales.simetriaAceptable
+                        ? "Aceptable"
+                        : "Déficit",
+                  tone:
+                    simetriaMedia >= umbrales.simetriaObjetivo
+                      ? "good"
+                      : simetriaMedia >= umbrales.simetriaAceptable
+                        ? "neutral"
+                        : "bad",
+                }
+              : undefined
+          }
         />
         <StatCard label="Semanas en proceso" value={atleta.semanaProceso} unit="sem." />
         <StatCard
@@ -90,10 +150,14 @@ export default function AtletaDetailPage({
           label="Dolor actual"
           value={dolorActual}
           unit="/10"
-          variation={{
-            label: dolorActual <= 2 ? "Leve" : dolorActual <= 5 ? "Moderado" : "Alto",
-            tone: dolorActual <= 2 ? "good" : dolorActual <= 5 ? "neutral" : "bad",
-          }}
+          variation={
+            dolorActual !== undefined
+              ? {
+                  label: dolorActual <= 2 ? "Leve" : dolorActual <= 5 ? "Moderado" : "Alto",
+                  tone: dolorActual <= 2 ? "good" : dolorActual <= 5 ? "neutral" : "bad",
+                }
+              : undefined
+          }
         />
       </div>
 
@@ -109,10 +173,9 @@ export default function AtletaDetailPage({
         </div>
         <TabsContent value="resumen" className="mt-6">
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-            <RadarPerfil perfilFisico={atleta.perfilFisico} sexo={atleta.sexo} />
-            <AcwrChart cargas={atleta.acwr} />
-            <SimetriaBar simetrias={atleta.simetrias} />
-            <EvolucionLine evolucion={atleta.evolucion} />
+            {config.ordenDashboard
+              .filter((paneles) => config.metricasVisiblesDashboard.includes(paneles))
+              .map((idPanel) => PANELES[idPanel])}
           </div>
         </TabsContent>
         <TabsContent value="programacion" className="mt-6">
@@ -127,7 +190,7 @@ export default function AtletaDetailPage({
           )}
         </TabsContent>
         <TabsContent value="tests" className="mt-6">
-          <TestsTable simetrias={atleta.simetrias} />
+          <TestsTable simetrias={simetrias} umbrales={umbralesSimetria} />
         </TabsContent>
         {TABS.filter((tab) => PLACEHOLDER_TABS.has(tab.value)).map((tab) => (
           <TabsContent key={tab.value} value={tab.value} className="mt-6">

@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { ChevronDown, Dumbbell } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getEjercicio } from "@/lib/mock/ejercicios";
-import type { Sesion } from "@/lib/mock/programaciones";
+import { useEjercicios } from "@/lib/store";
+import type { Sesion } from "@/lib/store";
 
 export function SesionAccordion({
   sesion,
@@ -14,6 +14,7 @@ export function SesionAccordion({
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const ejercicios = useEjercicios();
 
   return (
     <div className="overflow-hidden rounded-xl border border-borderSoft bg-surface2 shadow-sm">
@@ -57,7 +58,7 @@ export function SesionAccordion({
               </thead>
               <tbody>
                 {sesion.ejercicios.map((ej) => {
-                  const info = getEjercicio(ej.ejercicioId);
+                  const info = ejercicios.find((e) => e.id === ej.ejercicioId);
                   return (
                     <tr key={ej.ejercicioId} className="border-t border-borderSoft align-top">
                       <td className="px-5 py-3">

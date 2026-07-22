@@ -7,12 +7,14 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { cn } from "@/lib/utils";
 import { EjercicioCard } from "@/components/ejercicios/ejercicio-card";
 import { NuevoEjercicioDialog } from "@/components/ejercicios/nuevo-ejercicio-dialog";
-import { CATEGORIAS, FASES, ejercicios, type Categoria, type Fase } from "@/lib/mock/ejercicios";
+import { CATEGORIAS, FASES, type Categoria, type Fase } from "@/lib/mock/ejercicios";
+import { useEjercicios } from "@/lib/store";
 
 const selectClass =
   "flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
 
 export default function EjerciciosPage() {
+  const ejercicios = useEjercicios();
   const [categoria, setCategoria] = useState<Categoria | "Todas">("Todas");
   const [fase, setFase] = useState<Fase | "Todas">("Todas");
 
@@ -22,7 +24,7 @@ export default function EjerciciosPage() {
       const matchFase = fase === "Todas" || e.fasesSugeridas.includes(fase);
       return matchCategoria && matchFase;
     });
-  }, [categoria, fase]);
+  }, [categoria, fase, ejercicios]);
 
   return (
     <>

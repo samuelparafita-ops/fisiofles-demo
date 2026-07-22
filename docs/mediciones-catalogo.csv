@@ -1,0 +1,58 @@
+﻿CATÁLOGO · tests y variables;
+Fuente de los desplegables Test y Variable · amplíalo con tu batería;
+;
+TEST;VARIABLE
+CMJ;Altura (cm)
+CMJ;Peak power (W/kg)
+CMJ;RSI-mod
+CMJ;Tiempo de contacto (s)
+CMJ;Tiempo de vuelo (s)
+CMJ;Impulso (N·s)
+SJ;Altura (cm)
+SJ;Peak power (W/kg)
+Abalakov;Altura (cm)
+Drop Jump;Altura (cm)
+Drop Jump;RSI
+Drop Jump;Tiempo de contacto (s)
+SL CMJ;Altura (cm)
+SL CMJ;LSI (%)
+SL Drop Jump;Altura (cm)
+SL Drop Jump;LSI (%)
+IMTP;Peak force (N)
+IMTP;Fuerza relativa (N/kg)
+IMTP;RFD (N/s)
+Dinamometría cuádriceps;Fuerza (N)
+Dinamometría cuádriceps;LSI (%)
+Dinamometría isquios;Fuerza (N)
+Dinamometría isquios;LSI (%)
+Dinamometría aductores;Fuerza (N)
+Dinamometría aductores;LSI (%)
+Nordic;Fuerza (N)
+Nordic;LSI (%)
+1RM estimado;Carga (kg)
+1RM estimado;Fuerza relativa (kg/kg)
+5RM;Carga (kg)
+ROM rodilla flexión;Grados (°)
+ROM rodilla extensión;Grados (°)
+ROM tobillo dorsiflexión;Grados (°)
+ROM tobillo dorsiflexión;Distancia (cm)
+ROM cadera;Grados (°)
+Sprint 10m;Tiempo (s)
+Sprint 30m;Tiempo (s)
+Velocidad máxima;Vmax (m/s)
+Aceleración;Tiempo (s)
+505;Tiempo (s)
+505;Déficit COD (s)
+Illinois;Tiempo (s)
+Single hop;Distancia (cm)
+Single hop;LSI (%)
+Triple hop;Distancia (cm)
+Triple hop;LSI (%)
+Crossover hop;Distancia (cm)
+Crossover hop;LSI (%)
+ACL-RSI;Puntuación
+IKDC;Puntuación
+KOOS;Puntuación
+VISA-A;Puntuación
+LEFS;Puntuación
+NPRS;Puntuación (0-10)

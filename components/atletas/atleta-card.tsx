@@ -1,9 +1,17 @@
+"use client";
+
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { simetria, estadoSimetria } from "@/lib/calculations";
 import { colors } from "@/lib/tokens";
-import type { Atleta } from "@/lib/mock/atletas";
+import {
+  simetriasDesdeRegistros,
+  useCatalogoTests,
+  useConfig,
+  useRegistrosDeAtleta,
+  type Atleta,
+} from "@/lib/store";
 
 const ESTADO_COLOR = {
   deficit: colors.state.bad,
@@ -12,10 +20,17 @@ const ESTADO_COLOR = {
 } as const;
 
 export function AtletaCard({ atleta }: { atleta: Atleta }) {
-  const pcts = atleta.simetrias.map((s) => simetria(s.izq, s.der));
-  const media = pcts.reduce((a, b) => a + b, 0) / pcts.length;
-  const estado = estadoSimetria(media);
-  const color = ESTADO_COLOR[estado];
+  const registros = useRegistrosDeAtleta(atleta.id);
+  const catalogo = useCatalogoTests();
+  const { umbrales } = useConfig();
+  const simetrias = simetriasDesdeRegistros(registros, catalogo);
+  const pcts = simetrias.map((s) => simetria(s.izq, s.der));
+  const media = pcts.length > 0 ? pcts.reduce((a, b) => a + b, 0) / pcts.length : null;
+  const estado =
+    media !== null
+      ? estadoSimetria(media, { aceptable: umbrales.simetriaAceptable, optimo: umbrales.simetriaObjetivo })
+      : null;
+  const color = estado ? ESTADO_COLOR[estado] : colors.muted;
 
   return (
     <Link href={`/atletas/${atleta.id}`} className="group block h-full">
@@ -45,13 +60,13 @@ export function AtletaCard({ atleta }: { atleta: Atleta }) {
           <div className="flex items-center justify-between text-xs">
             <span className="text-textDim">Simetría media</span>
             <span className="font-display font-bold" style={{ color }}>
-              {media.toFixed(0)}%
+              {media !== null ? `${media.toFixed(0)}%` : "N/D"}
             </span>
           </div>
           <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-borderSoft">
             <div
               className="h-full rounded-full transition-all"
-              style={{ width: `${Math.min(100, media)}%`, background: color }}
+              style={{ width: `${media !== null ? Math.min(100, media) : 0}%`, background: color }}
             />
           </div>
         </div>

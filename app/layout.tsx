@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, Inter } from "next/font/google";
 import { DemoWatermark } from "@/components/shared/demo-watermark";
 import { ToastProvider } from "@/components/shared/toast";
+import { StoreProvider } from "@/lib/store";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -48,10 +49,12 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${spaceGrotesk.variable} ${inter.variable}`}>
       <body className="min-h-screen font-sans antialiased">
-        <ToastProvider>
-          {children}
-          <DemoWatermark />
-        </ToastProvider>
+        <StoreProvider>
+          <ToastProvider>
+            {children}
+            <DemoWatermark />
+          </ToastProvider>
+        </StoreProvider>
       </body>
     </html>
   );

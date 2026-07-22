@@ -15,8 +15,19 @@ export function simetria(izq: number, der: number): number {
   return (Math.min(izq, der) / Math.max(izq, der)) * 100;
 }
 
-export function estadoSimetria(pct: number): EstadoSimetria {
-  if (pct < 85) return "deficit";
-  if (pct < 90) return "aceptable";
+export type UmbralesSimetria = { aceptable: number; optimo: number };
+
+const UMBRALES_SIMETRIA_DEFECTO: UmbralesSimetria = { aceptable: 85, optimo: 90 };
+
+/**
+ * Umbrales por defecto solo para no romper llamadas existentes; en la app
+ * real se pasan siempre `state.config.umbrales` (ver CLAUDE.md).
+ */
+export function estadoSimetria(
+  pct: number,
+  umbrales: UmbralesSimetria = UMBRALES_SIMETRIA_DEFECTO
+): EstadoSimetria {
+  if (pct < umbrales.aceptable) return "deficit";
+  if (pct < umbrales.optimo) return "aceptable";
   return "optimo";
 }

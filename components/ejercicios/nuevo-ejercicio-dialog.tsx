@@ -15,24 +15,48 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/shared/toast";
-import { CATEGORIAS, FASES } from "@/lib/mock/ejercicios";
+import { CATEGORIAS, FASES, type Categoria, type Fase } from "@/lib/mock/ejercicios";
+import { accionCrear, useDispatch } from "@/lib/store";
 
 const selectClass =
   "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
 
-/** No persiste nada de verdad (sin backend): al enviar solo muestra un toast y cierra. */
+function slugify(texto: string): string {
+  return texto
+    .normalize("NFD")
+    .replace(new RegExp("[\\u0300-\\u036f]", "g"), "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export function NuevoEjercicioDialog() {
   const [open, setOpen] = useState(false);
   const toast = useToast();
+  const dispatch = useDispatch();
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
-    const nombre = String(form.get("nombre") || "el ejercicio").trim();
-    toast(
-      "Ejercicio añadido (demo)",
-      `${nombre} no se ha guardado — esto es una demo sin backend.`
+    const nombre = String(form.get("nombre") || "").trim();
+    const categoria = String(form.get("categoria") || CATEGORIAS[0]) as Categoria;
+    const fase = String(form.get("fase") || FASES[0]) as Fase;
+    const patron = String(form.get("patron") || "").trim();
+    const material = String(form.get("material") || "").trim();
+
+    dispatch(
+      accionCrear("ejercicios", {
+        id: `${slugify(nombre)}-${Date.now().toString(36)}`,
+        nombre,
+        categoria,
+        patron,
+        material,
+        fasesSugeridas: [fase],
+        variables: [],
+        descripcion: "",
+      })
     );
+    toast("Ejercicio añadido", `${nombre} se ha añadido a la librería de ejercicios.`);
     e.currentTarget.reset();
     setOpen(false);
   }

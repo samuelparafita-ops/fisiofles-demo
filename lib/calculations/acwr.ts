@@ -17,8 +17,19 @@ export function acwr(cargaAguda: number, cargaCronica: number | null): number | 
   return cargaAguda / cargaCronica;
 }
 
-export function zonaAcwr(ratio: number): ZonaAcwr {
-  if (ratio < 0.8) return "insuficiente";
-  if (ratio <= 1.3) return "optima";
+export type UmbralesAcwr = { bajo: number; alto: number };
+
+const UMBRALES_ACWR_DEFECTO: UmbralesAcwr = { bajo: 0.8, alto: 1.3 };
+
+/**
+ * Umbrales por defecto solo para no romper llamadas existentes; en la app
+ * real se pasan siempre `state.config.umbrales` (ver CLAUDE.md).
+ */
+export function zonaAcwr(
+  ratio: number,
+  umbrales: UmbralesAcwr = UMBRALES_ACWR_DEFECTO
+): ZonaAcwr {
+  if (ratio < umbrales.bajo) return "insuficiente";
+  if (ratio <= umbrales.alto) return "optima";
   return "riesgo";
 }

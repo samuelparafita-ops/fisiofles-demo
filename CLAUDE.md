@@ -6,7 +6,17 @@ deportiva. Es un PROTOTIPO para enseñar a fisioterapeutas, NO producción.
 
 ## Reglas duras
 - Sin backend, sin base de datos, sin auth real. Todo es mock en `lib/mock/`.
-- El estado vive en memoria (React state / context). Nada de localStorage salvo que se pida.
+- El store se persiste en `localStorage` bajo la clave única `fisiofles-demo-v2`
+  (ver `lib/store/`). Hay una acción "Restablecer demo" (menú del avatar) que
+  borra esa clave y re-siembra desde `lib/mock/seed.ts`.
+- Única fuente de verdad: todo dato editable vive en el store (`lib/store/`).
+  Ningún componente importa datos de `lib/mock/` directamente; los mocks son
+  solo la SEMILLA inicial del store. Una misma entidad (ej: la sesión del
+  jueves) debe poder editarse desde cualquier vista donde aparezca y
+  reflejarse en todas las demás.
+- Los umbrales de cálculo (bandas ACWR, objetivo de simetría), las métricas
+  visibles y el tema de color se leen SIEMPRE de la config del store
+  (`state.config`), nunca hardcodeados.
 - No inventes funcionalidades fuera del alcance de la fase actual.
 - Nunca escribas recomendaciones clínicas automáticas. La app MUESTRA, el profesional DECIDE.
 - Todos los datos de pacientes son ficticios. Añade marca "Demo · datos ficticios" visible.

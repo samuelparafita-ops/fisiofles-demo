@@ -7,16 +7,17 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Input } from "@/components/ui/input";
 import { AtletaCard } from "@/components/atletas/atleta-card";
 import { NuevoAtletaDialog } from "@/components/atletas/nuevo-atleta-dialog";
-import { atletas } from "@/lib/mock/atletas";
+import { useAtletas } from "@/lib/store";
 
 export default function AtletasPage() {
+  const atletas = useAtletas();
   const [busqueda, setBusqueda] = useState("");
 
   const atletasFiltrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
     if (!q) return atletas;
     return atletas.filter((a) => a.nombre.toLowerCase().includes(q));
-  }, [busqueda]);
+  }, [busqueda, atletas]);
 
   return (
     <>

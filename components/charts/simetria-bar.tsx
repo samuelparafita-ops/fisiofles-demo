@@ -13,16 +13,18 @@ import {
   type TooltipContentProps,
 } from "recharts";
 import { colors } from "@/lib/tokens";
-import { simetria, estadoSimetria, type EstadoSimetria } from "@/lib/calculations";
+import { simetria, estadoSimetria, type EstadoSimetria, type UmbralesSimetria } from "@/lib/calculations";
 import { ChartPanel, ChartTooltipBox } from "./chart-panel";
+
+const UMBRALES_DEFECTO: UmbralesSimetria = { aceptable: 85, optimo: 90 };
 
 export type SimetriaBarProps = {
   /** izq/der BRUTOS de cada test — el componente calcula el % con `simetria()`. */
-  simetrias: { test: string; izq: number; der: number }[];
+  simetrias: { test: string; fecha?: string; izq: number; der: number }[];
+  /** Siempre desde `useConfig().umbrales`, nunca hardcodeados (ver CLAUDE.md). */
+  umbrales?: UmbralesSimetria;
   className?: string;
 };
-
-const OBJETIVO_PCT = 90;
 
 const ESTADO_COLOR: Record<EstadoSimetria, string> = {
   deficit: colors.data.compare,
@@ -52,9 +54,19 @@ function SimetriaTooltip({ active, payload }: TooltipContentProps) {
   );
 }
 
-function SimetriaRow({ test, izq, der }: { test: string; izq: number; der: number }) {
+function SimetriaRow({
+  test,
+  izq,
+  der,
+  umbrales,
+}: {
+  test: string;
+  izq: number;
+  der: number;
+  umbrales: UmbralesSimetria;
+}) {
   const pct = simetria(izq, der);
-  const estado = estadoSimetria(pct);
+  const estado = estadoSimetria(pct, umbrales);
   const fuerte = Math.max(izq, der);
   const debilEsIzq = izq <= der;
 
@@ -87,10 +99,10 @@ function SimetriaRow({ test, izq, der }: { test: string; izq: number; der: numbe
               width={56}
             />
             <ReferenceLine
-              x={0.9 * fuerte}
+              x={(umbrales.optimo / 100) * fuerte}
               stroke={colors.brand}
               strokeDasharray="4 3"
-              label={{ value: "90%", position: "top", fill: colors.brand, fontSize: 10 }}
+              label={{ value: `${umbrales.optimo}%`, position: "top", fill: colors.brand, fontSize: 10 }}
             />
             <Tooltip content={(props) => <SimetriaTooltip {...props} />} cursor={{ fill: colors.chartGrid, opacity: 0.3 }} />
             <Bar dataKey="valor" barSize={14} isAnimationActive={false}>
@@ -127,27 +139,33 @@ function SimetriaRow({ test, izq, der }: { test: string; izq: number; der: numbe
  * Simetrías en test — índice de simetría bilateral (LSI).
  * NO recalcula nada: llama a `simetria()` / `estadoSimetria()` por test.
  */
-export function SimetriaBar({ simetrias, className }: SimetriaBarProps) {
+export function SimetriaBar({ simetrias, umbrales = UMBRALES_DEFECTO, className }: SimetriaBarProps) {
   const pcts = simetrias.map((s) => simetria(s.izq, s.der));
-  const media = pcts.reduce((a, b) => a + b, 0) / pcts.length;
+  const media = pcts.length > 0 ? pcts.reduce((a, b) => a + b, 0) / pcts.length : 0;
 
   return (
     <ChartPanel
       title="Simetrías en test"
-      description="Índice de simetría bilateral (min/max) — objetivo 90%"
+      description={`Índice de simetría bilateral (min/max) — objetivo ${umbrales.optimo}%`}
       className={className}
       action={
         <div className="text-right">
           <p className="font-display text-lg font-bold text-textStrong">
             {media.toFixed(0)}%
           </p>
-          <p className="text-[11px] text-textDim">media · objetivo {OBJETIVO_PCT}%</p>
+          <p className="text-[11px] text-textDim">media · objetivo {umbrales.optimo}%</p>
         </div>
       }
     >
       <div>
-        {simetrias.map((s) => (
-          <SimetriaRow key={s.test} test={s.test} izq={s.izq} der={s.der} />
+        {simetrias.map((s, i) => (
+          <SimetriaRow
+            key={`${s.test}-${s.fecha}-${i}`}
+            test={s.test}
+            izq={s.izq}
+            der={s.der}
+            umbrales={umbrales}
+          />
         ))}
       </div>
       <div className="mt-3 flex flex-wrap gap-4 border-t border-chartGrid pt-3">
@@ -161,7 +179,7 @@ export function SimetriaBar({ simetrias, className }: SimetriaBarProps) {
         </span>
         <span className="flex items-center gap-1.5 text-xs text-chartText">
           <span className="inline-block h-0.5 w-3" style={{ borderTop: `2px dashed ${colors.brand}` }} />
-          Objetivo 90%
+          Objetivo {umbrales.optimo}%
         </span>
       </div>
     </ChartPanel>

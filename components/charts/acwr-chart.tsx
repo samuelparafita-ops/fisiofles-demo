@@ -13,12 +13,16 @@ import {
   type TooltipContentProps,
 } from "recharts";
 import { colors } from "@/lib/tokens";
-import { cargaCronica, acwr, zonaAcwr, type ZonaAcwr } from "@/lib/calculations";
+import { cargaCronica, acwr, zonaAcwr, type UmbralesAcwr, type ZonaAcwr } from "@/lib/calculations";
 import { ChartPanel, LegendChip, ChartTooltipBox } from "./chart-panel";
+
+const UMBRALES_DEFECTO: UmbralesAcwr = { bajo: 0.8, alto: 1.3 };
 
 export type AcwrChartProps = {
   /** Carga aguda semanal (sRPE), BRUTA — el componente calcula crónica/ratio/zona. */
   cargas: { semana: string; agudo: number }[];
+  /** Bandas de riesgo — siempre desde `useConfig().umbrales`, nunca hardcodeadas (ver CLAUDE.md). */
+  umbrales?: UmbralesAcwr;
   className?: string;
 };
 
@@ -66,7 +70,7 @@ function AcwrTooltip({ active, payload, label }: TooltipContentProps) {
  * ACWR (agudo:crónico) — media móvil de 4 semanas.
  * NO recalcula nada: llama a `cargaCronica()` / `acwr()` / `zonaAcwr()`.
  */
-export function AcwrChart({ cargas, className }: AcwrChartProps) {
+export function AcwrChart({ cargas, umbrales = UMBRALES_DEFECTO, className }: AcwrChartProps) {
   const agudos = cargas.map((c) => c.agudo);
 
   const data = cargas.map((c, idx) => {
@@ -77,7 +81,7 @@ export function AcwrChart({ cargas, className }: AcwrChartProps) {
       agudo: c.agudo,
       cronica,
       ratio,
-      zona: ratio !== null ? zonaAcwr(ratio) : null,
+      zona: ratio !== null ? zonaAcwr(ratio, umbrales) : null,
     };
   });
 
@@ -117,11 +121,11 @@ export function AcwrChart({ cargas, className }: AcwrChartProps) {
               tickLine={false}
               width={40}
             />
-            <ReferenceArea y1={0} y2={0.8} fill={colors.data.compare} fillOpacity={0.08} />
-            <ReferenceArea y1={0.8} y2={1.3} fill={colors.data.good} fillOpacity={0.08} />
-            <ReferenceArea y1={1.3} y2={yMax} fill={colors.data.warn} fillOpacity={0.08} />
-            <ReferenceLine y={0.8} stroke={colors.chartGrid} strokeDasharray="4 3" />
-            <ReferenceLine y={1.3} stroke={colors.chartGrid} strokeDasharray="4 3" />
+            <ReferenceArea y1={0} y2={umbrales.bajo} fill={colors.data.compare} fillOpacity={0.08} />
+            <ReferenceArea y1={umbrales.bajo} y2={umbrales.alto} fill={colors.data.good} fillOpacity={0.08} />
+            <ReferenceArea y1={umbrales.alto} y2={yMax} fill={colors.data.warn} fillOpacity={0.08} />
+            <ReferenceLine y={umbrales.bajo} stroke={colors.chartGrid} strokeDasharray="4 3" />
+            <ReferenceLine y={umbrales.alto} stroke={colors.chartGrid} strokeDasharray="4 3" />
             {media !== null && (
               <ReferenceLine
                 y={media}
@@ -161,9 +165,9 @@ export function AcwrChart({ cargas, className }: AcwrChartProps) {
       </div>
       <div className="mt-3 flex flex-wrap gap-4">
         <LegendChip color={colors.data.primary} label="ACWR" />
-        <LegendChip color={colors.data.compare} label="Insuficiente (<0.8)" />
-        <LegendChip color={colors.data.good} label="Óptima (0.8–1.3)" />
-        <LegendChip color={colors.data.warn} label="Riesgo (>1.3)" />
+        <LegendChip color={colors.data.compare} label={`Insuficiente (<${umbrales.bajo})`} />
+        <LegendChip color={colors.data.good} label={`Óptima (${umbrales.bajo}–${umbrales.alto})`} />
+        <LegendChip color={colors.data.warn} label={`Riesgo (>${umbrales.alto})`} />
         <LegendChip color={colors.brand} label="Objetivo" dashed />
       </div>
     </ChartPanel>

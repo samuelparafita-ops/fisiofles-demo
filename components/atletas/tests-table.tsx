@@ -1,5 +1,7 @@
-import { simetria, estadoSimetria, type EstadoSimetria } from "@/lib/calculations";
+import { simetria, estadoSimetria, type EstadoSimetria, type UmbralesSimetria } from "@/lib/calculations";
 import { colors } from "@/lib/tokens";
+
+const UMBRALES_DEFECTO: UmbralesSimetria = { aceptable: 85, optimo: 90 };
 
 const ESTADO_LABEL: Record<EstadoSimetria, string> = {
   deficit: "Déficit",
@@ -28,8 +30,10 @@ function fmtValor(n: number) {
  */
 export function TestsTable({
   simetrias,
+  umbrales = UMBRALES_DEFECTO,
 }: {
   simetrias: { test: string; fecha: string; izq: number; der: number }[];
+  umbrales?: UmbralesSimetria;
 }) {
   const filas = [...simetrias].sort((a, b) => b.fecha.localeCompare(a.fecha));
 
@@ -48,11 +52,11 @@ export function TestsTable({
             </tr>
           </thead>
           <tbody>
-            {filas.map((fila) => {
+            {filas.map((fila, i) => {
               const pct = simetria(fila.izq, fila.der);
-              const estado = estadoSimetria(pct);
+              const estado = estadoSimetria(pct, umbrales);
               return (
-                <tr key={fila.test} className="border-b border-borderSoft last:border-0">
+                <tr key={`${fila.test}-${fila.fecha}-${i}`} className="border-b border-borderSoft last:border-0">
                   <td className="px-4 py-3 font-medium text-textStrong">{fila.test}</td>
                   <td className="px-4 py-3 text-textDim">{fmtFecha(fila.fecha)}</td>
                   <td className="px-4 py-3 text-text">{fmtValor(fila.izq)}</td>
