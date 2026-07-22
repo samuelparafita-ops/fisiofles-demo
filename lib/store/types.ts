@@ -249,9 +249,13 @@ export type Config = {
   tema: Tema;
   acento: string;
   umbrales: UmbralesConfig;
+  /** Paneles visibles/orden del tab Datos de la ficha de atleta (perfil-fisico/acwr/simetrias/evolucion). */
   metricasVisiblesDashboard: string[];
   ordenDashboard: string[];
   vistaAtletas: VistaAtletas;
+  /** Métricas visibles/orden de /dashboard (carga/acwr/simetria/dolor/sesiones) — ver lib/dashboard/metricas.ts. */
+  dashboardMetricas: string[];
+  dashboardOrden: string[];
 };
 
 // ---------------------------------------------------------------------------

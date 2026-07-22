@@ -30,3 +30,13 @@ export function useChartColors(): ChartColors {
       return colors.dataLight;
   }
 }
+
+/**
+ * Paleta de hasta 4 colores para superponer atletas en /dashboard (FASE E).
+ * Se asigna por orden de selección (primer atleta elegido → color[0], etc.),
+ * igual en los 4 gráficos de la página para que un mismo atleta se lea con
+ * el mismo color en todos. No varía por tema — ver lib/tokens.ts.
+ */
+export function useComparisonColors(): string[] {
+  return [...colors.comparison];
+}

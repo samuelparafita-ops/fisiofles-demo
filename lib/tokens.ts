@@ -52,6 +52,15 @@ export const colors = {
     base: "#64748B",
   },
 
+  // Paleta de comparación (Dashboard /dashboard, FASE E) — hasta 4 atletas
+  // superpuestos sobre la serie agregada gris. Deliberadamente fuera de la
+  // familia semántica rojo/verde/naranja de `dataLight` (reservada para
+  // zonas de riesgo) y del cyan de `dataLight.primary`, para que un atleta
+  // seleccionado nunca se confunda con una banda de estado. Las 4 contrastan
+  // ≥4.5:1 sobre blanco y son distinguibles entre sí. Acceder siempre vía
+  // `useComparisonColors()` (lib/theme.ts).
+  comparison: ["#2563EB", "#7C3AED", "#DB2777", "#0F766E"],
+
   // Superficie oscura de los gráficos (el "cockpit")
   chartBg: "#181C20", // fondo de los paneles de gráfico
   chartGrid: "#2E343A", // gridlines dentro del panel oscuro

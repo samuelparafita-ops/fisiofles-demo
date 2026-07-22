@@ -10,6 +10,7 @@
  */
 
 import { catalogoSemilla, testPorNombre, variablePorNombre } from "@/lib/store/catalogo";
+import { METRICAS_DASHBOARD_IDS } from "@/lib/dashboard/metricas";
 import type {
   AppState,
   Atleta,
@@ -1515,6 +1516,8 @@ export function buildSeed(): AppState {
     metricasVisiblesDashboard: ["perfil-fisico", "acwr", "simetrias", "evolucion"],
     ordenDashboard: ["perfil-fisico", "acwr", "simetrias", "evolucion"],
     vistaAtletas: "grid",
+    dashboardMetricas: METRICAS_DASHBOARD_IDS,
+    dashboardOrden: METRICAS_DASHBOARD_IDS,
   };
 
   return {
