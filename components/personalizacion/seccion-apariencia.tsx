@@ -4,7 +4,7 @@ import { Check } from "lucide-react";
 import { SeccionCard } from "./seccion-card";
 import { useToast } from "@/components/shared/toast";
 import { useConfig, useDispatch, type Tema } from "@/lib/store";
-import { colors } from "@/lib/tokens";
+import { colors, colorsDark } from "@/lib/tokens";
 import { ACENTOS, type AcentoId } from "@/lib/personalizacion/acentos";
 import { cn } from "@/lib/utils";
 
@@ -14,17 +14,10 @@ const TEMAS: { id: Tema; label: string; descripcion: string }[] = [
   { id: "oscuro", label: "Oscuro", descripcion: "Toda la interfaz en modo oscuro, misma paleta de datos que Fisiofles claro." },
 ];
 
-// Mismos hex que app/globals.css `.dark` (--background/--surface) — no hay
-// forma de leer una CSS var ya resuelta desde un componente sin montarlo, así
-// que este preview los repite literalmente para poder mostrar los 3 temas
-// A LA VEZ sin activar ninguno.
-const DARK_BG = "#0D1116";
-const DARK_SURFACE = "#161B22";
-
 /** Mini maqueta de barras — representa cómo queda CADA tema sin tener que activarlo. */
 function PreviewTema({ tema }: { tema: Tema }) {
-  const chrome = tema === "oscuro" ? DARK_BG : colors.bg;
-  const panel = tema === "clasico-excel" ? colors.chartBg : tema === "oscuro" ? DARK_SURFACE : colors.surface2;
+  const chrome = tema === "oscuro" ? colorsDark.bg : colors.bg;
+  const panel = tema === "clasico-excel" ? colors.chartBg : tema === "oscuro" ? colorsDark.surface : colors.surface2;
   const barras =
     tema === "clasico-excel"
       ? [colors.data.primary, colors.data.compare, colors.data.good, colors.data.warn]

@@ -3,6 +3,7 @@ import { Space_Grotesk, Inter } from "next/font/google";
 import { ToastProvider } from "@/components/shared/toast";
 import { ThemeEffect } from "@/components/theme/theme-effect";
 import { StoreProvider } from "@/lib/store";
+import { colors } from "@/lib/tokens";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#F6F7F9",
+  themeColor: colors.bg,
 };
 
 export default function RootLayout({

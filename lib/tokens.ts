@@ -104,4 +104,10 @@ export const colorsDark = {
   border: "#3A424D",
   borderSoft: "#242B34",
   textDim: "#ADB4BE",
+  // Fondo/superficie del tema "Oscuro" — espejo EXACTO de app/globals.css
+  // `.dark` (--background/--surface). Solo como literal donde no llega la CSS
+  // var: el preview de temas de Personalización pinta los 3 temas a la vez sin
+  // activar ninguno (ver components/personalizacion/seccion-apariencia.tsx).
+  bg: "#0D1116",
+  surface: "#161B22",
 } as const;

@@ -4,8 +4,8 @@
   "description": "Demo clicable de seguimiento y análisis para readaptación deportiva. Datos ficticios.",
   "start_url": "/login",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#F6F7F9",
+  "theme_color": "#F6F7F9",
   "icons": [
     {
       "src": "/icons/icon-192.png",
