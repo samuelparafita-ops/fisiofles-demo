@@ -11,8 +11,7 @@ import {
   ResponsiveContainer,
   type TooltipContentProps,
 } from "recharts";
-import { colors } from "@/lib/tokens";
-import { useChartColors } from "@/lib/theme";
+import { useChartColors, useChartGridColors } from "@/lib/theme";
 import { cargaCronica, acwr, zonaAcwr, type UmbralesAcwr } from "@/lib/calculations";
 import { ChartPanel, LegendChip, ChartTooltipBox } from "./chart-panel";
 
@@ -52,6 +51,7 @@ function ActividadTooltip({ active, payload, label }: TooltipContentProps) {
  */
 export function ActividadPlantillaChart({ atletas, umbrales, className }: ActividadPlantillaChartProps) {
   const chartColors = useChartColors();
+  const gridColors = useChartGridColors();
 
   const puntos: PuntoSemana[] = [];
   for (let offset = SEMANAS - 1; offset >= 0; offset--) {
@@ -92,17 +92,17 @@ export function ActividadPlantillaChart({ atletas, umbrales, className }: Activi
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={puntos} margin={{ top: 8, right: 12, left: -4, bottom: 0 }}>
-            <CartesianGrid stroke={colors.borderSoft} strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid stroke={gridColors.grid} strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="semana"
-              tick={{ fill: colors.textDim, fontSize: 11 }}
-              axisLine={{ stroke: colors.borderSoft }}
+              tick={{ fill: gridColors.axis, fontSize: 11 }}
+              axisLine={{ stroke: gridColors.grid }}
               tickLine={false}
             />
             <YAxis
               yAxisId="carga"
-              tick={{ fill: colors.textDim, fontSize: 11 }}
-              axisLine={{ stroke: colors.borderSoft }}
+              tick={{ fill: gridColors.axis, fontSize: 11 }}
+              axisLine={{ stroke: gridColors.grid }}
               tickLine={false}
               width={52}
             />
@@ -111,12 +111,12 @@ export function ActividadPlantillaChart({ atletas, umbrales, className }: Activi
               orientation="right"
               allowDecimals={false}
               domain={[0, Math.max(1, totalAtletas)]}
-              tick={{ fill: colors.textDim, fontSize: 11 }}
-              axisLine={{ stroke: colors.borderSoft }}
+              tick={{ fill: gridColors.axis, fontSize: 11 }}
+              axisLine={{ stroke: gridColors.grid }}
               tickLine={false}
               width={28}
             />
-            <Tooltip content={(props) => <ActividadTooltip {...props} />} cursor={{ stroke: colors.borderSoft }} />
+            <Tooltip content={(props) => <ActividadTooltip {...props} />} cursor={{ stroke: gridColors.cursor }} />
             <Area
               yAxisId="carga"
               type="monotone"

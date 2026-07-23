@@ -6,6 +6,7 @@
 
 import type { Capacidad, Sexo } from "@/lib/calculations";
 import type { Categoria, Fase, VariableMedible } from "@/lib/mock/ejercicios";
+import type { AcentoId } from "@/lib/personalizacion/acentos";
 
 export type { Categoria, Fase, VariableMedible, Capacidad, Sexo };
 
@@ -247,7 +248,8 @@ export type VistaAtletas = "grid" | "lista";
 
 export type Config = {
   tema: Tema;
-  acento: string;
+  /** Paleta cerrada de 6 acentos — ver lib/personalizacion/acentos.ts. No es un color libre. */
+  acento: AcentoId;
   umbrales: UmbralesConfig;
   /** Paneles visibles/orden del tab Datos de la ficha de atleta (perfil-fisico/acwr/simetrias/evolucion). */
   metricasVisiblesDashboard: string[];

@@ -10,6 +10,8 @@
  */
 
 import { catalogoSemilla, testPorNombre, variablePorNombre } from "@/lib/store/catalogo";
+import { ACENTO_DEFECTO } from "@/lib/personalizacion/acentos";
+import { UMBRALES_DEFECTO } from "@/lib/personalizacion/umbrales";
 import { METRICAS_DASHBOARD_IDS } from "@/lib/dashboard/metricas";
 import type {
   AppState,
@@ -1505,14 +1507,8 @@ export function buildSeed(): AppState {
 
   const config: Config = {
     tema: "fisiofles",
-    acento: "#1DC4EB",
-    umbrales: {
-      acwrBajo: 0.8,
-      acwrAlto: 1.3,
-      simetriaObjetivo: 90,
-      simetriaAceptable: 85,
-      dolorAlerta: 5,
-    },
+    acento: ACENTO_DEFECTO,
+    umbrales: { ...UMBRALES_DEFECTO },
     metricasVisiblesDashboard: ["perfil-fisico", "acwr", "simetrias", "evolucion"],
     ordenDashboard: ["perfil-fisico", "acwr", "simetrias", "evolucion"],
     vistaAtletas: "grid",

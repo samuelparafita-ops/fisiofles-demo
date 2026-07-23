@@ -13,7 +13,7 @@ import {
   type TooltipContentProps,
 } from "recharts";
 import { colors } from "@/lib/tokens";
-import { useChartColors } from "@/lib/theme";
+import { useChartColors, useChartGridColors, type ChartGridColors } from "@/lib/theme";
 import { cargaCronica, acwr, zonaAcwr, type UmbralesAcwr, type ZonaAcwr } from "@/lib/calculations";
 import { ChartPanel, LegendChip, ChartTooltipBox } from "./chart-panel";
 
@@ -38,7 +38,8 @@ function AcwrTooltip({
   payload,
   label,
   zonaColor,
-}: TooltipContentProps & { zonaColor: Record<ZonaAcwr, string> }) {
+  gridColors,
+}: TooltipContentProps & { zonaColor: Record<ZonaAcwr, string>; gridColors: ChartGridColors }) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload as {
     agudo: number;
@@ -57,7 +58,7 @@ function AcwrTooltip({
       ) : (
         <>
           <p className="text-textDim">Carga crónica: {d.cronica.toFixed(1)}</p>
-          <p style={{ color: d.zona ? zonaColor[d.zona] : colors.textDim }}>
+          <p style={{ color: d.zona ? zonaColor[d.zona] : gridColors.axis }}>
             ACWR: {d.ratio?.toFixed(2)} · {d.zona ? ZONA_LABEL[d.zona] : "—"}
           </p>
         </>
@@ -72,6 +73,7 @@ function AcwrTooltip({
  */
 export function AcwrChart({ cargas, umbrales = UMBRALES_DEFECTO, className }: AcwrChartProps) {
   const chartColors = useChartColors();
+  const gridColors = useChartGridColors();
   const ZONA_COLOR: Record<ZonaAcwr, string> = {
     insuficiente: colors.state.bad,
     optima: colors.state.good,
@@ -112,26 +114,26 @@ export function AcwrChart({ cargas, umbrales = UMBRALES_DEFECTO, className }: Ac
       <div className="h-80 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
-            <CartesianGrid stroke={colors.borderSoft} strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid stroke={gridColors.grid} strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="semana"
-              tick={{ fill: colors.textDim, fontSize: 11 }}
-              axisLine={{ stroke: colors.borderSoft }}
+              tick={{ fill: gridColors.axis, fontSize: 11 }}
+              axisLine={{ stroke: gridColors.grid }}
               tickLine={false}
             />
             <YAxis
               domain={[0, yMax]}
               ticks={Array.from({ length: yMax / 0.5 + 1 }, (_, i) => i * 0.5)}
-              tick={{ fill: colors.textDim, fontSize: 11 }}
-              axisLine={{ stroke: colors.borderSoft }}
+              tick={{ fill: gridColors.axis, fontSize: 11 }}
+              axisLine={{ stroke: gridColors.grid }}
               tickLine={false}
               width={40}
             />
             <ReferenceArea y1={0} y2={umbrales.bajo} fill={chartColors.compare} fillOpacity={0.07} />
             <ReferenceArea y1={umbrales.bajo} y2={umbrales.alto} fill={chartColors.good} fillOpacity={0.07} />
             <ReferenceArea y1={umbrales.alto} y2={yMax} fill={chartColors.warn} fillOpacity={0.07} />
-            <ReferenceLine y={umbrales.bajo} stroke={colors.border} strokeDasharray="4 3" />
-            <ReferenceLine y={umbrales.alto} stroke={colors.border} strokeDasharray="4 3" />
+            <ReferenceLine y={umbrales.bajo} stroke={gridColors.line} strokeDasharray="4 3" />
+            <ReferenceLine y={umbrales.alto} stroke={gridColors.line} strokeDasharray="4 3" />
             {media !== null && (
               <ReferenceLine
                 y={media}
@@ -140,7 +142,7 @@ export function AcwrChart({ cargas, umbrales = UMBRALES_DEFECTO, className }: Ac
                 label={{
                   value: "Media",
                   position: "insideBottomLeft",
-                  fill: colors.textDim,
+                  fill: gridColors.axis,
                   fontSize: 10,
                 }}
               />
@@ -157,8 +159,8 @@ export function AcwrChart({ cargas, umbrales = UMBRALES_DEFECTO, className }: Ac
               }}
             />
             <Tooltip
-              content={(props) => <AcwrTooltip {...props} zonaColor={ZONA_COLOR} />}
-              cursor={{ stroke: colors.borderSoft }}
+              content={(props) => <AcwrTooltip {...props} zonaColor={ZONA_COLOR} gridColors={gridColors} />}
+              cursor={{ stroke: gridColors.cursor }}
             />
             <Line
               dataKey="ratio"

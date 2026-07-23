@@ -89,3 +89,19 @@ export const fonts = {
   display: "var(--font-display)", // Space Grotesk — h1-h3, números de métricas, datos grandes
   sans: "var(--font-sans)", // Inter — el resto
 } as const;
+
+/**
+ * Subconjunto de `colors` para tema "Oscuro" en props INLINE de Recharts
+ * (grid/eje/cursor de tooltip) — el SVG de Recharts no puede leer las clases
+ * Tailwind `bg-surface2`/`border-borderSoft` que sí resuelven el resto de la
+ * UI vía CSS var (`app/globals.css` `.dark`); necesita un color final. NO
+ * usar directamente: siempre a través de `useChartGridColors()`
+ * (lib/theme.ts), igual que "clasico-excel" usa `chartGrid`/`chartText` de
+ * arriba. `bg`/`surface2`/`textStrong` etc. NO hacen falta aquí porque esos
+ * sí llegan a los gráficos vía clases Tailwind (ChartPanel, ChartTooltipBox).
+ */
+export const colorsDark = {
+  border: "#3A424D",
+  borderSoft: "#242B34",
+  textDim: "#ADB4BE",
+} as const;

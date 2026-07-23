@@ -8,7 +8,7 @@
  */
 
 import { useConfig } from "@/lib/store";
-import { colors } from "@/lib/tokens";
+import { colors, colorsDark } from "@/lib/tokens";
 
 export type ChartColors = {
   primary: string;
@@ -29,6 +29,44 @@ export function useChartColors(): ChartColors {
     default:
       return colors.dataLight;
   }
+}
+
+export type ChartGridColors = {
+  /** CartesianGrid / PolarGrid stroke. */
+  grid: string;
+  /** Tick de ejes (XAxis/YAxis/PolarAngleAxis/PolarRadiusAxis). */
+  axis: string;
+  /** Cursor de Tooltip (línea/área que sigue al ratón). */
+  cursor: string;
+  /** ReferenceLine "neutra" (umbrales, punto de comparación) — más marcada que `grid`. */
+  line: string;
+};
+
+/**
+ * Colores de rejilla/eje para los 6 componentes de gráfico — el SVG de
+ * Recharts necesita un color final en cada prop, no puede heredar las clases
+ * Tailwind (`border-borderSoft`/`text-textDim`) que sí resuelven solas con
+ * el tema vía CSS var. Mismo criterio que `useChartColors()`: "clasico-excel"
+ * usa el cockpit oscuro (`chartGrid`/`chartText`); "oscuro" usa la
+ * mini-paleta `colorsDark`; "fisiofles" usa los tokens claros de siempre.
+ */
+export function useChartGridColors(): ChartGridColors {
+  const { tema } = useConfig();
+
+  switch (tema) {
+    case "clasico-excel":
+      return { grid: colors.chartGrid, axis: colors.chartText, cursor: colors.chartGrid, line: colors.chartGrid };
+    case "oscuro":
+      return { grid: colorsDark.borderSoft, axis: colorsDark.textDim, cursor: colorsDark.borderSoft, line: colorsDark.border };
+    case "fisiofles":
+    default:
+      return { grid: colors.borderSoft, axis: colors.textDim, cursor: colors.borderSoft, line: colors.border };
+  }
+}
+
+/** true solo para "clasico-excel" — el panel del gráfico pasa a cockpit oscuro (ver ChartPanel). */
+export function useCockpit(): boolean {
+  return useConfig().tema === "clasico-excel";
 }
 
 /**

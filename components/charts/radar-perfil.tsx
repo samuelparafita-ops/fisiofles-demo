@@ -11,8 +11,7 @@ import {
   Tooltip,
   type TooltipContentProps,
 } from "recharts";
-import { colors } from "@/lib/tokens";
-import { useChartColors } from "@/lib/theme";
+import { useChartColors, useChartGridColors } from "@/lib/theme";
 import { perfilRadar, type Capacidad, type Sexo } from "@/lib/calculations";
 import { ChartPanel, LegendChip, ChartTooltipBox } from "./chart-panel";
 
@@ -51,6 +50,7 @@ function RadarTooltip({ active, payload, label }: TooltipContentProps) {
 export function RadarPerfil({ perfilFisico, sexo, className }: RadarPerfilProps) {
   const [compararInicial, setCompararInicial] = useState(false);
   const chartColors = useChartColors();
+  const gridColors = useChartGridColors();
 
   const valoresIniciales = Object.fromEntries(
     perfilFisico.map((p) => [p.eje, p.inicial])
@@ -82,14 +82,14 @@ export function RadarPerfil({ perfilFisico, sexo, className }: RadarPerfilProps)
           onClick={() => setCompararInicial((v) => !v)}
           className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors"
           style={{
-            borderColor: compararInicial ? chartColors.base : colors.borderSoft,
-            color: compararInicial ? chartColors.base : colors.textDim,
+            borderColor: compararInicial ? chartColors.base : gridColors.grid,
+            color: compararInicial ? chartColors.base : gridColors.axis,
             background: compararInicial ? `${chartColors.base}14` : "transparent",
           }}
         >
           <span
             className="inline-block size-2 rounded-full"
-            style={{ background: compararInicial ? chartColors.base : colors.border }}
+            style={{ background: compararInicial ? chartColors.base : gridColors.line }}
           />
           Comparar con inicial
         </button>
@@ -98,14 +98,14 @@ export function RadarPerfil({ perfilFisico, sexo, className }: RadarPerfilProps)
       <div className="h-80 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={data} outerRadius="70%">
-            <PolarGrid stroke={colors.borderSoft} />
+            <PolarGrid stroke={gridColors.grid} />
             <PolarAngleAxis
               dataKey="eje"
-              tick={{ fill: colors.textDim, fontSize: 10 }}
+              tick={{ fill: gridColors.axis, fontSize: 10 }}
             />
             <PolarRadiusAxis
               domain={[-5, 3]}
-              tick={{ fill: colors.textDim, fontSize: 9 }}
+              tick={{ fill: gridColors.axis, fontSize: 9 }}
               tickCount={5}
               axisLine={false}
             />

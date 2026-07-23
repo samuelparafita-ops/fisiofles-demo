@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, Inter } from "next/font/google";
 import { ToastProvider } from "@/components/shared/toast";
+import { ThemeEffect } from "@/components/theme/theme-effect";
 import { StoreProvider } from "@/lib/store";
 import "./globals.css";
 
@@ -46,9 +47,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${spaceGrotesk.variable} ${inter.variable}`}>
+    <html lang="es" className={`${spaceGrotesk.variable} ${inter.variable}`} suppressHydrationWarning>
       <body className="min-h-screen font-sans antialiased">
         <StoreProvider>
+          <ThemeEffect />
           <ToastProvider>{children}</ToastProvider>
         </StoreProvider>
       </body>

@@ -14,14 +14,26 @@
     --background: 220 20% 97%; /* bg #F6F7F9 */
     --foreground: 217 16% 16%; /* text #232830 */
 
-    --card: 0 0% 100%; /* surface2 #FFFFFF */
+    /* Superficie elevada compartida (cards/sidebar/topbar/popovers/diálogos) — antes
+       4 valores idénticos por separado; ahora una sola var para que Oscuro los
+       cambie todos a la vez. Ver `surface1`/`surface2`/`card`/`popover` en tailwind.config.ts. */
+    --surface: 0 0% 100%; /* surface1/surface2 #FFFFFF */
+    --card: var(--surface);
     --card-foreground: 217 16% 16%; /* text #232830 */
 
-    --popover: 0 0% 100%; /* surface2 #FFFFFF */
+    --popover: var(--surface);
     --popover-foreground: 217 16% 16%; /* text #232830 */
 
-    --primary: 191 84% 52%; /* brand #1DC4EB */
-    --primary-foreground: 0 0% 100%; /* white — texto sobre botón cyan */
+    /* Acento dinámico — Personalización > Apariencia. Por defecto cyan Fisiofles;
+       lo reescribe en runtime `components/theme/theme-effect.tsx` según
+       `config.acento` (ver lib/personalizacion/acentos.ts). NO varía con
+       Oscuro/Claro, solo con el acento elegido. */
+    --brand: 191 84% 52%; /* acentos.cyan.hsl.default */
+    --brand-tint: 194 85% 95%; /* acentos.cyan.hsl.tint */
+    --brand-ink: 192 89% 38%; /* acentos.cyan.hsl.ink */
+
+    --primary: var(--brand);
+    --primary-foreground: 0 0% 100%; /* white — texto sobre botón de acento */
 
     --secondary: 216 2% 94%; /* borderSoft #EEF0F3 */
     --secondary-foreground: 217 16% 16%; /* text #232830 */
@@ -29,15 +41,22 @@
     --muted: 216 2% 94%; /* borderSoft #EEF0F3 */
     --muted-foreground: 214 7% 58%; /* muted #8B929B */
 
-    --accent: 194 85% 95%; /* brandTint #E7F8FD */
-    --accent-foreground: 192 89% 38%; /* brandInk #0B96B8 */
+    --accent: var(--brand-tint);
+    --accent-foreground: var(--brand-ink);
 
     --destructive: 0 72% 51%; /* state.bad #DC2626 */
     --destructive-foreground: 0 0% 100%; /* white */
 
     --border: 214 14% 90%; /* border #E3E6EA */
+    --border-soft: 216 2% 94%; /* borderSoft #EEF0F3 (alias de --secondary para uso como borde) */
     --input: 214 14% 90%; /* border #E3E6EA */
-    --ring: 191 84% 52%; /* brand #1DC4EB */
+    --ring: var(--brand);
+
+    /* Texto — dos tonos que NO tienen equivalente shadcn (más oscuro/más
+       fuerte que --foreground/--muted-foreground). Ver `textDim`/`textStrong`
+       en tailwind.config.ts. */
+    --text-dim: 214 8% 39%; /* textDim #5B626B */
+    --text-strong: 216 28% 7%; /* textStrong #0D1117 */
 
     /* Solo para uso dentro del tema "clasico-excel" — ver lib/tokens.ts `data.*` */
     --chart-1: 191 84% 52%; /* data.primary #1DC4EB */
@@ -54,6 +73,38 @@
     --data-light-base: 215 16% 47%; /* dataLight.base #64748B */
 
     --radius: 0.5rem;
+  }
+
+  /**
+   * Tema "Oscuro" (Personalización > Apariencia) — activado añadiendo la
+   * clase `dark` a <html> desde `components/theme/theme-effect.tsx` cuando
+   * `config.tema === "oscuro"`. Reescribe solo neutros/superficies/texto:
+   * el acento (--brand*), los estados (state.*) y las paletas de datos de
+   * los gráficos (dataLight/data) NO cambian con el tema claro/oscuro — ver
+   * CLAUDE.md > Estética y lib/theme.ts `useChartColors()`.
+   * "Clásico Excel" es independiente de esta clase: solo oscurece el panel
+   * de cada gráfico (`chartBg`), nunca el resto de la UI — ver ChartPanel.
+   */
+  .dark {
+    --background: 213 26% 7%; /* dark bg #0D1116 */
+    --foreground: 214 16% 91%; /* dark text #E5E8EC */
+
+    --surface: 215 21% 11%; /* dark surface #161B22 */
+    --card-foreground: 214 16% 91%;
+    --popover-foreground: 214 16% 91%;
+
+    --secondary: 214 18% 15%; /* dark borderSoft #1F252D */
+    --secondary-foreground: 214 16% 91%;
+
+    --muted: 214 18% 15%;
+    --muted-foreground: 215 10% 58%; /* dark muted #8A93A0 */
+
+    --border: 215 17% 20%; /* dark border #2B323C */
+    --border-soft: 214 18% 15%;
+    --input: 215 17% 20%;
+
+    --text-dim: 215 12% 71%; /* dark textDim #ADB4BE */
+    --text-strong: 216 33% 97%; /* dark textStrong #F5F7FA */
   }
 }
 

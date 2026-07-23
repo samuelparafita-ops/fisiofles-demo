@@ -18,8 +18,7 @@ import {
   serieSesionesCompletadas,
   serieSimetriaMedia,
 } from "@/lib/dashboard/series";
-import { colors } from "@/lib/tokens";
-import { useChartColors, useComparisonColors } from "@/lib/theme";
+import { useChartColors, useChartGridColors, useComparisonColors } from "@/lib/theme";
 import {
   useAtletas,
   useCatalogoTests,
@@ -39,6 +38,7 @@ export default function DashboardPage() {
   const catalogoTests = useCatalogoTests();
   const config = useConfig();
   const chartColors = useChartColors();
+  const gridColors = useChartGridColors();
   const comparisonColors = useComparisonColors();
 
   const [rango, setRango] = useState<RangoSemanas>(RANGO_SEMANAS_DEFECTO);
@@ -93,8 +93,8 @@ export default function DashboardPage() {
     { y1: umbralesAcwr.alto, y2: yMaxAcwr, color: chartColors.warn },
   ];
   const lineasAcwr = [
-    { y: umbralesAcwr.bajo, color: colors.border },
-    { y: umbralesAcwr.alto, color: colors.border },
+    { y: umbralesAcwr.bajo, color: gridColors.line },
+    { y: umbralesAcwr.alto, color: gridColors.line },
   ];
 
   const PANELES: Record<string, JSX.Element> = {

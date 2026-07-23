@@ -12,8 +12,7 @@ import {
   ResponsiveContainer,
   type TooltipContentProps,
 } from "recharts";
-import { colors } from "@/lib/tokens";
-import { useChartColors } from "@/lib/theme";
+import { useChartColors, useChartGridColors } from "@/lib/theme";
 import { ChartPanel, ChartTooltipBox } from "./chart-panel";
 
 export type EvolucionLineProps = {
@@ -65,6 +64,7 @@ function EvolucionTooltip({
  */
 export function EvolucionLine({ evolucion, className }: EvolucionLineProps) {
   const chartColors = useChartColors();
+  const gridColors = useChartGridColors();
   const SERIES: Record<SerieKey, { label: string; color: string }> = useMemo(
     () => ({
       dolor: { label: "Dolor (0–10)", color: chartColors.compare },
@@ -117,14 +117,14 @@ export function EvolucionLine({ evolucion, className }: EvolucionLineProps) {
                 onClick={() => toggle(key)}
                 className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors"
                 style={{
-                  borderColor: activo ? SERIES[key].color : colors.borderSoft,
-                  color: activo ? SERIES[key].color : colors.textDim,
+                  borderColor: activo ? SERIES[key].color : gridColors.grid,
+                  color: activo ? SERIES[key].color : gridColors.axis,
                   background: activo ? `${SERIES[key].color}14` : "transparent",
                 }}
               >
                 <span
                   className="inline-block size-2 rounded-full"
-                  style={{ background: activo ? SERIES[key].color : colors.border }}
+                  style={{ background: activo ? SERIES[key].color : gridColors.line }}
                 />
                 {SERIES[key].label}
               </button>
@@ -136,23 +136,23 @@ export function EvolucionLine({ evolucion, className }: EvolucionLineProps) {
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
-            <CartesianGrid stroke={colors.borderSoft} strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid stroke={gridColors.grid} strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="fecha"
-              tick={{ fill: colors.textDim, fontSize: 11 }}
-              axisLine={{ stroke: colors.borderSoft }}
+              tick={{ fill: gridColors.axis, fontSize: 11 }}
+              axisLine={{ stroke: gridColors.grid }}
               tickLine={false}
             />
             <YAxis
               domain={[0, 10]}
-              tick={{ fill: colors.textDim, fontSize: 11 }}
-              axisLine={{ stroke: colors.borderSoft }}
+              tick={{ fill: gridColors.axis, fontSize: 11 }}
+              axisLine={{ stroke: gridColors.grid }}
               tickLine={false}
               width={32}
             />
             <Tooltip
               content={(props) => <EvolucionTooltip {...props} series={SERIES} />}
-              cursor={{ stroke: colors.borderSoft }}
+              cursor={{ stroke: gridColors.cursor }}
             />
             {visibles.has("dolor") && (
               <ReferenceLine

@@ -65,11 +65,19 @@ const config: Config = {
         },
 
         // Tokens exactos de lib/tokens.ts (hoja de cálculo del producto).
+        // `brand.DEFAULT/tint/ink` viven en CSS vars (--brand*) porque son el
+        // ÚNICO acento dinámico (Personalización > Apariencia, 6 opciones,
+        // ver lib/personalizacion/acentos.ts) — `light`/`deep` no se usan hoy
+        // en ningún componente, se dejan fijos. `bg/surface1/surface2/
+        // borderSoft/textDim/textStrong` también van por CSS var para que el
+        // tema "Oscuro" reteñina toda la UI sin tocar cada componente — ver
+        // app/globals.css `.dark` y `border`/`card`/`popover`/`secondary`/
+        // `muted` (ya eran CSS vars) más arriba en este mismo objeto `colors`.
         brand: {
-          DEFAULT: "#1DC4EB",
+          DEFAULT: "hsl(var(--brand))",
           light: "#67DBF6",
-          tint: "#E7F8FD",
-          ink: "#0B96B8",
+          tint: "hsl(var(--brand-tint))",
+          ink: "hsl(var(--brand-ink))",
           deep: "#0062FF",
         },
         data: {
@@ -94,12 +102,12 @@ const config: Config = {
           warn: "#B45309",
           bad: "#DC2626",
         },
-        bg: "#F6F7F9",
-        surface1: "#FFFFFF",
-        surface2: "#FFFFFF",
-        borderSoft: "#EEF0F3",
-        textDim: "#5B626B",
-        textStrong: "#0D1117",
+        bg: "hsl(var(--background))",
+        surface1: "hsl(var(--surface))",
+        surface2: "hsl(var(--surface))",
+        borderSoft: "hsl(var(--border-soft))",
+        textDim: "hsl(var(--text-dim))",
+        textStrong: "hsl(var(--text-strong))",
       },
       borderRadius: {
         lg: "var(--radius)",

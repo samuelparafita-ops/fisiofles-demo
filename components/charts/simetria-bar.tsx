@@ -13,7 +13,7 @@ import {
   type TooltipContentProps,
 } from "recharts";
 import { colors } from "@/lib/tokens";
-import { useChartColors, type ChartColors } from "@/lib/theme";
+import { useChartColors, useChartGridColors, type ChartColors, type ChartGridColors } from "@/lib/theme";
 import { simetria, estadoSimetria, type EstadoSimetria, type UmbralesSimetria } from "@/lib/calculations";
 import { ChartPanel, ChartTooltipBox } from "./chart-panel";
 
@@ -61,12 +61,14 @@ function SimetriaRow({
   der,
   umbrales,
   chartColors,
+  gridColors,
 }: {
   test: string;
   izq: number;
   der: number;
   umbrales: UmbralesSimetria;
   chartColors: ChartColors;
+  gridColors: ChartGridColors;
 }) {
   const pct = simetria(izq, der);
   const estado = estadoSimetria(pct, umbrales);
@@ -96,7 +98,7 @@ function SimetriaRow({
             <YAxis
               type="category"
               dataKey="lado"
-              tick={{ fill: colors.textDim, fontSize: 10 }}
+              tick={{ fill: gridColors.axis, fontSize: 10 }}
               axisLine={false}
               tickLine={false}
               width={56}
@@ -107,7 +109,7 @@ function SimetriaRow({
               strokeDasharray="4 3"
               label={{ value: `${umbrales.optimo}%`, position: "top", fill: chartColors.primary, fontSize: 10 }}
             />
-            <Tooltip content={(props) => <SimetriaTooltip {...props} />} cursor={{ fill: colors.borderSoft, opacity: 0.5 }} />
+            <Tooltip content={(props) => <SimetriaTooltip {...props} />} cursor={{ fill: gridColors.cursor, opacity: 0.5 }} />
             <Bar dataKey="valor" barSize={14} isAnimationActive={false}>
               {data.map((entry) => (
                 <Cell key={entry.lado} fill={entry.esDebil ? colorDebil : chartColors.primary} />
@@ -116,7 +118,7 @@ function SimetriaRow({
                 dataKey="valor"
                 position="right"
                 formatter={(v) => (typeof v === "number" ? fmtValor(v) : "")}
-                fill={colors.textDim}
+                fill={gridColors.axis}
                 fontSize={10}
               />
             </Bar>
@@ -144,6 +146,7 @@ function SimetriaRow({
  */
 export function SimetriaBar({ simetrias, umbrales = UMBRALES_DEFECTO, className }: SimetriaBarProps) {
   const chartColors = useChartColors();
+  const gridColors = useChartGridColors();
   const pcts = simetrias.map((s) => simetria(s.izq, s.der));
   const media = pcts.length > 0 ? pcts.reduce((a, b) => a + b, 0) / pcts.length : 0;
 
@@ -163,6 +166,7 @@ export function SimetriaBar({ simetrias, umbrales = UMBRALES_DEFECTO, className 
             der={s.der}
             umbrales={umbrales}
             chartColors={chartColors}
+            gridColors={gridColors}
           />
         ))}
       </div>

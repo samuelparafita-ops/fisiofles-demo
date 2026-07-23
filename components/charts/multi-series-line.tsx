@@ -14,8 +14,7 @@ import {
   ResponsiveContainer,
   type TooltipContentProps,
 } from "recharts";
-import { colors } from "@/lib/tokens";
-import { useChartColors } from "@/lib/theme";
+import { useChartColors, useChartGridColors } from "@/lib/theme";
 import type { PuntoSerie } from "@/lib/dashboard/series";
 import { ChartPanel, LegendChip, ChartTooltipBox } from "./chart-panel";
 
@@ -98,6 +97,7 @@ export function MultiSeriesLine({
   className,
 }: MultiSeriesLineProps) {
   const chartColors = useChartColors();
+  const gridColors = useChartGridColors();
 
   const data = puntos.map((p) => ({ semana: p.semana, agregado: p.agregado, ...p.porAtleta }));
   const TooltipContent = crearTooltip(atletas, etiquetaAgregado, formatoValor, chartColors.base);
@@ -107,17 +107,17 @@ export function MultiSeriesLine({
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
-            <CartesianGrid stroke={colors.borderSoft} strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid stroke={gridColors.grid} strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="semana"
-              tick={{ fill: colors.textDim, fontSize: 11 }}
-              axisLine={{ stroke: colors.borderSoft }}
+              tick={{ fill: gridColors.axis, fontSize: 11 }}
+              axisLine={{ stroke: gridColors.grid }}
               tickLine={false}
             />
             <YAxis
               domain={dominioY}
-              tick={{ fill: colors.textDim, fontSize: 11 }}
-              axisLine={{ stroke: colors.borderSoft }}
+              tick={{ fill: gridColors.axis, fontSize: 11 }}
+              axisLine={{ stroke: gridColors.grid }}
               tickLine={false}
               width={unidad ? 48 : 40}
               unit={unidad}
@@ -134,7 +134,7 @@ export function MultiSeriesLine({
                 label={l.label ? { value: l.label, position: "insideTopLeft", fill: l.color, fontSize: 10 } : undefined}
               />
             ))}
-            <Tooltip content={(props) => <TooltipContent {...props} />} cursor={{ stroke: colors.borderSoft }} />
+            <Tooltip content={(props) => <TooltipContent {...props} />} cursor={{ stroke: gridColors.cursor }} />
             <Area
               dataKey="agregado"
               stroke={chartColors.base}
