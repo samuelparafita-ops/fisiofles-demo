@@ -76,11 +76,11 @@ function crearTooltip(
 }
 
 /**
- * Gráfico genérico "agregado + superpuestos" de /dashboard (FASE E): una
- * serie agregada de la plantilla activa (área sutil gris) con hasta 4
- * atletas superpuestos como líneas de color propio. Las 5 métricas del
- * dashboard (carga, ACWR, simetría, dolor, sesiones) reutilizan este mismo
- * componente parametrizado — ver `app/(app)/dashboard/page.tsx`.
+ * Gráfico genérico "agregado + superpuestos" de /dashboard: una serie
+ * agregada de la plantilla activa (área sutil gris) con hasta 6 atletas
+ * superpuestos como líneas de color propio. Lo usan los `resultado:*` de
+ * tipo "linea" (ACWR, dolor, readiness) vía `GraficoResultado` — ver
+ * `lib/dashboard/graficos.ts` y `components/charts/grafico-resultado.tsx`.
  */
 export function MultiSeriesLine({
   title,
@@ -102,9 +102,20 @@ export function MultiSeriesLine({
   const data = puntos.map((p) => ({ semana: p.semana, agregado: p.agregado, ...p.porAtleta }));
   const TooltipContent = crearTooltip(atletas, etiquetaAgregado, formatoValor, chartColors.base);
 
+  const sinDatos = puntos.every(
+    (p) => p.agregado === null && Object.values(p.porAtleta).every((v) => v === null)
+  );
+  if (sinDatos) {
+    return (
+      <ChartPanel title={title} description={description} metric={metric} className={className}>
+        <p className="py-10 text-center text-sm text-textDim">Sin registros en el periodo seleccionado.</p>
+      </ChartPanel>
+    );
+  }
+
   return (
     <ChartPanel title={title} description={description} metric={metric} className={className}>
-      <div className="h-72 w-full">
+      <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
             <CartesianGrid stroke={gridColors.grid} strokeDasharray="3 3" vertical={false} />

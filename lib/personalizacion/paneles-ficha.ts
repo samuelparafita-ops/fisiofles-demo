@@ -3,8 +3,8 @@
  * esta lista Personalización (visibilidad/orden) y `TabDatos`
  * (components/atletas/ficha/tab-datos.tsx), que ya lee
  * `config.metricasVisiblesDashboard`/`ordenDashboard` (fases A/C). No
- * confundir con `lib/dashboard/metricas.ts`, que es el catálogo de /dashboard
- * (agregado de plantilla), un config distinto (`dashboardMetricas`/`dashboardOrden`).
+ * confundir con `lib/dashboard/graficos.ts`, que es el catálogo de /dashboard
+ * (agregado de plantilla), un config distinto (`dashboardGraficos`/`dashboardGraficosOrden`).
  */
 
 export type PanelFichaId = "perfil-fisico" | "acwr" | "simetrias" | "evolucion";

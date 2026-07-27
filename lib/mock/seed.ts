@@ -12,7 +12,6 @@
 import { catalogoSemilla, testPorNombre, variablePorNombre } from "@/lib/store/catalogo";
 import { ACENTO_DEFECTO } from "@/lib/personalizacion/acentos";
 import { UMBRALES_DEFECTO } from "@/lib/personalizacion/umbrales";
-import { METRICAS_DASHBOARD_IDS } from "@/lib/dashboard/metricas";
 import { GRAFICOS_DASHBOARD_DEFECTO } from "@/lib/dashboard/graficos";
 import type {
   AppState,
@@ -2004,8 +2003,6 @@ export function buildSeed(): AppState {
     metricasVisiblesDashboard: ["perfil-fisico", "acwr", "simetrias", "evolucion"],
     ordenDashboard: ["perfil-fisico", "acwr", "simetrias", "evolucion"],
     vistaAtletas: "grid",
-    dashboardMetricas: METRICAS_DASHBOARD_IDS,
-    dashboardOrden: METRICAS_DASHBOARD_IDS,
     dashboardGraficos: GRAFICOS_DASHBOARD_DEFECTO,
     dashboardGraficosOrden: GRAFICOS_DASHBOARD_DEFECTO,
   };

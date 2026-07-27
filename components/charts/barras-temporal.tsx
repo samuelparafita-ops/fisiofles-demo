@@ -94,9 +94,20 @@ export function BarrasTemporal({
   const data = puntos.map((p) => ({ semana: p.semana, agregado: p.agregado, ...p.porAtleta }));
   const TooltipContent = crearTooltip(atletas, etiquetaAgregado, formatoValor, chartColors.base);
 
+  const sinDatos = puntos.every(
+    (p) => p.agregado === null && Object.values(p.porAtleta).every((v) => v === null)
+  );
+  if (sinDatos) {
+    return (
+      <ChartPanel title={titulo} description={descripcion} action={action} className={className}>
+        <p className="py-10 text-center text-sm text-textDim">Sin registros en el periodo seleccionado.</p>
+      </ChartPanel>
+    );
+  }
+
   return (
     <ChartPanel title={titulo} description={descripcion} action={action} className={className}>
-      <div className="h-72 w-full">
+      <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
             <CartesianGrid stroke={gridColors.grid} strokeDasharray="3 3" vertical={false} />

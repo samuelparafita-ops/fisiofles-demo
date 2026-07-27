@@ -33,6 +33,11 @@ export function graficoTestId(testId: string): string {
   return `test:${testId}`;
 }
 
+/** Inversa de `graficoResultadoId` — el id de `ResultadoDashboardId` a partir de un id `resultado:<id>` del catálogo. */
+export function resultadoIdDeGrafico(id: string): ResultadoDashboardId {
+  return id.slice("resultado:".length) as ResultadoDashboardId;
+}
+
 /**
  * Gráficos visibles por defecto. `resultado:cuadrante-fv` va SIEMPRE primero
  * (es la lectura de cabecera del dashboard v3).

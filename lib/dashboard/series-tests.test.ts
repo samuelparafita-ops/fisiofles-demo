@@ -2,7 +2,15 @@ import { describe, expect, it } from "vitest";
 import { simetria } from "@/lib/calculations";
 import type { RegistroTest, TestDef } from "@/lib/store/types";
 import { atletaFixture } from "@/lib/insights/test-helpers";
-import { mediana, puntosCuadranteFV, rangoDesdeSemanas, semanasEnRango, serieTest, ultimoValorPorAtleta } from "./series-tests";
+import {
+  mediana,
+  puntosCuadranteFV,
+  rangoDesdeSemanas,
+  semanasDesdeRango,
+  semanasEnRango,
+  serieTest,
+  ultimoValorPorAtleta,
+} from "./series-tests";
 
 const TEST_UNILATERAL: TestDef = {
   id: "nordic",
@@ -80,6 +88,21 @@ describe("rangoDesdeSemanas", () => {
     expect(desde.getFullYear()).toBe(2026);
     expect(desde.getMonth()).toBe(6); // julio, 0-indexado
     expect(desde.getDate()).toBe(2);
+  });
+});
+
+describe("semanasDesdeRango", () => {
+  it("es la inversa de rangoDesdeSemanas para presets de n semanas", () => {
+    const hoy = new Date("2026-07-23T00:00:00");
+    for (const semanas of [4, 8, 12]) {
+      const { desde, hasta } = rangoDesdeSemanas(semanas, hoy);
+      expect(semanasDesdeRango(desde, hasta)).toBe(semanas);
+    }
+  });
+
+  it("redondea al entero más cercano y nunca da menos de 1", () => {
+    const hoy = new Date("2026-07-23T00:00:00");
+    expect(semanasDesdeRango(hoy, hoy)).toBe(1);
   });
 });
 

@@ -79,6 +79,14 @@ export function BarrasComparativa({
     return comparisonColors[idx % comparisonColors.length];
   }
 
+  if (data.length === 0) {
+    return (
+      <ChartPanel title={titulo} description={descripcion} action={action} className={className}>
+        <p className="py-10 text-center text-sm text-textDim">Sin registros de este test todavía.</p>
+      </ChartPanel>
+    );
+  }
+
   return (
     <ChartPanel
       title={titulo}
@@ -87,7 +95,7 @@ export function BarrasComparativa({
       metric={media !== null ? { value: `${formatoValor(media)}${unidad ?? ""}`, label: "media equipo" } : undefined}
       className={className}
     >
-      <div className="h-72 w-full">
+      <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
             <CartesianGrid stroke={gridColors.grid} strokeDasharray="3 3" vertical={false} />

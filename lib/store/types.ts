@@ -300,9 +300,6 @@ export type Config = {
   metricasVisiblesDashboard: string[];
   ordenDashboard: string[];
   vistaAtletas: VistaAtletas;
-  /** Métricas visibles/orden de /dashboard (carga/acwr/simetria/dolor/sesiones) — ver lib/dashboard/metricas.ts. */
-  dashboardMetricas: string[];
-  dashboardOrden: string[];
   /**
    * Gráficos visibles del dashboard v3. Ids `test:<testId>` (uno por test del
    * catálogo) y `resultado:<id>` para los derivados — ver lib/dashboard/graficos.ts.

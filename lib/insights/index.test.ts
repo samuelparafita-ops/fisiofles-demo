@@ -13,8 +13,8 @@ const CONFIG: Config = {
   metricasVisiblesDashboard: [],
   ordenDashboard: [],
   vistaAtletas: "grid",
-  dashboardMetricas: [],
-  dashboardOrden: [],
+  dashboardGraficos: [],
+  dashboardGraficosOrden: [],
 };
 
 function semanas(agudos: number[]) {

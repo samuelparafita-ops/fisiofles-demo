@@ -132,7 +132,7 @@ export function DispersionCuadrante({
 
   return (
     <ChartPanel title={titulo} description={descripcion} className={className}>
-      <div className="h-80 w-full">
+      <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 8, right: 16, left: -4, bottom: 4 }}>
             <CartesianGrid stroke={gridColors.grid} strokeDasharray="3 3" />

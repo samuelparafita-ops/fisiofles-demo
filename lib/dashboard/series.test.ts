@@ -9,6 +9,7 @@ import {
   serieAcwr,
   serieCargaSemanal,
   serieDolorMedio,
+  serieReadinessMedia,
   serieSesionesCompletadas,
   serieSimetriaMedia,
 } from "./series";
@@ -138,6 +139,22 @@ describe("serieDolorMedio", () => {
     ];
     const serie = serieDolorMedio(atletas, 1, new Date("2026-07-06T00:00:00"));
     expect(serie[0].porAtleta.a1).toBeCloseTo(4, 5);
+  });
+});
+
+describe("serieReadinessMedia", () => {
+  it("interpola el readiness entre puntos de evolución", () => {
+    const atletas = [
+      {
+        id: "a1",
+        evolucion: [
+          { fecha: "2026-07-01", readiness: 5 },
+          { fecha: "2026-07-11", readiness: 9 },
+        ],
+      },
+    ];
+    const serie = serieReadinessMedia(atletas, 1, new Date("2026-07-06T00:00:00"));
+    expect(serie[0].porAtleta.a1).toBeCloseTo(7, 5);
   });
 });
 

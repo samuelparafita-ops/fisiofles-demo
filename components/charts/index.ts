@@ -8,3 +8,4 @@ export * from "./barras-comparativa";
 export * from "./barras-temporal";
 export * from "./dispersion-cuadrante";
 export * from "./grafico-test";
+export * from "./grafico-resultado";

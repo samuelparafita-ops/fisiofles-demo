@@ -63,9 +63,25 @@ export function semanasEnRango(desde: Date, hasta: Date): string[] {
   return fechas;
 }
 
-/** Puente de compatibilidad con el rango legado (4/8/12 semanas de `lib/dashboard/metricas.ts`). */
+/** Presets de periodo del selector de rango de /dashboard — ver `SelectorRango`. */
+export const RANGOS_SEMANAS = [4, 8, 12] as const;
+export type RangoSemanas = (typeof RANGOS_SEMANAS)[number];
+export const RANGO_SEMANAS_DEFECTO: RangoSemanas = 8;
+
+/** Puente de compatibilidad con el rango legado (4/8/12 semanas de un preset). */
 export function rangoDesdeSemanas(semanas: number, hoy: Date = new Date()): { desde: Date; hasta: Date } {
   return { desde: restarDias(hoy, (semanas - 1) * 7), hasta: hoy };
+}
+
+/**
+ * Inversa de `rangoDesdeSemanas` — nº de semanas que cubre un rango
+ * `desde`/`hasta` explícito, para alimentar las series "resultado" heredadas
+ * (`lib/dashboard/series.ts`), que toman `semanas: number` en vez de fechas.
+ * Redondea al entero más cercano; mínimo 1 semana.
+ */
+export function semanasDesdeRango(desde: Date, hasta: Date): number {
+  const dias = Math.round((hasta.getTime() - desde.getTime()) / 86_400_000);
+  return Math.max(1, Math.round(dias / 7) + 1);
 }
 
 // ---------------------------------------------------------------------------
