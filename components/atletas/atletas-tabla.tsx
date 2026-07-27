@@ -50,8 +50,8 @@ function FilaAtleta({ atleta }: { atleta: Atleta }) {
         {atleta.lesion}
       </td>
       <td className="px-4 py-3">
-        <Badge variant="secondary" className="truncate">
-          {atleta.fase}
+        <Badge variant="secondary" className="min-w-0 max-w-[160px]">
+          <span className="block truncate">{atleta.fase}</span>
         </Badge>
       </td>
       <td className="whitespace-nowrap px-4 py-3 text-sm text-textDim">Sem. {atleta.semanaProceso}</td>

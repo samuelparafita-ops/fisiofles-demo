@@ -57,7 +57,7 @@ export function ChartPanel({
             </p>
           )}
         </div>
-        <div className="flex items-start gap-4">
+        <div className="flex flex-wrap items-start gap-4">
           {action}
           {metric && (
             <div className="text-right">

@@ -6,6 +6,7 @@ import {
   Activity,
   AlertTriangle,
   ArrowRight,
+  Briefcase,
   CalendarCheck2,
   CalendarX,
   Check,
@@ -81,14 +82,13 @@ function iconoDeHallazgo(id: string): LucideIcon {
   return ICONOS_HALLAZGO.find((h) => id.startsWith(h.prefijo))?.icon ?? AlertTriangle;
 }
 
-// Accesos rápidos a las secciones clave. La ruta /clinica llega en FASE 8: la
-// dejamos fuera del listado (en vez de enlazar a un 404) hasta que exista.
+// Accesos rápidos a las secciones clave.
 const ACCESOS_RAPIDOS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/dashboard", label: "Dashboard", icon: ChartNoAxesCombined },
   { href: "/atletas", label: "Atletas", icon: Users },
   { href: "/plantillas", label: "Plantillas", icon: LayoutTemplate },
   { href: "/formularios", label: "Formularios", icon: ClipboardList },
-  // TODO(FASE 8): { href: "/clinica", label: "Clínica", icon: Stethoscope },
+  { href: "/clinica", label: "Clínica", icon: Briefcase },
 ];
 
 function AccesoRapidoCard({ href, label, icon: Icon }: { href: string; label: string; icon: LucideIcon }) {
@@ -422,7 +422,7 @@ export default function InicioPage() {
         <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-textDim">
           Accesos rápidos
         </h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           {ACCESOS_RAPIDOS.map((a) => (
             <AccesoRapidoCard key={a.href} {...a} />
           ))}

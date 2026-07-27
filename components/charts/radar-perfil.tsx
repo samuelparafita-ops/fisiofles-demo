@@ -108,7 +108,7 @@ export function RadarPerfil({ perfilFisico, sexo, ejesVisibles, accionExtra, cla
     >
       <div className="h-96 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <RadarChart data={data} outerRadius="70%">
+          <RadarChart data={data} outerRadius="55%">
             <PolarGrid stroke={gridColors.grid} />
             <PolarAngleAxis
               dataKey="eje"

@@ -97,17 +97,18 @@ export function BarrasComparativa({
     >
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
+          <BarChart data={data} margin={{ top: 8, right: 12, left: 8, bottom: 0 }}>
             <CartesianGrid stroke={gridColors.grid} strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="nombre"
+              tickFormatter={(nombre: string) => nombre.split(" ")[0]}
               tick={{ fill: gridColors.axis, fontSize: 11 }}
               axisLine={{ stroke: gridColors.grid }}
               tickLine={false}
               interval={0}
-              angle={data.length > 6 ? -20 : 0}
-              textAnchor={data.length > 6 ? "end" : "middle"}
-              height={data.length > 6 ? 36 : 24}
+              angle={-30}
+              textAnchor="end"
+              height={44}
             />
             <YAxis
               tick={{ fill: gridColors.axis, fontSize: 11 }}

@@ -71,8 +71,8 @@ export function AtletaCard({ atleta }: { atleta: Atleta }) {
       <p className="mt-4 line-clamp-1 text-sm text-text">{atleta.lesion}</p>
 
       <div className="mt-3 flex items-center justify-between gap-2">
-        <Badge variant="secondary" className="truncate">
-          {atleta.fase}
+        <Badge variant="secondary" className="min-w-0">
+          <span className="block truncate">{atleta.fase}</span>
         </Badge>
         <span className="shrink-0 text-xs text-muted-foreground">
           Semana {atleta.semanaProceso}
