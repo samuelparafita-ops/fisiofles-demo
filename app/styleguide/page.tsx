@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { RadarPerfil, AcwrChart, SimetriaBar, EvolucionLine } from "@/components/charts";
+import { GraficoTestDemo } from "./grafico-test-demo";
 
 const SAMPLE_PERFIL = [
   { eje: "Fuerza explosiva" as const, inicial: 34, actual: 39, objetivo: 1.2 },
@@ -265,6 +266,20 @@ export default function StyleguidePage() {
           <SimetriaBar simetrias={SAMPLE_SIMETRIAS} />
           <EvolucionLine evolucion={SAMPLE_EVOLUCION} />
         </div>
+      </section>
+
+      {/* Motor de gráficos v3 (FASE 3) — verificación temporal, ver CLAUDE.md */}
+      <section className="mt-14 space-y-4 border-t border-borderSoft pt-10">
+        <h2 className="font-display text-lg font-bold text-textStrong">
+          GraficoTest — motor de gráficos por test (FASE 3, temporal)
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          CMJ y Nordic (<code className="text-xs">origen: &quot;test&quot;</code>, barras) + Cuadrante F-V (
+          <code className="text-xs">origen: &quot;resultado&quot;</code>, dispersión) montados con datos reales del
+          store vía <code className="text-xs">GraficoTest</code>. Este bloque se retira cuando{" "}
+          <code className="text-xs">/dashboard</code> y la ficha del atleta lo reemplacen (FASE 4).
+        </p>
+        <GraficoTestDemo />
       </section>
 
       {/* PageHeader */}

@@ -91,10 +91,11 @@ export function useStateColors(): StateColors {
 }
 
 /**
- * Paleta de hasta 4 colores para superponer atletas en /dashboard (FASE E).
- * Se asigna por orden de selección (primer atleta elegido → color[0], etc.),
- * igual en los 4 gráficos de la página para que un mismo atleta se lea con
- * el mismo color en todos. No varía por tema — ver lib/tokens.ts.
+ * Paleta de hasta 6 colores para superponer/resaltar atletas (dashboard v2
+ * FASE E, motor de gráficos por test FASE 3). Se asigna por orden de
+ * selección (primer atleta elegido → color[0], etc.), igual en todos los
+ * gráficos de una misma página para que un mismo atleta se lea con el mismo
+ * color en todos. No varía por tema — ver lib/tokens.ts.
  */
 export function useComparisonColors(): string[] {
   return [...colors.comparison];
