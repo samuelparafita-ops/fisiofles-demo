@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Bell, FlaskConical, Menu, RotateCcw } from "lucide-react";
+import { Bell, FlaskConical, Menu, Moon, RotateCcw, Sun, Sliders } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +16,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { navItemFooter, navItems, Wordmark } from "@/components/layout/sidebar";
 import { useToast } from "@/components/shared/toast";
-import { resetDemo, useDispatch, useNotificacionesNoLeidas } from "@/lib/store";
+import { resetDemo, useConfig, useDispatch, useNotificacionesNoLeidas } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 function isActive(pathname: string | null, href: string) {
@@ -30,6 +30,14 @@ export function Topbar() {
   const dispatch = useDispatch();
   const toast = useToast();
   const noLeidas = useNotificacionesNoLeidas();
+  const { tema } = useConfig();
+  const esOscuro = tema === "oscuro";
+
+  function toggleTema() {
+    // Desde "clasico-excel" el toggle pasa a "oscuro" (clasico-excel solo se
+    // activa desde Personalización); desde ahí alterna claro/oscuro normal.
+    dispatch({ type: "CONFIG_ACTUALIZAR", payload: { tema: esOscuro ? "fisiofles" : "oscuro" } });
+  }
 
   function handleReset() {
     resetDemo(dispatch);
@@ -111,6 +119,17 @@ export function Topbar() {
       <Button
         variant="ghost"
         size="icon"
+        onClick={toggleTema}
+        aria-label={esOscuro ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
+        title={esOscuro ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
+      >
+        {esOscuro ? <Sun className="size-5" /> : <Moon className="size-5" />}
+        <span className="sr-only">Alternar tema claro/oscuro</span>
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="icon"
         className="relative"
         onClick={() => router.push("/notificaciones")}
       >
@@ -143,6 +162,15 @@ export function Topbar() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Sesión demo</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={toggleTema}>
+            {esOscuro ? <Sun className="mr-2 size-4" /> : <Moon className="mr-2 size-4" />}
+            Tema claro/oscuro
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => router.push("/personalizacion")}>
+            <Sliders className="mr-2 size-4" />
+            Personalización
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={handleReset}>
             <RotateCcw className="mr-2 size-4" />

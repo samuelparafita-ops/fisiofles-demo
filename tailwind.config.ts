@@ -22,6 +22,16 @@ const config: Config = {
         sans: ["var(--font-sans)", ...defaultTheme.fontFamily.sans],
         display: ["var(--font-display)", ...defaultTheme.fontFamily.sans],
       },
+      // Texto +1pt a petición del cliente — NO toca los tamaños display
+      // (2xl+) ni los `fontSize` fijos en px de los ticks/labels de Recharts
+      // (components/charts/, inline en cada gráfico): esos siguen igual.
+      fontSize: {
+        xs: ["13px", { lineHeight: "17px" }],
+        sm: ["15px", { lineHeight: "21px" }],
+        base: ["17px", { lineHeight: "25px" }],
+        lg: ["19px", { lineHeight: "30px" }],
+        xl: ["21px", { lineHeight: "29px" }],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

@@ -12,8 +12,7 @@ import {
   ResponsiveContainer,
   type TooltipContentProps,
 } from "recharts";
-import { colors } from "@/lib/tokens";
-import { useChartColors, useChartGridColors, type ChartGridColors } from "@/lib/theme";
+import { useChartColors, useChartGridColors, useStateColors, type ChartGridColors } from "@/lib/theme";
 import { cargaCronica, acwr, zonaAcwr, type UmbralesAcwr, type ZonaAcwr } from "@/lib/calculations";
 import { ChartPanel, LegendChip, ChartTooltipBox } from "./chart-panel";
 
@@ -74,10 +73,11 @@ function AcwrTooltip({
 export function AcwrChart({ cargas, umbrales = UMBRALES_DEFECTO, className }: AcwrChartProps) {
   const chartColors = useChartColors();
   const gridColors = useChartGridColors();
+  const estadoColores = useStateColors();
   const ZONA_COLOR: Record<ZonaAcwr, string> = {
-    insuficiente: colors.state.bad,
-    optima: colors.state.good,
-    riesgo: colors.state.warn,
+    insuficiente: estadoColores.bad,
+    optima: estadoColores.good,
+    riesgo: estadoColores.warn,
   };
   const agudos = cargas.map((c) => c.agudo);
 

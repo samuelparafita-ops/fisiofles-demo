@@ -10,6 +10,12 @@
 import { useConfig } from "@/lib/store";
 import { colors, colorsDark } from "@/lib/tokens";
 
+export type StateColors = {
+  good: string;
+  warn: string;
+  bad: string;
+};
+
 export type ChartColors = {
   primary: string;
   compare: string;
@@ -25,6 +31,7 @@ export function useChartColors(): ChartColors {
     case "clasico-excel":
       return colors.data;
     case "oscuro":
+      return colors.dataDark;
     case "fisiofles":
     default:
       return colors.dataLight;
@@ -67,6 +74,20 @@ export function useChartGridColors(): ChartGridColors {
 /** true solo para "clasico-excel" — el panel del gráfico pasa a cockpit oscuro (ver ChartPanel). */
 export function useCockpit(): boolean {
   return useConfig().tema === "clasico-excel";
+}
+
+/**
+ * Colores de estado (good/warn/bad) para badges/iconos pintados con `style`
+ * inline (no llegan las clases Tailwind `text-state-*`/`bg-state-*` porque
+ * se combinan con el hex en runtime, ej. `${color}1A` de fondo). `state.*`
+ * está afinado para contrastar sobre BLANCO; en "oscuro" se sustituye por
+ * `stateDark.*` (mismos tonos que `dataDark.compare/warn/good`). "clasico-excel"
+ * no toca la UI general (solo el panel de cada gráfico, ver `useCockpit()`),
+ * así que sigue usando `state.*`.
+ */
+export function useStateColors(): StateColors {
+  const { tema } = useConfig();
+  return tema === "oscuro" ? colors.stateDark : colors.state;
 }
 
 /**

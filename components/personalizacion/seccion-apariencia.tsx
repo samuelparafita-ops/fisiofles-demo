@@ -21,7 +21,9 @@ function PreviewTema({ tema }: { tema: Tema }) {
   const barras =
     tema === "clasico-excel"
       ? [colors.data.primary, colors.data.compare, colors.data.good, colors.data.warn]
-      : [colors.dataLight.primary, colors.dataLight.compare, colors.dataLight.good, colors.dataLight.warn];
+      : tema === "oscuro"
+        ? [colors.dataDark.primary, colors.dataDark.compare, colors.dataDark.good, colors.dataDark.warn]
+        : [colors.dataLight.primary, colors.dataLight.compare, colors.dataLight.good, colors.dataLight.warn];
   const alturas = [55, 30, 70, 45];
 
   return (

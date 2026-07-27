@@ -15,17 +15,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { colors } from "@/lib/tokens";
+import { useStateColors } from "@/lib/theme";
 import { useAtleta } from "@/lib/store";
 import type { Hallazgo, SeveridadHallazgo } from "@/lib/insights";
 
 const ORDEN_SEVERIDAD: Record<SeveridadHallazgo, number> = { critico: 0, atencion: 1, info: 2 };
-
-const COLOR_SEVERIDAD: Record<SeveridadHallazgo, string> = {
-  critico: colors.state.bad,
-  atencion: colors.state.warn,
-  info: colors.state.good,
-};
 
 const ICONOS_HALLAZGO: { prefijo: string; icon: LucideIcon }[] = [
   { prefijo: "hallazgo-racha-acwr-", icon: CheckCircle2 },
@@ -44,7 +38,13 @@ function iconoDeHallazgo(id: string): LucideIcon {
 function FilaHallazgo({ hallazgo, mostrarAtleta }: { hallazgo: Hallazgo; mostrarAtleta: boolean }) {
   const atleta = useAtleta(hallazgo.atletaId);
   const Icon = iconoDeHallazgo(hallazgo.id);
-  const color = COLOR_SEVERIDAD[hallazgo.severidad];
+  const estado = useStateColors();
+  const colorPorSeveridad: Record<SeveridadHallazgo, string> = {
+    critico: estado.bad,
+    atencion: estado.warn,
+    info: estado.good,
+  };
+  const color = colorPorSeveridad[hallazgo.severidad];
 
   return (
     <Link href={hallazgo.enlace} className="group flex items-start gap-3 py-3">
@@ -89,6 +89,7 @@ export function CajaHallazgos({
   className?: string;
 }) {
   const [colapsada, setColapsada] = useState(Boolean(colapsableInicial));
+  const estado = useStateColors();
 
   const ordenados = [...hallazgos].sort((a, b) => {
     const porSeveridad = ORDEN_SEVERIDAD[a.severidad] - ORDEN_SEVERIDAD[b.severidad];
@@ -109,10 +110,11 @@ export function CajaHallazgos({
           <h3 className="font-display text-base font-bold text-textStrong">{titulo}</h3>
           {ordenados.length > 0 && (
             <span
-              className={cn(
-                "rounded-full px-2 py-0.5 text-xs font-semibold",
-                tieneUrgentes ? "bg-state-bad/10 text-state-bad" : "bg-state-good/10 text-state-good"
-              )}
+              className="rounded-full px-2 py-0.5 text-xs font-semibold"
+              style={{
+                color: tieneUrgentes ? estado.bad : estado.good,
+                background: `${tieneUrgentes ? estado.bad : estado.good}1A`,
+              }}
             >
               {ordenados.length}
             </span>
@@ -133,7 +135,7 @@ export function CajaHallazgos({
             </div>
           ) : (
             <div className="flex flex-col items-center py-6 text-center">
-              <ShieldCheck className="mb-2 size-6 text-state-good" />
+              <ShieldCheck className="mb-2 size-6" style={{ color: estado.good }} />
               <p className="text-sm font-medium text-textStrong">{vacioTitulo}</p>
               <p className="mt-1 text-xs text-textDim">{vacioDescripcion}</p>
             </div>

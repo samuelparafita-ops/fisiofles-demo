@@ -5,6 +5,7 @@ import { AlertTriangle, ArrowRight, Check, Clock3, ClipboardCheck, type LucideIc
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { colors } from "@/lib/tokens";
+import { useStateColors, type StateColors } from "@/lib/theme";
 import { tiempoRelativo } from "@/lib/notificaciones/tiempo-relativo";
 import {
   accionActualizar,
@@ -21,28 +22,27 @@ const ICONO_TIPO: Record<TipoNotificacion, LucideIcon> = {
   tarea: ClipboardCheck,
 };
 
-const COLOR_SEVERIDAD: Record<SeveridadNotificacion, string> = {
-  critico: colors.state.bad,
-  atencion: colors.state.warn,
-  info: colors.state.good,
-};
-
-// Notificaciones sembradas a mano no tienen `severidad` — se colorean por tipo.
-const COLOR_TIPO_FALLBACK: Record<TipoNotificacion, string> = {
-  alerta: colors.state.bad,
-  recordatorio: colors.state.warn,
-  tarea: colors.brandInk,
-};
-
-function colorDe(n: Notificacion): string {
-  return n.severidad ? COLOR_SEVERIDAD[n.severidad] : COLOR_TIPO_FALLBACK[n.tipo];
+function colorDe(n: Notificacion, estado: StateColors): string {
+  const colorSeveridad: Record<SeveridadNotificacion, string> = {
+    critico: estado.bad,
+    atencion: estado.warn,
+    info: estado.good,
+  };
+  // Notificaciones sembradas a mano no tienen `severidad` — se colorean por tipo.
+  const colorTipoFallback: Record<TipoNotificacion, string> = {
+    alerta: estado.bad,
+    recordatorio: estado.warn,
+    tarea: colors.brandInk,
+  };
+  return n.severidad ? colorSeveridad[n.severidad] : colorTipoFallback[n.tipo];
 }
 
 export function NotificacionItem({ notificacion }: { notificacion: Notificacion }) {
   const dispatch = useDispatch();
   const atleta = useAtleta(notificacion.atletaId ?? "");
   const Icon = ICONO_TIPO[notificacion.tipo];
-  const color = colorDe(notificacion);
+  const estado = useStateColors();
+  const color = colorDe(notificacion, estado);
 
   function marcarLeida() {
     dispatch(accionActualizar("notificaciones", notificacion.id, { leida: true }));

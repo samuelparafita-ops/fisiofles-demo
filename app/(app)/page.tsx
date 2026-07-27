@@ -36,7 +36,7 @@ import {
   type Sesion,
 } from "@/lib/store";
 import { generarHallazgos, type Hallazgo, type SeveridadHallazgo } from "@/lib/insights";
-import { colors } from "@/lib/tokens";
+import { useStateColors } from "@/lib/theme";
 
 const NOMBRE_PROFESIONAL = "Álex";
 
@@ -82,15 +82,11 @@ function iconoDeHallazgo(id: string): LucideIcon {
   return ICONOS_HALLAZGO.find((h) => id.startsWith(h.prefijo))?.icon ?? AlertTriangle;
 }
 
-const COLOR_SEVERIDAD: Record<HallazgoRelevante["severidad"], string> = {
-  critico: colors.state.bad,
-  atencion: colors.state.warn,
-};
-
 function SesionHoyRow({ sesion }: { sesion: Sesion }) {
   const atleta = useAtleta(sesion.atletaId);
   const dispatch = useDispatch();
   const toast = useToast();
+  const estado = useStateColors();
 
   if (!atleta) return null;
 
@@ -127,7 +123,10 @@ function SesionHoyRow({ sesion }: { sesion: Sesion }) {
           Marcar completada
         </Button>
       ) : sesion.estado === "completada" ? (
-        <span className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-state-good">
+        <span
+          className="flex shrink-0 items-center gap-1.5 text-xs font-medium"
+          style={{ color: estado.good }}
+        >
           <CheckCircle2 className="size-3.5" />
           Completada
         </span>
@@ -141,7 +140,12 @@ function SesionHoyRow({ sesion }: { sesion: Sesion }) {
 function HallazgoRow({ hallazgo }: { hallazgo: HallazgoRelevante }) {
   const atleta = useAtleta(hallazgo.atletaId);
   const Icon = iconoDeHallazgo(hallazgo.id);
-  const color = COLOR_SEVERIDAD[hallazgo.severidad];
+  const estado = useStateColors();
+  const colorPorSeveridad: Record<HallazgoRelevante["severidad"], string> = {
+    critico: estado.bad,
+    atencion: estado.warn,
+  };
+  const color = colorPorSeveridad[hallazgo.severidad];
 
   return (
     <Link href={hallazgo.enlace} className="group flex items-start gap-3 py-3">
@@ -169,6 +173,7 @@ export default function InicioPage() {
   const formulariosEnvios = useFormulariosEnvios();
   const notificaciones = useNotificaciones();
   const config = useConfig();
+  const estado = useStateColors();
 
   const ahora = useMemo(() => new Date(), []);
   const hoyIso = isoLocal(ahora);
@@ -311,7 +316,10 @@ export default function InicioPage() {
           <div className="flex items-center justify-between">
             <h2 className="font-display text-base font-bold text-textStrong">Alertas del día</h2>
             {alertasDelDia.length > 0 && (
-              <span className="rounded-full bg-state-bad/10 px-2 py-0.5 text-xs font-semibold text-state-bad">
+              <span
+                className="rounded-full px-2 py-0.5 text-xs font-semibold"
+                style={{ color: estado.bad, background: `${estado.bad}1A` }}
+              >
                 {alertasDelDia.length}
               </span>
             )}

@@ -5,20 +5,9 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { estadoSimetria } from "@/lib/calculations";
 import { colors } from "@/lib/tokens";
+import { useStateColors } from "@/lib/theme";
 import { useConfig, useResumenAtleta, type Atleta } from "@/lib/store";
 import { AtletaMenu } from "@/components/atletas/atleta-menu";
-
-const ESTADO_COLOR = {
-  deficit: colors.state.bad,
-  aceptable: colors.state.warn,
-  optimo: colors.state.good,
-} as const;
-
-const ESTADO_ATLETA_DOT: Record<Atleta["estado"], string> = {
-  activo: colors.state.good,
-  alta: colors.brandInk,
-  pausa: colors.state.warn,
-};
 
 const ESTADO_ATLETA_LABEL: Record<Atleta["estado"], string> = {
   activo: "Activo",
@@ -30,6 +19,17 @@ export function AtletaCard({ atleta }: { atleta: Atleta }) {
   const router = useRouter();
   const resumen = useResumenAtleta(atleta.id);
   const { umbrales } = useConfig();
+  const estadoColores = useStateColors();
+  const ESTADO_COLOR = {
+    deficit: estadoColores.bad,
+    aceptable: estadoColores.warn,
+    optimo: estadoColores.good,
+  } as const;
+  const ESTADO_ATLETA_DOT: Record<Atleta["estado"], string> = {
+    activo: estadoColores.good,
+    alta: colors.brandInk,
+    pausa: estadoColores.warn,
+  };
   const media = resumen?.simetriaMedia ?? null;
   const estado =
     media !== null

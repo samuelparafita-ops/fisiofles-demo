@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { colors } from "@/lib/tokens";
+import { useStateColors } from "@/lib/theme";
 import { useResumenAtleta, type Atleta } from "@/lib/store";
 import { AtletaMenu } from "@/components/atletas/atleta-menu";
 import type { ZonaAcwr } from "@/lib/calculations";
@@ -13,27 +14,26 @@ const ESTADO_ATLETA_LABEL: Record<Atleta["estado"], string> = {
   pausa: "Pausa",
 };
 
-const ESTADO_ATLETA_COLOR: Record<Atleta["estado"], string> = {
-  activo: colors.state.good,
-  alta: colors.brandInk,
-  pausa: colors.state.warn,
-};
-
 const ZONA_LABEL: Record<ZonaAcwr, string> = {
   optima: "Óptima",
   riesgo: "Riesgo",
   insuficiente: "Insuf.",
 };
 
-const ZONA_COLOR: Record<ZonaAcwr, string> = {
-  optima: colors.state.good,
-  riesgo: colors.state.bad,
-  insuficiente: colors.state.warn,
-};
-
 function FilaAtleta({ atleta }: { atleta: Atleta }) {
   const router = useRouter();
   const resumen = useResumenAtleta(atleta.id);
+  const estado = useStateColors();
+  const ESTADO_ATLETA_COLOR: Record<Atleta["estado"], string> = {
+    activo: estado.good,
+    alta: colors.brandInk,
+    pausa: estado.warn,
+  };
+  const ZONA_COLOR: Record<ZonaAcwr, string> = {
+    optima: estado.good,
+    riesgo: estado.bad,
+    insuficiente: estado.warn,
+  };
 
   return (
     <tr

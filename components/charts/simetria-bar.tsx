@@ -12,8 +12,7 @@ import {
   ResponsiveContainer,
   type TooltipContentProps,
 } from "recharts";
-import { colors } from "@/lib/tokens";
-import { useChartColors, useChartGridColors, type ChartColors, type ChartGridColors } from "@/lib/theme";
+import { useChartColors, useChartGridColors, useStateColors, type ChartColors, type ChartGridColors } from "@/lib/theme";
 import { simetria, estadoSimetria, type EstadoSimetria, type UmbralesSimetria } from "@/lib/calculations";
 import { ChartPanel, ChartTooltipBox } from "./chart-panel";
 
@@ -25,12 +24,6 @@ export type SimetriaBarProps = {
   /** Siempre desde `useConfig().umbrales`, nunca hardcodeados (ver CLAUDE.md). */
   umbrales?: UmbralesSimetria;
   className?: string;
-};
-
-const ESTADO_COLOR: Record<EstadoSimetria, string> = {
-  deficit: colors.state.bad,
-  aceptable: colors.state.warn,
-  optimo: colors.state.good,
 };
 
 const ESTADO_LABEL: Record<EstadoSimetria, string> = {
@@ -72,6 +65,12 @@ function SimetriaRow({
 }) {
   const pct = simetria(izq, der);
   const estado = estadoSimetria(pct, umbrales);
+  const estadoColores = useStateColors();
+  const ESTADO_COLOR: Record<EstadoSimetria, string> = {
+    deficit: estadoColores.bad,
+    aceptable: estadoColores.warn,
+    optimo: estadoColores.good,
+  };
   const fuerte = Math.max(izq, der);
   const debilEsIzq = izq <= der;
 
