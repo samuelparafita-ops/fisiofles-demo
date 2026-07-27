@@ -126,12 +126,13 @@ describe("semilla · modelo v3", () => {
     }
   });
 
-  it("todo punto de evolución tiene readiness en 0-100", () => {
+  it("todo punto de evolución tiene readiness en 0-10, sin huecos", () => {
     for (const atleta of seed.atletas) {
+      expect(atleta.evolucion.length).toBeGreaterThan(0);
       for (const punto of atleta.evolucion) {
         expect(esNumero(punto.readiness)).toBe(true);
         expect(punto.readiness).toBeGreaterThanOrEqual(0);
-        expect(punto.readiness).toBeLessThanOrEqual(100);
+        expect(punto.readiness).toBeLessThanOrEqual(10);
       }
     }
   });

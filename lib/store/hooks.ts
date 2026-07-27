@@ -24,7 +24,7 @@ export function useEntrenador(id: string | undefined) {
   return id ? entrenadores.find((e) => e.id === id) : undefined;
 }
 
-/** Último readiness registrado (0–100) del atleta, o `null` si no tiene evolución. */
+/** Último readiness registrado (0–10) del atleta, o `null` si no tiene evolución. */
 export function useReadinessActual(atletaId: string): number | null {
   const atleta = useAtleta(atletaId);
   const ultimo = atleta?.evolucion[atleta.evolucion.length - 1];

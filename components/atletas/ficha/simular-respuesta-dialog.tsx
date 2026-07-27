@@ -73,7 +73,7 @@ export function SimularRespuestaDialog({
       const ultimo = evolucionActual[evolucionActual.length - 1];
       // Sin histórico previo se arranca de un readiness neutro: ningún
       // formulario de la demo mide readiness todavía, así que se hereda.
-      const base = ultimo ?? { fecha: hoy, dolor: 0, carga: 0, rpe: 0, readiness: 70 };
+      const base = ultimo ?? { fecha: hoy, dolor: 0, carga: 0, rpe: 0, readiness: 7 };
       const nuevoPunto = { ...base, ...cambios, fecha: hoy };
       const nuevaEvolucion =
         ultimo && ultimo.fecha === hoy

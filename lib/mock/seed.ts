@@ -217,6 +217,7 @@ function acwrSemanas(inicioSemana: number, agudos: number[]): Atleta["acwr"] {
   return agudos.map((agudo, i) => ({ semana: `S${inicioSemana + i}`, agudo }));
 }
 
+/** `dolor`, `rpe` y `readiness` en 0–10; `carga` en sRPE bruto. */
 function evolucionPuntos(
   fechas: string[],
   dolor: number[],
@@ -695,7 +696,7 @@ export function buildSeed(): AppState {
         [420, 460, 480, 520, 560, 610, 670, 780],
         [5, 6, 6, 6, 7, 7, 7, 8],
         // Cae al final: el partido amistoso no planificado le pasa factura.
-        [52, 58, 62, 66, 70, 74, 78, 71]
+        [5, 5, 6, 6, 7, 7, 8, 6]
       ),
     });
 
@@ -774,7 +775,7 @@ export function buildSeed(): AppState {
         [4, 4, 3, 3, 3, 2, 2, 2],
         [160, 175, 190, 200, 210, 220, 228, 232],
         [4, 4, 5, 5, 5, 6, 6, 6],
-        [58, 61, 64, 67, 70, 74, 78, 81]
+        [4, 5, 5, 6, 6, 7, 7, 8]
       ),
     });
 
@@ -851,7 +852,7 @@ export function buildSeed(): AppState {
         [2, 2, 1, 1, 1, 0, 0, 0],
         [650, 670, 690, 700, 710, 715, 720, 718],
         [6, 6, 6, 7, 7, 7, 6, 6],
-        [76, 79, 81, 84, 86, 88, 90, 92]
+        [7, 7, 8, 8, 8, 9, 9, 9]
       ),
     });
 
@@ -920,7 +921,7 @@ export function buildSeed(): AppState {
         [4, 3, 3],
         [90, 105, 110],
         [4, 4, 5],
-        [45, 50, 54]
+        [4, 4, 5]
       ),
     });
 
@@ -986,7 +987,7 @@ export function buildSeed(): AppState {
         [80, 150, 220, 260, 300, 130],
         [3, 4, 5, 5, 6, 5],
         // Readiness bajo, con recaída clara al repuntar el dolor.
-        [38, 44, 53, 58, 62, 43]
+        [3, 4, 5, 6, 6, 4]
       ),
     });
 
@@ -1061,7 +1062,7 @@ export function buildSeed(): AppState {
         [5, 4, 3, 3, 2, 2, 2, 1, 1],
         [150, 170, 190, 205, 220, 232, 240, 250, 255],
         [4, 4, 5, 5, 5, 6, 6, 6, 6],
-        [55, 58, 62, 66, 69, 72, 76, 79, 82]
+        [5, 5, 6, 6, 7, 7, 7, 8, 8]
       ),
     });
 
@@ -1139,7 +1140,7 @@ export function buildSeed(): AppState {
         [340, 355, 360, 365, 370, 375, 380, 385, 650],
         [5, 5, 5, 6, 6, 6, 6, 6, 7],
         // Cae en el último punto: rodaje de montaña no planificado.
-        [56, 60, 63, 66, 68, 71, 74, 76, 63]
+        [5, 6, 6, 7, 7, 7, 8, 8, 6]
       ),
     });
 
@@ -1214,7 +1215,7 @@ export function buildSeed(): AppState {
         [3, 3, 2, 2, 2, 1, 1, 1, 0],
         [175, 195, 210, 225, 235, 240, 250, 255, 260],
         [4, 4, 5, 5, 5, 6, 6, 6, 6],
-        [62, 65, 68, 72, 75, 78, 81, 84, 86]
+        [6, 6, 7, 7, 7, 8, 8, 8, 9]
       ),
     });
 
@@ -1292,7 +1293,7 @@ export function buildSeed(): AppState {
         [3, 3, 2, 2, 1, 1, 1, 0, 0],
         [500, 520, 535, 545, 555, 565, 575, 585, 595],
         [5, 5, 6, 6, 6, 6, 7, 7, 7],
-        [70, 73, 76, 79, 82, 85, 87, 90, 92]
+        [7, 7, 8, 8, 8, 9, 9, 9, 9]
       ),
     });
 
@@ -1370,7 +1371,7 @@ export function buildSeed(): AppState {
         [1, 1, 0, 0, 0, 0, 0, 0, 0],
         [430, 445, 455, 460, 465, 468, 470, 472, 470],
         [5, 5, 6, 6, 6, 6, 6, 6, 6],
-        [82, 84, 86, 88, 90, 92, 93, 94, 95]
+        [8, 8, 9, 9, 9, 9, 9, 10, 10]
       ),
     });
 

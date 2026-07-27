@@ -76,9 +76,9 @@ export type Suscripcion = {
 };
 
 /**
- * Punto de evolución diario/semanal del atleta. Valores BRUTOS: dolor y RPE
- * en 0–10, carga en sRPE, `readiness` en 0–100 (cuánto de preparado/motivado
- * se siente ese día).
+ * Punto de evolución diario/semanal del atleta. Valores BRUTOS: dolor, RPE y
+ * `readiness` en 0–10 (misma escala, comparten eje en el gráfico de Evolución),
+ * carga en sRPE. `readiness` = cuánto de preparado/motivado se siente ese día.
  */
 export type PuntoEvolucion = {
   fecha: string;
