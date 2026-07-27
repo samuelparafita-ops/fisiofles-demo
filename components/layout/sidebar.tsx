@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Bell,
+  Briefcase,
   ChartNoAxesCombined,
   ClipboardList,
   Dumbbell,
@@ -23,6 +24,7 @@ export const navItems = [
   { href: "/plantillas", label: "Plantillas", icon: LayoutTemplate },
   { href: "/formularios", label: "Formularios", icon: ClipboardList },
   { href: "/notificaciones", label: "Notificaciones", icon: Bell },
+  { href: "/clinica", label: "Clínica", icon: Briefcase },
 ];
 
 export const navItemFooter = {

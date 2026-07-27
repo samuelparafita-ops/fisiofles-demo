@@ -43,3 +43,10 @@ export function fmtFechaLarga(iso: string): string {
   const [y, m, d] = iso.split("-");
   return `${d}/${m}/${y}`;
 }
+
+/** Días entre hoy y `fechaIso` (negativo si `fechaIso` ya pasó). */
+export function diasHasta(fechaIso: string): number {
+  const hoy = new Date(`${hoyIso()}T00:00:00`);
+  const fecha = new Date(`${fechaIso}T00:00:00`);
+  return Math.round((fecha.getTime() - hoy.getTime()) / 86400000);
+}
