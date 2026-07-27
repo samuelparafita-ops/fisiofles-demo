@@ -11,6 +11,7 @@ import type {
   Atleta,
   BloqueSemanal,
   Config,
+  Entrenador,
   FormularioDef,
   FormularioEnvio,
   Notificacion,
@@ -24,6 +25,7 @@ import type {
 
 export type EntityMap = {
   atletas: Atleta;
+  entrenadores: Entrenador;
   sesiones: Sesion;
   bloques: BloqueSemanal;
   ejercicios: Ejercicio;

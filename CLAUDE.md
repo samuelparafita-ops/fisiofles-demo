@@ -6,7 +6,7 @@ deportiva. Es un PROTOTIPO para enseñar a fisioterapeutas, NO producción.
 
 ## Reglas duras
 - Sin backend, sin base de datos, sin auth real. Todo es mock en `lib/mock/`.
-- El store se persiste en `localStorage` bajo la clave única `fisiofles-demo-v2`
+- El store se persiste en `localStorage` bajo la clave única `fisiofles-demo-v3`
   (ver `lib/store/`). Hay una acción "Restablecer demo" (menú del avatar) que
   borra esa clave y re-siembra desde `lib/mock/seed.ts`.
 - Única fuente de verdad: todo dato editable vive en el store (`lib/store/`).
@@ -22,7 +22,7 @@ deportiva. Es un PROTOTIPO para enseñar a fisioterapeutas, NO producción.
 - Todos los datos de pacientes son ficticios. Añade marca "Demo · datos ficticios" visible.
 
 ## Motor de cálculo (CRÍTICO)
-- Las fórmulas de los gráficos están especificadas en `docs/formulas-dashboard.md`. Es la FUENTE DE VERDAD.
+- Las fórmulas de los gráficos están especificadas en `docs/Fisiofles_Formulas_Dashboard.md`. Es la FUENTE DE VERDAD.
 - Implementación en `lib/calculations/` como funciones PURAS (sin React, sin estado), con tests.
 - Los datos mock guardan valores BRUTOS; las fórmulas se aplican en tiempo de render llamando a `lib/calculations/`. El dashboard calcula de verdad, no pinta números fijos.
 - No cambies una fórmula sin que yo lo pida. Si algo no cuadra con `docs/formulas-dashboard.md`, para y pregunta.

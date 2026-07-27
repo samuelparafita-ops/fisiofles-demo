@@ -14,7 +14,7 @@ import { buildSeed } from "@/lib/mock/seed";
 import { reducer, type Action } from "./reducer";
 import type { AppState } from "./types";
 
-export const STORAGE_KEY = "fisiofles-demo-v2";
+export const STORAGE_KEY = "fisiofles-demo-v3";
 const PERSIST_DEBOUNCE_MS = 300;
 
 type StoreContextValue = {

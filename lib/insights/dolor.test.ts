@@ -3,7 +3,7 @@ import { hallazgosDolor } from "./dolor";
 import { atletaFixture, UMBRALES_FIXTURE } from "./test-helpers";
 
 function evolucion(dolor: number) {
-  return [{ fecha: "2026-07-20", dolor, carga: 500, rpe: 6 }];
+  return [{ fecha: "2026-07-20", dolor, carga: 500, rpe: 6, readiness: 70 }];
 }
 
 describe("hallazgosDolor", () => {
