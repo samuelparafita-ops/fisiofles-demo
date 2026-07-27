@@ -75,6 +75,7 @@ export function CajaHallazgos({
   titulo,
   mostrarAtleta = true,
   colapsableInicial,
+  maxVisibles = 3,
   vacioTitulo = "Sin hallazgos activos",
   vacioDescripcion = "No hay hallazgos que mostrar ahora mismo.",
   className,
@@ -84,11 +85,14 @@ export function CajaHallazgos({
   mostrarAtleta?: boolean;
   /** true = la caja arranca colapsada. */
   colapsableInicial?: boolean;
+  /** Nº de hallazgos visibles (por severidad) antes de "Mostrar N más". */
+  maxVisibles?: number;
   vacioTitulo?: string;
   vacioDescripcion?: string;
   className?: string;
 }) {
   const [colapsada, setColapsada] = useState(Boolean(colapsableInicial));
+  const [expandida, setExpandida] = useState(false);
   const estado = useStateColors();
 
   const ordenados = [...hallazgos].sort((a, b) => {
@@ -98,6 +102,8 @@ export function CajaHallazgos({
   });
 
   const tieneUrgentes = ordenados.some((h) => h.severidad !== "info");
+  const hayOcultos = ordenados.length > maxVisibles;
+  const visibles = expandida ? ordenados : ordenados.slice(0, maxVisibles);
 
   return (
     <div className={cn("rounded-xl border border-borderSoft bg-surface2 shadow-sm", className)}>
@@ -128,11 +134,25 @@ export function CajaHallazgos({
       {!colapsada && (
         <div className="border-t border-borderSoft px-5 pb-2">
           {ordenados.length > 0 ? (
-            <div className="divide-y divide-borderSoft">
-              {ordenados.map((h) => (
-                <FilaHallazgo key={h.id} hallazgo={h} mostrarAtleta={mostrarAtleta} />
-              ))}
-            </div>
+            <>
+              <div className="divide-y divide-borderSoft">
+                {visibles.map((h) => (
+                  <FilaHallazgo key={h.id} hallazgo={h} mostrarAtleta={mostrarAtleta} />
+                ))}
+              </div>
+              {hayOcultos && (
+                <button
+                  type="button"
+                  onClick={() => setExpandida((e) => !e)}
+                  className="flex w-full items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-brand-ink transition-colors hover:underline"
+                >
+                  {expandida ? "Mostrar menos" : `Mostrar ${ordenados.length - maxVisibles} más`}
+                  <ChevronDown
+                    className={cn("size-3.5 shrink-0 transition-transform", expandida && "rotate-180")}
+                  />
+                </button>
+              )}
+            </>
           ) : (
             <div className="flex flex-col items-center py-6 text-center">
               <ShieldCheck className="mb-2 size-6" style={{ color: estado.good }} />

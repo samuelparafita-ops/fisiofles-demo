@@ -1,13 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { UserCog } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { estadoSimetria } from "@/lib/calculations";
 import { colors } from "@/lib/tokens";
 import { useStateColors } from "@/lib/theme";
-import { useConfig, useResumenAtleta, type Atleta } from "@/lib/store";
+import { useEntrenador, useReadinessActual, type Atleta } from "@/lib/store";
+import { AtletaAvatar } from "@/components/atletas/atleta-avatar";
 import { AtletaMenu } from "@/components/atletas/atleta-menu";
+import { estadoReadiness } from "@/components/atletas/readiness-utils";
 
 const ESTADO_ATLETA_LABEL: Record<Atleta["estado"], string> = {
   activo: "Activo",
@@ -17,25 +19,22 @@ const ESTADO_ATLETA_LABEL: Record<Atleta["estado"], string> = {
 
 export function AtletaCard({ atleta }: { atleta: Atleta }) {
   const router = useRouter();
-  const resumen = useResumenAtleta(atleta.id);
-  const { umbrales } = useConfig();
+  const entrenador = useEntrenador(atleta.entrenadorId);
+  const readiness = useReadinessActual(atleta.id);
   const estadoColores = useStateColors();
-  const ESTADO_COLOR = {
-    deficit: estadoColores.bad,
-    aceptable: estadoColores.warn,
-    optimo: estadoColores.good,
-  } as const;
   const ESTADO_ATLETA_DOT: Record<Atleta["estado"], string> = {
     activo: estadoColores.good,
     alta: colors.brandInk,
     pausa: estadoColores.warn,
   };
-  const media = resumen?.simetriaMedia ?? null;
-  const estado =
-    media !== null
-      ? estadoSimetria(media, { aceptable: umbrales.simetriaAceptable, optimo: umbrales.simetriaObjetivo })
-      : null;
-  const color = estado ? ESTADO_COLOR[estado] : colors.muted;
+  const READINESS_COLOR = {
+    bien: estadoColores.good,
+    atencion: estadoColores.warn,
+    alerta: estadoColores.bad,
+  } as const;
+
+  const readinessPct = readiness !== null ? Math.round(readiness * 10) : null;
+  const color = readinessPct !== null ? READINESS_COLOR[estadoReadiness(readinessPct)] : colors.muted;
 
   return (
     <Card
@@ -44,9 +43,11 @@ export function AtletaCard({ atleta }: { atleta: Atleta }) {
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-start gap-3">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand-tint font-display text-sm font-bold text-brand-ink transition-colors group-hover:bg-brand group-hover:text-white">
-            {atleta.avatarInitials}
-          </div>
+          <AtletaAvatar
+            atleta={atleta}
+            size="md"
+            className="transition-colors group-hover:bg-brand group-hover:text-white"
+          />
           <div className="min-w-0">
             <p className="font-display text-base font-bold text-textStrong">{atleta.nombre}</p>
             <p className="text-sm text-muted-foreground">{atleta.deporte}</p>
@@ -78,17 +79,26 @@ export function AtletaCard({ atleta }: { atleta: Atleta }) {
         </span>
       </div>
 
+      <div className="mt-3 flex items-center gap-1.5 text-xs text-textDim">
+        <UserCog className="size-3.5 shrink-0" />
+        {entrenador ? (
+          <span className="truncate text-text">{entrenador.nombre}</span>
+        ) : (
+          <span>Sin asignar</span>
+        )}
+      </div>
+
       <div className="mt-4">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-textDim">Simetría media</span>
+          <span className="text-textDim">Readiness</span>
           <span className="font-display font-bold" style={{ color }}>
-            {media !== null ? `${media.toFixed(0)}%` : "N/D"}
+            {readinessPct !== null ? `${readinessPct}%` : "N/D"}
           </span>
         </div>
         <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-borderSoft">
           <div
             className="h-full rounded-full transition-all"
-            style={{ width: `${media !== null ? Math.min(100, media) : 0}%`, background: color }}
+            style={{ width: `${readinessPct !== null ? Math.min(100, readinessPct) : 0}%`, background: color }}
           />
         </div>
       </div>

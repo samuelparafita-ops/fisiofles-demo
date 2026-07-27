@@ -4,9 +4,10 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { colors } from "@/lib/tokens";
 import { useStateColors } from "@/lib/theme";
-import { useResumenAtleta, type Atleta } from "@/lib/store";
+import { useEntrenador, useReadinessActual, type Atleta } from "@/lib/store";
+import { AtletaAvatar } from "@/components/atletas/atleta-avatar";
 import { AtletaMenu } from "@/components/atletas/atleta-menu";
-import type { ZonaAcwr } from "@/lib/calculations";
+import { estadoReadiness } from "@/components/atletas/readiness-utils";
 
 const ESTADO_ATLETA_LABEL: Record<Atleta["estado"], string> = {
   activo: "Activo",
@@ -14,26 +15,24 @@ const ESTADO_ATLETA_LABEL: Record<Atleta["estado"], string> = {
   pausa: "Pausa",
 };
 
-const ZONA_LABEL: Record<ZonaAcwr, string> = {
-  optima: "Óptima",
-  riesgo: "Riesgo",
-  insuficiente: "Insuf.",
-};
-
 function FilaAtleta({ atleta }: { atleta: Atleta }) {
   const router = useRouter();
-  const resumen = useResumenAtleta(atleta.id);
+  const entrenador = useEntrenador(atleta.entrenadorId);
+  const readiness = useReadinessActual(atleta.id);
   const estado = useStateColors();
   const ESTADO_ATLETA_COLOR: Record<Atleta["estado"], string> = {
     activo: estado.good,
     alta: colors.brandInk,
     pausa: estado.warn,
   };
-  const ZONA_COLOR: Record<ZonaAcwr, string> = {
-    optima: estado.good,
-    riesgo: estado.bad,
-    insuficiente: estado.warn,
-  };
+  const READINESS_COLOR = {
+    bien: estado.good,
+    atencion: estado.warn,
+    alerta: estado.bad,
+  } as const;
+
+  const readinessPct = readiness !== null ? Math.round(readiness * 10) : null;
+  const readinessColorValue = readinessPct !== null ? READINESS_COLOR[estadoReadiness(readinessPct)] : colors.muted;
 
   return (
     <tr
@@ -42,9 +41,7 @@ function FilaAtleta({ atleta }: { atleta: Atleta }) {
     >
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-tint font-display text-xs font-bold text-brand-ink">
-            {atleta.avatarInitials}
-          </div>
+          <AtletaAvatar atleta={atleta} size="sm" />
           <p className="font-display text-sm font-bold text-textStrong">{atleta.nombre}</p>
         </div>
       </td>
@@ -58,21 +55,14 @@ function FilaAtleta({ atleta }: { atleta: Atleta }) {
         </Badge>
       </td>
       <td className="whitespace-nowrap px-4 py-3 text-sm text-textDim">Sem. {atleta.semanaProceso}</td>
-      <td className="px-4 py-3 text-sm font-medium text-textStrong">
-        {resumen?.simetriaMedia !== null && resumen?.simetriaMedia !== undefined
-          ? `${resumen.simetriaMedia.toFixed(0)}%`
-          : "N/D"}
+      <td className="px-4 py-3 text-sm font-semibold" style={{ color: readinessColorValue }}>
+        {readinessPct !== null ? `${readinessPct}%` : "N/D"}
       </td>
-      <td className="px-4 py-3">
-        {resumen?.ratioAcwr !== null && resumen?.ratioAcwr !== undefined && resumen.zonaAcwr ? (
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
-            style={{ color: ZONA_COLOR[resumen.zonaAcwr], background: `${ZONA_COLOR[resumen.zonaAcwr]}1A` }}
-          >
-            {resumen.ratioAcwr.toFixed(2)} · {ZONA_LABEL[resumen.zonaAcwr]}
-          </span>
+      <td className="px-4 py-3 text-sm">
+        {entrenador ? (
+          <span className="text-text">{entrenador.nombre}</span>
         ) : (
-          <span className="text-xs text-textDim">N/D</span>
+          <span className="text-muted-foreground">Sin asignar</span>
         )}
       </td>
       <td className="px-4 py-3">
@@ -103,8 +93,8 @@ export function AtletasTabla({ atletas }: { atletas: Atleta[] }) {
               <th className="px-4 py-3 font-medium">Lesión</th>
               <th className="px-4 py-3 font-medium">Fase</th>
               <th className="px-4 py-3 font-medium">Semana</th>
-              <th className="px-4 py-3 font-medium">Simetría media</th>
-              <th className="px-4 py-3 font-medium">ACWR actual</th>
+              <th className="px-4 py-3 font-medium">Readiness</th>
+              <th className="px-4 py-3 font-medium">Entrenador</th>
               <th className="px-4 py-3 font-medium">Estado</th>
               <th className="px-2 py-3" />
             </tr>

@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/shared/stat-card";
+import { AtletaAvatar } from "@/components/atletas/atleta-avatar";
 import { AtletaMenu } from "@/components/atletas/atleta-menu";
 import { useResumenAtleta, useSesionesDeAtleta, useConfig, type Atleta, type Sesion } from "@/lib/store";
 
@@ -46,9 +47,7 @@ export function FichaHeader({ atleta }: { atleta: Atleta }) {
     <div className="mb-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-4">
-          <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-brand-tint font-display text-xl font-bold text-brand-ink">
-            {atleta.avatarInitials}
-          </div>
+          <AtletaAvatar atleta={atleta} size="lg" />
           <div>
             <h1 className="font-display text-2xl font-bold tracking-tight text-textStrong">
               {atleta.nombre}
