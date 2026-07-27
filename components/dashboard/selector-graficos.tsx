@@ -3,30 +3,32 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, Search, SlidersHorizontal } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { catalogoGraficos, type GraficoDef } from "@/lib/dashboard/graficos";
-import { useCatalogoTests, useConfig, useDispatch } from "@/lib/store";
+import type { GraficoDef } from "@/lib/dashboard/graficos";
 
 /**
- * Checkboxes de gráficos visibles en /dashboard — persiste en
- * `config.dashboardGraficos` (sobrevive al refresh). El orden de render lo
- * decide `config.dashboardGraficosOrden` (Personalización), no este selector
- * — ver `lib/dashboard/graficos.ts`.
+ * Checkboxes de gráficos visibles — usado por /dashboard
+ * (`config.dashboardGraficos`/`dashboardGraficosOrden`) y por el tab Datos de
+ * la ficha de atleta (`config.fichaGraficos`/`fichaGraficosOrden`), MISMO
+ * catálogo (`lib/dashboard/graficos.ts`) pero config distinta en cada caso —
+ * ver FASE 7. El orden de render lo decide `*Orden` (Personalización), no
+ * este selector.
  */
-export function SelectorGraficos() {
-  const catalogoTests = useCatalogoTests();
-  const { dashboardGraficos } = useConfig();
-  const dispatch = useDispatch();
+export function SelectorGraficos({
+  catalogo,
+  seleccionados,
+  onChange,
+}: {
+  catalogo: GraficoDef[];
+  seleccionados: string[];
+  onChange: (next: string[]) => void;
+}) {
   const [busqueda, setBusqueda] = useState("");
 
-  const graficos = useMemo(() => catalogoGraficos(catalogoTests), [catalogoTests]);
-  const resultados = useMemo(() => graficos.filter((g) => g.origen === "resultado"), [graficos]);
-  const tests = useMemo(() => graficos.filter((g) => g.origen === "test"), [graficos]);
+  const resultados = useMemo(() => catalogo.filter((g) => g.origen === "resultado"), [catalogo]);
+  const tests = useMemo(() => catalogo.filter((g) => g.origen === "test"), [catalogo]);
 
   function toggle(id: string) {
-    const next = dashboardGraficos.includes(id)
-      ? dashboardGraficos.filter((g) => g !== id)
-      : [...dashboardGraficos, id];
-    dispatch({ type: "CONFIG_ACTUALIZAR", payload: { dashboardGraficos: next } });
+    onChange(seleccionados.includes(id) ? seleccionados.filter((g) => g !== id) : [...seleccionados, id]);
   }
 
   const q = busqueda.trim().toLowerCase();
@@ -35,7 +37,7 @@ export function SelectorGraficos() {
   const testsFiltrados = filtrar(tests);
 
   function Item(g: GraficoDef) {
-    const activo = dashboardGraficos.includes(g.id);
+    const activo = seleccionados.includes(g.id);
     return (
       <label
         key={g.id}
@@ -62,7 +64,7 @@ export function SelectorGraficos() {
           <SlidersHorizontal className="size-4 text-textDim" />
           Gráficos
           <span className="rounded-full bg-brand-tint px-1.5 py-0.5 text-[11px] font-semibold text-brand-ink">
-            {dashboardGraficos.length}/{graficos.length}
+            {seleccionados.length}/{catalogo.length}
           </span>
           <ChevronDown className="size-3.5 text-textDim" />
         </button>

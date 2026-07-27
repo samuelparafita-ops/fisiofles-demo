@@ -296,9 +296,6 @@ export type Config = {
   /** Paleta cerrada de 6 acentos — ver lib/personalizacion/acentos.ts. No es un color libre. */
   acento: AcentoId;
   umbrales: UmbralesConfig;
-  /** Paneles visibles/orden del tab Datos de la ficha de atleta (perfil-fisico/acwr/simetrias/evolucion). */
-  metricasVisiblesDashboard: string[];
-  ordenDashboard: string[];
   vistaAtletas: VistaAtletas;
   /**
    * Gráficos visibles del dashboard v3. Ids `test:<testId>` (uno por test del
@@ -307,6 +304,14 @@ export type Config = {
   dashboardGraficos: string[];
   /** Orden de render de los gráficos del dashboard v3. */
   dashboardGraficosOrden: string[];
+  /**
+   * Gráficos visibles del tab Datos de la ficha de atleta — MISMO catálogo
+   * que `dashboardGraficos` (`lib/dashboard/graficos.ts`), config propia
+   * porque la selección tiene sentido distinto por atleta (ver FASE 7).
+   */
+  fichaGraficos: string[];
+  /** Orden de render de los gráficos de la ficha de atleta. */
+  fichaGraficosOrden: string[];
 };
 
 // ---------------------------------------------------------------------------

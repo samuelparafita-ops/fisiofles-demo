@@ -27,7 +27,7 @@ import {
 } from "@/lib/dashboard/series";
 import { rangoDesdeSemanas } from "@/lib/dashboard/series-tests";
 import { useComparisonColors } from "@/lib/theme";
-import { useAtletas, useCatalogoTests, useConfig, useRegistrosTests, useSesiones } from "@/lib/store";
+import { useAtletas, useCatalogoTests, useConfig, useDispatch, useRegistrosTests, useSesiones } from "@/lib/store";
 
 function fmtEntero(n: number): string {
   return Math.round(n).toLocaleString("es-ES");
@@ -46,6 +46,7 @@ export default function DashboardPage() {
   const registrosTests = useRegistrosTests();
   const catalogoTests = useCatalogoTests();
   const config = useConfig();
+  const dispatch = useDispatch();
   const comparisonColors = useComparisonColors();
 
   const [rango, setRango] = useState<RangoDashboardValor>(RANGO_DASHBOARD_DEFECTO);
@@ -141,7 +142,11 @@ export default function DashboardPage() {
           onChange={setSeleccionados}
           colores={comparisonColors}
         />
-        <SelectorGraficos />
+        <SelectorGraficos
+          catalogo={graficosCatalogo}
+          seleccionados={config.dashboardGraficos}
+          onChange={(next) => dispatch({ type: "CONFIG_ACTUALIZAR", payload: { dashboardGraficos: next } })}
+        />
         <SelectorFiltro
           label="Deporte"
           icon={Dumbbell}

@@ -1,9 +1,10 @@
 "use client";
 
-import { CheckCircle2 } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle2, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DIAS_SEMANA, type BloqueSemanalConSesiones, type Sesion } from "@/lib/store";
-import { SesionAccordion } from "@/components/programacion/sesion-accordion";
+import { SesionDetalleCard } from "@/components/programacion/sesion-detalle-card";
 
 function fmtFecha(iso: string) {
   const [, m, d] = iso.split("-");
@@ -57,33 +58,48 @@ function WeekStrip({ bloque }: { bloque: BloqueSemanalConSesiones }) {
 
 export function ProgramacionView({
   bloque,
+  defaultOpen = false,
   onEditarSesion,
 }: {
   bloque: BloqueSemanalConSesiones;
+  /** true = el bloque semanal arranca desplegado (la semana actual). */
+  defaultOpen?: boolean;
   /** Mismo diálogo de edición que usa el tab Calendario: editar aquí es editar allí. */
   onEditarSesion?: (sesion: Sesion) => void;
 }) {
+  const [open, setOpen] = useState(defaultOpen);
+
   return (
-    <div className="space-y-6">
-      <div className="rounded-xl border border-borderSoft bg-surface2 p-5 shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-borderSoft bg-surface2 shadow-sm">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between gap-3 p-5 text-left"
+      >
         <div>
           <p className="font-display text-base font-bold text-textStrong">{bloque.nombre}</p>
           <p className="mt-0.5 text-xs text-textDim">
             {fmtFecha(bloque.fechaInicio)} – {fmtFecha(bloque.fechaFin)}
           </p>
-          <p className="mt-3 max-w-2xl text-sm text-text">{bloque.objetivo}</p>
         </div>
+        <ChevronDown className={cn("size-4 shrink-0 text-textDim transition-transform", open && "rotate-180")} />
+      </button>
 
-        <div className="mt-5">
-          <WeekStrip bloque={bloque} />
+      {open && (
+        <div className="border-t border-borderSoft p-5 pt-5">
+          <p className="max-w-2xl text-sm text-text">{bloque.objetivo}</p>
+
+          <div className="mt-5">
+            <WeekStrip bloque={bloque} />
+          </div>
+
+          <div className="mt-6 space-y-3">
+            {bloque.sesiones.map((sesion) => (
+              <SesionDetalleCard key={sesion.id} sesion={sesion} onEditar={onEditarSesion} />
+            ))}
+          </div>
         </div>
-      </div>
-
-      <div className="space-y-3">
-        {bloque.sesiones.map((sesion, i) => (
-          <SesionAccordion key={sesion.id} sesion={sesion} defaultOpen={i === 0} onEditar={onEditarSesion} />
-        ))}
-      </div>
+      )}
     </div>
   );
 }

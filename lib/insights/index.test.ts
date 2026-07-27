@@ -10,11 +10,11 @@ const CONFIG: Config = {
   tema: "fisiofles",
   acento: ACENTO_DEFECTO,
   umbrales: UMBRALES_FIXTURE,
-  metricasVisiblesDashboard: [],
-  ordenDashboard: [],
   vistaAtletas: "grid",
   dashboardGraficos: [],
   dashboardGraficosOrden: [],
+  fichaGraficos: [],
+  fichaGraficosOrden: [],
 };
 
 function semanas(agudos: number[]) {

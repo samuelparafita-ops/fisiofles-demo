@@ -54,6 +54,26 @@ export const GRAFICOS_DASHBOARD_DEFECTO: string[] = [
   graficoTestId("sprint-10m"),
 ];
 
+/**
+ * Gráficos visibles por defecto en el tab Datos de la ficha de atleta (FASE
+ * 7) — mismo catálogo que el dashboard, sin `cuadrante-fv` (es una lectura de
+ * equipo, no individual) y con los 3 resultados de evolución individual
+ * (dolor/carga/readiness) que el dashboard no activa por defecto.
+ */
+export const FICHA_GRAFICOS_DEFECTO: string[] = [
+  graficoResultadoId("acwr"),
+  graficoResultadoId("simetria"),
+  graficoResultadoId("dolor"),
+  graficoResultadoId("carga"),
+  graficoResultadoId("readiness"),
+  graficoTestId("cmj"),
+  graficoTestId("imtp"),
+  graficoTestId("dinamometria-cuadriceps"),
+  graficoTestId("nordic"),
+  graficoTestId("single-hop"),
+  graficoTestId("sprint-10m"),
+];
+
 // ---------------------------------------------------------------------------
 // Catálogo de gráficos (FASE 3) — GraficoDef por test + por resultado.
 // ---------------------------------------------------------------------------

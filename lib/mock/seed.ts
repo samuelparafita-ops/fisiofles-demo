@@ -12,7 +12,7 @@
 import { catalogoSemilla, testPorNombre, variablePorNombre } from "@/lib/store/catalogo";
 import { ACENTO_DEFECTO } from "@/lib/personalizacion/acentos";
 import { UMBRALES_DEFECTO } from "@/lib/personalizacion/umbrales";
-import { GRAFICOS_DASHBOARD_DEFECTO } from "@/lib/dashboard/graficos";
+import { GRAFICOS_DASHBOARD_DEFECTO, FICHA_GRAFICOS_DEFECTO } from "@/lib/dashboard/graficos";
 import type {
   AppState,
   Atleta,
@@ -2000,11 +2000,11 @@ export function buildSeed(): AppState {
     tema: "fisiofles",
     acento: ACENTO_DEFECTO,
     umbrales: { ...UMBRALES_DEFECTO },
-    metricasVisiblesDashboard: ["perfil-fisico", "acwr", "simetrias", "evolucion"],
-    ordenDashboard: ["perfil-fisico", "acwr", "simetrias", "evolucion"],
     vistaAtletas: "grid",
     dashboardGraficos: GRAFICOS_DASHBOARD_DEFECTO,
     dashboardGraficosOrden: GRAFICOS_DASHBOARD_DEFECTO,
+    fichaGraficos: FICHA_GRAFICOS_DEFECTO,
+    fichaGraficosOrden: FICHA_GRAFICOS_DEFECTO,
   };
 
   return {
