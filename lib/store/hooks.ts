@@ -14,6 +14,23 @@ export function useAtleta(id: string) {
   return useStore().state.atletas.find((a) => a.id === id);
 }
 
+export function useEntrenadores() {
+  return useStore().state.entrenadores;
+}
+
+/** `undefined` tanto si el atleta no tiene entrenador asignado como si el id no existe. */
+export function useEntrenador(id: string | undefined) {
+  const { entrenadores } = useStore().state;
+  return id ? entrenadores.find((e) => e.id === id) : undefined;
+}
+
+/** Último readiness registrado (0–10) del atleta, o `null` si no tiene evolución. */
+export function useReadinessActual(atletaId: string): number | null {
+  const atleta = useAtleta(atletaId);
+  const ultimo = atleta?.evolucion[atleta.evolucion.length - 1];
+  return ultimo ? ultimo.readiness : null;
+}
+
 export function useEjercicios() {
   return useStore().state.ejercicios;
 }

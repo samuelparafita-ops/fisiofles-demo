@@ -1,6 +1,9 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useStateColors } from "@/lib/theme";
 
 interface StatCardVariation {
   label: string;
@@ -16,12 +19,6 @@ interface StatCardProps {
   className?: string;
 }
 
-const toneClasses: Record<StatCardVariation["tone"], string> = {
-  good: "text-state-good",
-  bad: "text-state-bad",
-  neutral: "text-muted-foreground",
-};
-
 export function StatCard({
   label,
   value,
@@ -29,6 +26,13 @@ export function StatCard({
   variation,
   className,
 }: StatCardProps) {
+  const estado = useStateColors();
+  const toneColor: Record<StatCardVariation["tone"], string | undefined> = {
+    good: estado.good,
+    bad: estado.bad,
+    neutral: undefined,
+  };
+
   return (
     <div
       className={cn(
@@ -51,8 +55,9 @@ export function StatCard({
         <div
           className={cn(
             "mt-2 flex items-center gap-1 text-xs font-medium",
-            toneClasses[variation.tone]
+            variation.tone === "neutral" && "text-muted-foreground"
           )}
+          style={{ color: toneColor[variation.tone] }}
         >
           {variation.direction === "up" && <ArrowUp className="size-3" />}
           {variation.direction === "down" && <ArrowDown className="size-3" />}

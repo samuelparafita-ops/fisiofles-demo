@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Radar,
   RadarChart,
@@ -19,6 +19,10 @@ export type RadarPerfilProps = {
   /** Valores BRUTOS por capacidad — el componente calcula el z-score, no lo recibe. */
   perfilFisico: { eje: Capacidad; inicial: number; actual: number; objetivo: number }[];
   sexo: Sexo;
+  /** Si se pasa, filtra los ejes mostrados (mínimo 3 — ver selector en la ficha del atleta). Por defecto, todos. */
+  ejesVisibles?: Capacidad[];
+  /** Control extra en la cabecera, junto a "Comparar con inicial" (ej. selector de ejes en la ficha). */
+  accionExtra?: ReactNode;
   className?: string;
 };
 
@@ -47,19 +51,23 @@ function RadarTooltip({ active, payload, label }: TooltipContentProps) {
  * NO recalcula nada: llama a `perfilRadar()` de `lib/calculations/radar.ts`.
  * Por defecto solo muestra Actual vs. Objetivo; "Inicial" es opcional (toggle).
  */
-export function RadarPerfil({ perfilFisico, sexo, className }: RadarPerfilProps) {
+export function RadarPerfil({ perfilFisico, sexo, ejesVisibles, accionExtra, className }: RadarPerfilProps) {
   const [compararInicial, setCompararInicial] = useState(false);
   const chartColors = useChartColors();
   const gridColors = useChartGridColors();
 
+  const perfilFiltrado = ejesVisibles
+    ? perfilFisico.filter((p) => ejesVisibles.includes(p.eje))
+    : perfilFisico;
+
   const valoresIniciales = Object.fromEntries(
-    perfilFisico.map((p) => [p.eje, p.inicial])
+    perfilFiltrado.map((p) => [p.eje, p.inicial])
   ) as Partial<Record<Capacidad, number>>;
   const valoresActuales = Object.fromEntries(
-    perfilFisico.map((p) => [p.eje, p.actual])
+    perfilFiltrado.map((p) => [p.eje, p.actual])
   ) as Partial<Record<Capacidad, number>>;
   const objetivoPorEje = Object.fromEntries(
-    perfilFisico.map((p) => [p.eje, p.objetivo])
+    perfilFiltrado.map((p) => [p.eje, p.objetivo])
   ) as Record<Capacidad, number>;
 
   const series = perfilRadar(valoresIniciales, valoresActuales, sexo);
@@ -77,27 +85,30 @@ export function RadarPerfil({ perfilFisico, sexo, className }: RadarPerfilProps)
       description="12 capacidades vs. población de referencia (z-score)"
       className={className}
       action={
-        <button
-          type="button"
-          onClick={() => setCompararInicial((v) => !v)}
-          className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors"
-          style={{
-            borderColor: compararInicial ? chartColors.base : gridColors.grid,
-            color: compararInicial ? chartColors.base : gridColors.axis,
-            background: compararInicial ? `${chartColors.base}14` : "transparent",
-          }}
-        >
-          <span
-            className="inline-block size-2 rounded-full"
-            style={{ background: compararInicial ? chartColors.base : gridColors.line }}
-          />
-          Comparar con inicial
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {accionExtra}
+          <button
+            type="button"
+            onClick={() => setCompararInicial((v) => !v)}
+            className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors"
+            style={{
+              borderColor: compararInicial ? chartColors.base : gridColors.grid,
+              color: compararInicial ? chartColors.base : gridColors.axis,
+              background: compararInicial ? `${chartColors.base}14` : "transparent",
+            }}
+          >
+            <span
+              className="inline-block size-2 rounded-full"
+              style={{ background: compararInicial ? chartColors.base : gridColors.line }}
+            />
+            Comparar con inicial
+          </button>
+        </div>
       }
     >
-      <div className="h-80 w-full">
+      <div className="h-96 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <RadarChart data={data} outerRadius="70%">
+          <RadarChart data={data} outerRadius="55%">
             <PolarGrid stroke={gridColors.grid} />
             <PolarAngleAxis
               dataKey="eje"

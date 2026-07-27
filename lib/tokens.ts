@@ -12,9 +12,11 @@
  * "clasico-excel" (panel oscuro `chartBg`, activable desde Personalización);
  * sobre fondo claro no tienen contraste suficiente y fatigan la vista.
  * `dataLight.*` es la paleta de datos para fondo claro (tema "fisiofles" por
- * defecto, y "oscuro" sobre superficies oscuras) — ver `lib/theme.ts`
- * `useChartColors()`. Ningún gráfico debe importar `data.*` directamente:
- * todos consumen colores vía ese hook.
+ * defecto). `dataDark.*` es su equivalente para el tema "oscuro" (mismos 5
+ * roles, tonos claros-saturados legibles sobre `colorsDark.surface`). Ambas
+ * vía `lib/theme.ts` `useChartColors()`. Ningún gráfico debe importar
+ * `data.*`/`dataLight.*`/`dataDark.*` directamente: todos consumen colores
+ * vía ese hook.
  * `brand` es para acentos grandes / estado activo / panel oscuro; para texto
  * y enlaces cyan sobre fondo claro usa `brandInk`, que sí contrasta. `brand`
  * tampoco sirve para trazos/líneas de gráfico sobre blanco (~2:1, no pasa
@@ -52,14 +54,29 @@ export const colors = {
     base: "#64748B",
   },
 
-  // Paleta de comparación (Dashboard /dashboard, FASE E) — hasta 4 atletas
-  // superpuestos sobre la serie agregada gris. Deliberadamente fuera de la
-  // familia semántica rojo/verde/naranja de `dataLight` (reservada para
-  // zonas de riesgo) y del cyan de `dataLight.primary`, para que un atleta
-  // seleccionado nunca se confunda con una banda de estado. Las 4 contrastan
+  // Datos — paleta para FONDO OSCURO (tema "oscuro"). Mismos 5 roles que
+  // `dataLight`, en versión clara-saturada: sobre `colorsDark.surface`
+  // (#161B22) los tonos de `dataLight` (pensados para contrastar en blanco)
+  // pierden legibilidad. Verificado ≥6:1 los 5 (líneas/texto) salvo `base`
+  // (~6.6:1, de sobra para trazos de referencia). Acceder vía
+  // `useChartColors()` (lib/theme.ts), igual que `dataLight`.
+  dataDark: {
+    primary: "#22D3EE", // cyan claro (~9.3:1 sobre #161B22)
+    compare: "#F87171", // rojo claro (~6.1:1)
+    good: "#4ADE80", // verde claro (~9.7:1)
+    warn: "#FBBF24", // ámbar claro (~10.1:1)
+    base: "#94A3B8", // gris claro (~6.6:1)
+  },
+
+  // Paleta de comparación (Dashboard /dashboard FASE E; motor de gráficos por
+  // test FASE 3) — hasta 6 atletas superpuestos sobre la serie agregada gris
+  // o resaltados en barras/dispersión. Deliberadamente fuera de la familia
+  // semántica rojo/verde/naranja de `dataLight` (reservada para zonas de
+  // estado) y del cyan de `dataLight.primary`, para que un atleta
+  // seleccionado nunca se confunda con una banda de estado. Los 6 contrastan
   // ≥4.5:1 sobre blanco y son distinguibles entre sí. Acceder siempre vía
   // `useComparisonColors()` (lib/theme.ts).
-  comparison: ["#2563EB", "#7C3AED", "#DB2777", "#0F766E"],
+  comparison: ["#2563EB", "#7C3AED", "#DB2777", "#0F766E", "#92400E", "#475569"],
 
   // Superficie oscura de los gráficos (el "cockpit")
   chartBg: "#181C20", // fondo de los paneles de gráfico
@@ -71,6 +88,19 @@ export const colors = {
     good: "#15803D",
     warn: "#B45309",
     bad: "#DC2626",
+  },
+
+  // Estados — misma semántica que `state.*` pero tonos de `dataDark` (ya
+  // verificados ≥6:1 sobre `colorsDark.surface`): los tonos de `state.*` se
+  // eligieron oscuros a propósito para contrastar en BLANCO, así que pierden
+  // legibilidad sobre superficie oscura. Acceder vía `useStateColors()`
+  // (lib/theme.ts) donde un estado se pinta con `style` inline (icono/badge
+  // de hallazgo, hito, notificación...). No se usa en gráficos: eso ya lo
+  // cubre `dataDark` vía `useChartColors()`.
+  stateDark: {
+    good: "#4ADE80",
+    warn: "#FBBF24",
+    bad: "#F87171",
   },
 
   // Neutros — base CLARA

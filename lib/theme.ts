@@ -10,6 +10,12 @@
 import { useConfig } from "@/lib/store";
 import { colors, colorsDark } from "@/lib/tokens";
 
+export type StateColors = {
+  good: string;
+  warn: string;
+  bad: string;
+};
+
 export type ChartColors = {
   primary: string;
   compare: string;
@@ -25,6 +31,7 @@ export function useChartColors(): ChartColors {
     case "clasico-excel":
       return colors.data;
     case "oscuro":
+      return colors.dataDark;
     case "fisiofles":
     default:
       return colors.dataLight;
@@ -70,10 +77,25 @@ export function useCockpit(): boolean {
 }
 
 /**
- * Paleta de hasta 4 colores para superponer atletas en /dashboard (FASE E).
- * Se asigna por orden de selección (primer atleta elegido → color[0], etc.),
- * igual en los 4 gráficos de la página para que un mismo atleta se lea con
- * el mismo color en todos. No varía por tema — ver lib/tokens.ts.
+ * Colores de estado (good/warn/bad) para badges/iconos pintados con `style`
+ * inline (no llegan las clases Tailwind `text-state-*`/`bg-state-*` porque
+ * se combinan con el hex en runtime, ej. `${color}1A` de fondo). `state.*`
+ * está afinado para contrastar sobre BLANCO; en "oscuro" se sustituye por
+ * `stateDark.*` (mismos tonos que `dataDark.compare/warn/good`). "clasico-excel"
+ * no toca la UI general (solo el panel de cada gráfico, ver `useCockpit()`),
+ * así que sigue usando `state.*`.
+ */
+export function useStateColors(): StateColors {
+  const { tema } = useConfig();
+  return tema === "oscuro" ? colors.stateDark : colors.state;
+}
+
+/**
+ * Paleta de hasta 6 colores para superponer/resaltar atletas (dashboard v2
+ * FASE E, motor de gráficos por test FASE 3). Se asigna por orden de
+ * selección (primer atleta elegido → color[0], etc.), igual en todos los
+ * gráficos de una misma página para que un mismo atleta se lea con el mismo
+ * color en todos. No varía por tema — ver lib/tokens.ts.
  */
 export function useComparisonColors(): string[] {
   return [...colors.comparison];

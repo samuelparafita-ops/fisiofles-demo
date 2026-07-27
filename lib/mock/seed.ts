@@ -12,7 +12,7 @@
 import { catalogoSemilla, testPorNombre, variablePorNombre } from "@/lib/store/catalogo";
 import { ACENTO_DEFECTO } from "@/lib/personalizacion/acentos";
 import { UMBRALES_DEFECTO } from "@/lib/personalizacion/umbrales";
-import { METRICAS_DASHBOARD_IDS } from "@/lib/dashboard/metricas";
+import { GRAFICOS_DASHBOARD_DEFECTO, FICHA_GRAFICOS_DEFECTO } from "@/lib/dashboard/graficos";
 import type {
   AppState,
   Atleta,
@@ -20,6 +20,7 @@ import type {
   Capacidad,
   Config,
   EjercicioProgramado,
+  Entrenador,
   EstadoSesion,
   FormularioDef,
   FormularioEnvio,
@@ -28,8 +29,11 @@ import type {
   Notificacion,
   PlantillaPrograma,
   PlantillaSesion,
+  PreguntaAnamnesis,
   RegistroTest,
   Sesion,
+  Suscripcion,
+  TestDef,
   TipoHito,
   ValorCuestionario,
   ValorUnico,
@@ -212,14 +216,42 @@ function acwrSemanas(inicioSemana: number, agudos: number[]): Atleta["acwr"] {
   return agudos.map((agudo, i) => ({ semana: `S${inicioSemana + i}`, agudo }));
 }
 
+/** `dolor`, `rpe` y `readiness` en 0–10; `carga` en sRPE bruto. */
 function evolucionPuntos(
   fechas: string[],
   dolor: number[],
   carga: number[],
-  rpe: number[]
+  rpe: number[],
+  readiness: number[]
 ): Atleta["evolucion"] {
-  return fechas.map((fecha, i) => ({ fecha, dolor: dolor[i], carga: carga[i], rpe: rpe[i] }));
+  return fechas.map((fecha, i) => ({
+    fecha,
+    dolor: dolor[i],
+    carga: carga[i],
+    rpe: rpe[i],
+    readiness: readiness[i],
+  }));
 }
+
+function anamnesis(pares: [string, string][]): PreguntaAnamnesis[] {
+  return pares.map(([pregunta, respuesta]) => ({ pregunta, respuesta }));
+}
+
+// ---------------------------------------------------------------------------
+// Entrenadores y suscripciones
+// ---------------------------------------------------------------------------
+
+const entrenadores: Entrenador[] = [
+  { id: "alex-rios", nombre: "Álex Ríos", iniciales: "AR", rol: "Readaptador", capacidadMaxima: 6 },
+  { id: "marta-pena", nombre: "Marta Peña", iniciales: "MP", rol: "Fisioterapeuta", capacidadMaxima: 5 },
+  { id: "jorge-lema", nombre: "Jorge Lema", iniciales: "JL", rol: "Preparador físico", capacidadMaxima: 4 },
+];
+
+const DURACION_PLAN: Record<string, number> = {
+  Mensual: 30,
+  Trimestral: 90,
+  "Readaptación completa": 180,
+};
 
 // Ejercicios de librería reutilizados en la programación de todos los atletas.
 const EJ = {
@@ -331,6 +363,251 @@ const EJ = {
 };
 
 // ---------------------------------------------------------------------------
+// Ampliación determinista de registros de test
+//
+// El dashboard v3 pinta un gráfico por test del catálogo, así que la semilla
+// necesita histórico en TODOS los tests, no solo en los que se escribieron a
+// mano arriba. Estas tablas describen, por test y por atleta, cómo se ve una
+// medición "de hoy"; el generador (`generarRegistros`) interpola hacia atrás
+// en el tiempo. Todo determinista: mismos valores en cada `buildSeed()`.
+// ---------------------------------------------------------------------------
+
+/** Valor de referencia de una variable en la medición MÁS RECIENTE del atleta medio. */
+type EspecVariable = { valor: number; dec: number; menorEsMejor?: boolean };
+
+/** `mejora` = ganancia relativa acumulada entre el registro más antiguo y el más reciente. */
+type EspecTest = { mejora: number; vars: Record<string, EspecVariable> };
+
+/** Indexado por id de test / id de variable del catálogo (slugs de `lib/store/catalogo.ts`). */
+const ESPEC_TESTS: Record<string, EspecTest> = {
+  cmj: {
+    mejora: 0.16,
+    vars: {
+      altura: { valor: 32, dec: 1 },
+      "peak-power": { valor: 45, dec: 1 },
+      "rsi-mod": { valor: 0.46, dec: 2 },
+      "tiempo-de-contacto": { valor: 0.24, dec: 2, menorEsMejor: true },
+      "tiempo-de-vuelo": { valor: 0.51, dec: 2 },
+      impulso: { valor: 218, dec: 0 },
+    },
+  },
+  sj: { mejora: 0.15, vars: { altura: { valor: 28.5, dec: 1 }, "peak-power": { valor: 41, dec: 1 } } },
+  abalakov: { mejora: 0.15, vars: { altura: { valor: 35, dec: 1 } } },
+  "drop-jump": {
+    mejora: 0.17,
+    vars: {
+      altura: { valor: 29.5, dec: 1 },
+      rsi: { valor: 1.38, dec: 2 },
+      "tiempo-de-contacto": { valor: 0.22, dec: 2, menorEsMejor: true },
+    },
+  },
+  "sl-cmj": { mejora: 0.18, vars: { altura: { valor: 19.5, dec: 1 } } },
+  "sl-drop-jump": { mejora: 0.18, vars: { altura: { valor: 16.5, dec: 1 } } },
+  imtp: {
+    mejora: 0.18,
+    vars: {
+      "peak-force": { valor: 2350, dec: 0 },
+      "fuerza-relativa": { valor: 32.5, dec: 1 },
+      rfd: { valor: 5800, dec: 0 },
+    },
+  },
+  "dinamometria-cuadriceps": { mejora: 0.2, vars: { fuerza: { valor: 355, dec: 0 } } },
+  "dinamometria-isquios": { mejora: 0.2, vars: { fuerza: { valor: 228, dec: 0 } } },
+  "dinamometria-aductores": { mejora: 0.2, vars: { fuerza: { valor: 212, dec: 0 } } },
+  nordic: { mejora: 0.22, vars: { fuerza: { valor: 305, dec: 0 } } },
+  "1rm-estimado": {
+    mejora: 0.16,
+    vars: { carga: { valor: 102, dec: 0 }, "fuerza-relativa": { valor: 1.32, dec: 2 } },
+  },
+  "5rm": { mejora: 0.16, vars: { carga: { valor: 86, dec: 0 } } },
+  "rom-rodilla-flexion": { mejora: 0.12, vars: { grados: { valor: 134, dec: 0 } } },
+  // Déficit de extensión: se mide lo que FALTA para el 0°, así que menos es mejor.
+  "rom-rodilla-extension": { mejora: 1.5, vars: { grados: { valor: 1, dec: 0, menorEsMejor: true } } },
+  "rom-tobillo-dorsiflexion": {
+    mejora: 0.22,
+    vars: { grados: { valor: 38, dec: 0 }, distancia: { valor: 11.2, dec: 1 } },
+  },
+  "rom-cadera": { mejora: 0.2, vars: { grados: { valor: 43, dec: 0 } } },
+  "sprint-10m": { mejora: 0.07, vars: { tiempo: { valor: 1.8, dec: 2, menorEsMejor: true } } },
+  "sprint-30m": { mejora: 0.06, vars: { tiempo: { valor: 4.32, dec: 2, menorEsMejor: true } } },
+  "velocidad-maxima": { mejora: 0.08, vars: { vmax: { valor: 7.7, dec: 2 } } },
+  aceleracion: { mejora: 0.07, vars: { tiempo: { valor: 1.04, dec: 2, menorEsMejor: true } } },
+  "505": {
+    mejora: 0.1,
+    vars: {
+      tiempo: { valor: 2.42, dec: 2, menorEsMejor: true },
+      "deficit-cod": { valor: 0.24, dec: 2, menorEsMejor: true },
+    },
+  },
+  illinois: { mejora: 0.08, vars: { tiempo: { valor: 16.4, dec: 2, menorEsMejor: true } } },
+  "single-hop": { mejora: 0.18, vars: { distancia: { valor: 190, dec: 0 } } },
+  "triple-hop": { mejora: 0.18, vars: { distancia: { valor: 555, dec: 0 } } },
+  "crossover-hop": { mejora: 0.18, vars: { distancia: { valor: 530, dec: 0 } } },
+};
+
+/** Cuestionarios PRO: recorrido de la puntuación entre el peor y el mejor estado. */
+const ESPEC_PRO: Record<string, { inicial: number; final: number }> = {
+  "acl-rsi": { inicial: 32, final: 88 },
+  ikdc: { inicial: 42, final: 92 },
+  koos: { inicial: 46, final: 93 },
+  "visa-a": { inicial: 38, final: 86 },
+  lefs: { inicial: 42, final: 78 },
+  nprs: { inicial: 7, final: 1 }, // escala 0-10 invertida: menos dolor es mejor
+};
+
+type PerfilSemilla = {
+  /** Escala física global del atleta (1 = atleta medio del modelo). */
+  factor: number;
+  ladoDebil: "izq" | "der";
+  /** Simetría (0-1) en el registro más antiguo y en el más reciente de la ventana. */
+  lsiInicio: number;
+  lsiFin: number;
+  /** Posición (0-1) dentro del recorrido de los cuestionarios PRO. */
+  proInicio: number;
+  proFin: number;
+  /** Offset (días respecto a hoy) del registro más antiguo generado. */
+  diaInicio: number;
+};
+
+/**
+ * Nerea Otxoa queda FUERA del generador a propósito: es el caso "recién
+ * llegada / datos escasos" de la demo (radar incompleto, ACWR no calculable).
+ */
+const PERFILES_SEMILLA: Record<string, PerfilSemilla> = {
+  "marcos-vidal": { factor: 1.08, ladoDebil: "izq", lsiInicio: 0.58, lsiFin: 0.76, proInicio: 0.05, proFin: 0.62, diaInicio: -98 },
+  "laura-saez": { factor: 0.84, ladoDebil: "izq", lsiInicio: 0.66, lsiFin: 0.88, proInicio: 0.15, proFin: 0.72, diaInicio: -56 },
+  "diego-torres": { factor: 1.12, ladoDebil: "der", lsiInicio: 0.8, lsiFin: 0.96, proInicio: 0.3, proFin: 0.9, diaInicio: -112 },
+  // Lumbalgia: sin déficit lateral relevante, simetría alta y estable.
+  "ruben-campos": { factor: 1.05, ladoDebil: "der", lsiInicio: 0.92, lsiFin: 0.96, proInicio: 0.1, proFin: 0.45, diaInicio: -35 },
+  "marta-iglesias": { factor: 0.9, ladoDebil: "izq", lsiInicio: 0.62, lsiFin: 0.78, proInicio: 0.2, proFin: 0.7, diaInicio: -63 },
+  "pol-serra": { factor: 0.98, ladoDebil: "der", lsiInicio: 0.84, lsiFin: 0.93, proInicio: 0.18, proFin: 0.66, diaInicio: -70 },
+  "carla-domenech": { factor: 0.88, ladoDebil: "der", lsiInicio: 0.82, lsiFin: 0.95, proInicio: 0.22, proFin: 0.75, diaInicio: -91 },
+  "ivan-roldan": { factor: 1.1, ladoDebil: "izq", lsiInicio: 0.86, lsiFin: 0.96, proInicio: 0.28, proFin: 0.88, diaInicio: -112 },
+  "sofia-marin": { factor: 0.95, ladoDebil: "izq", lsiInicio: 0.88, lsiFin: 0.98, proInicio: 0.35, proFin: 0.97, diaInicio: -112 },
+};
+
+/** Nº de registros objetivo por par atleta/test (dentro del rango 3-6 pedido). */
+const REGISTROS_OBJETIVO = 4;
+
+/** Hash estable (no aleatorio) para variar nº de registros y fechas por par. */
+function huella(texto: string): number {
+  let h = 7;
+  for (let i = 0; i < texto.length; i += 1) h = (h * 31 + texto.charCodeAt(i)) % 100003;
+  return h;
+}
+
+function redondear(valor: number, dec: number): number {
+  const f = 10 ** dec;
+  return Math.round(valor * f) / f;
+}
+
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+/** Ganancia relativa del test entre su registro más antiguo y el más reciente. */
+function mejoraDeTest(test: TestDef): number | null {
+  if (test.tipo === "cuestionario-pro") return ESPEC_PRO[test.id] ? 0.28 : null;
+  return ESPEC_TESTS[test.id]?.mejora ?? null;
+}
+
+/**
+ * Valores de un registro nuevo en la posición temporal `p` (0 = el más antiguo
+ * de la serie del atleta, 1 = el más reciente).
+ */
+function valoresGenerados(
+  test: TestDef,
+  perfil: PerfilSemilla,
+  p: number
+): RegistroTest["valores"] | null {
+  if (test.tipo === "cuestionario-pro") {
+    const espec = ESPEC_PRO[test.id];
+    if (!espec) return null;
+    const pro = lerp(perfil.proInicio, perfil.proFin, p);
+    const valores: ValorCuestionario = { puntuacion: Math.round(lerp(espec.inicial, espec.final, pro)) };
+    return valores;
+  }
+
+  const espec = ESPEC_TESTS[test.id];
+  if (!espec) return null;
+
+  if (test.tipo === "unilateral-lsi") {
+    // El LSI NUNCA se guarda: se calcula con `lib/calculations/simetria.ts`.
+    const valores: ValorUnilateral = {};
+    for (const [variableId, v] of Object.entries(espec.vars)) {
+      const fuerte = redondear(v.valor * perfil.factor * (1 + espec.mejora * (p - 1)), v.dec);
+      const debil = redondear(fuerte * lerp(perfil.lsiInicio, perfil.lsiFin, p), v.dec);
+      valores[variableId] =
+        perfil.ladoDebil === "izq" ? { izq: debil, der: fuerte } : { izq: fuerte, der: debil };
+    }
+    return valores;
+  }
+
+  const valores: ValorUnico = {};
+  for (const [variableId, v] of Object.entries(espec.vars)) {
+    // En tiempos y déficits, el atleta con mejor nivel marca valores MÁS BAJOS.
+    const escala = v.menorEsMejor ? 2 - perfil.factor : perfil.factor;
+    const direccion = v.menorEsMejor ? -1 : 1;
+    valores[variableId] = redondear(
+      v.valor * escala * (1 + direccion * espec.mejora * (p - 1)),
+      v.dec
+    );
+  }
+  return valores;
+}
+
+/**
+ * Extrapola hacia atrás (k pasos) el registro más antiguo que ya existía de un
+ * par atleta/test, para darle histórico sin tocar su medición más reciente.
+ */
+function valoresRetro(
+  test: TestDef,
+  ref: RegistroTest,
+  decremento: number,
+  k: number
+): RegistroTest["valores"] {
+  const atenuacion = 1 - decremento * k;
+  const espec = ESPEC_TESTS[test.id];
+
+  if (test.tipo === "cuestionario-pro") {
+    const { puntuacion } = ref.valores as ValorCuestionario;
+    const pro = ESPEC_PRO[test.id];
+    const menorEsMejor = pro ? pro.final < pro.inicial : false;
+    const factor = menorEsMejor ? 1 + decremento * k : atenuacion;
+    const valores: ValorCuestionario = { puntuacion: Math.round(puntuacion * factor) };
+    return valores;
+  }
+
+  if (test.tipo === "unilateral-lsi") {
+    const valores: ValorUnilateral = {};
+    for (const [variableId, valor] of Object.entries(ref.valores as ValorUnilateral)) {
+      const dec = espec?.vars[variableId]?.dec ?? 1;
+      const fuerte = Math.max(valor.izq, valor.der);
+      const debil = Math.min(valor.izq, valor.der);
+      const lsiRetro = fuerte > 0 ? Math.max(0.45, debil / fuerte - 0.05 * k) : 0;
+      const fuerteRetro = redondear(fuerte * atenuacion, dec);
+      const debilRetro = redondear(fuerteRetro * lsiRetro, dec);
+      // El lado débil se conserva: nunca contradecimos el registro escrito a mano.
+      valores[variableId] =
+        valor.izq <= valor.der
+          ? { izq: debilRetro, der: fuerteRetro }
+          : { izq: fuerteRetro, der: debilRetro };
+    }
+    return valores;
+  }
+
+  const valores: ValorUnico = {};
+  for (const [variableId, valor] of Object.entries(ref.valores as ValorUnico)) {
+    const v = espec?.vars[variableId];
+    valores[variableId] = redondear(
+      valor * (v?.menorEsMejor ? 1 + decremento * k : atenuacion),
+      v?.dec ?? 2
+    );
+  }
+  return valores;
+}
+
+// ---------------------------------------------------------------------------
 // buildSeed
 // ---------------------------------------------------------------------------
 
@@ -338,6 +615,13 @@ export function buildSeed(): AppState {
   contadorId = 0;
   const hoy = new Date();
   const iso = (offsetDias: number) => toIso(addDias(hoy, offsetDias));
+
+  /** Suscripción que vence dentro de `diasHastaFin`; el inicio sale de la duración del plan. */
+  const suscripcion = (plan: keyof typeof DURACION_PLAN, diasHastaFin: number): Suscripcion => ({
+    plan,
+    fechaInicio: iso(diasHastaFin - DURACION_PLAN[plan]),
+    fechaFin: iso(diasHastaFin),
+  });
 
   const atletas: Atleta[] = [];
   const registrosTests: RegistroTest[] = [];
@@ -363,6 +647,18 @@ export function buildSeed(): AppState {
       fechaNacimiento: "1999-03-12",
       fechaInicioTratamiento: iso(-98),
       estado: "activo",
+      entrenadorId: "alex-rios",
+      suscripcion: suscripcion("Trimestral", 9),
+      anamnesis: anamnesis([
+        ["Mecanismo de lesión", "Entrada a destiempo en partido, valgo forzado de rodilla izquierda con el pie fijo."],
+        ["Antecedentes en la misma zona", "Ninguno previo en la rodilla izquierda; esguince de tobillo derecho en 2021."],
+        ["Dolor inicial (EVA 0-10)", "8/10 las primeras 72 h; 3/10 al alta hospitalaria."],
+        ["Medicación actual", "Ninguna. Retiró el antiinflamatorio a las 3 semanas de la cirugía."],
+        ["Objetivo deportivo", "Volver a jugar como titular en su equipo de fútbol federado."],
+        ["Expectativa de vuelta", "Espera competir antes de 6 meses desde la cirugía."],
+        ["Carga de entrenamiento previa", "5 sesiones + 1 partido por semana."],
+        ["Experiencia previa en readaptación", "No. Es su primer proceso largo de recuperación."],
+      ]),
       notas: [
         nota(iso(-70), "Buena adherencia al plan. Sin derrame tras las últimas sesiones de fuerza."),
         nota(iso(-21), "Aparece aprensión leve en cambios de dirección a máxima velocidad; se pospone la reintroducción de COD agresivo una semana."),
@@ -397,7 +693,9 @@ export function buildSeed(): AppState {
         [iso(-49), iso(-42), iso(-35), iso(-28), iso(-21), iso(-14), iso(-7), iso(0)],
         [6, 5, 5, 4, 4, 3, 3, 2],
         [420, 460, 480, 520, 560, 610, 670, 780],
-        [5, 6, 6, 6, 7, 7, 7, 8]
+        [5, 6, 6, 6, 7, 7, 7, 8],
+        // Cae al final: el partido amistoso no planificado le pasa factura.
+        [5, 5, 6, 6, 7, 7, 8, 6]
       ),
     });
 
@@ -433,6 +731,17 @@ export function buildSeed(): AppState {
       fechaNacimiento: "1996-07-04",
       fechaInicioTratamiento: iso(-56),
       estado: "activo",
+      entrenadorId: "marta-pena",
+      suscripcion: suscripcion("Trimestral", 38),
+      anamnesis: anamnesis([
+        ["Mecanismo de lesión", "Inicio insidioso por sobreuso tras subir de 60 a 85 km semanales en 4 semanas."],
+        ["Antecedentes en la misma zona", "Molestias aquíleas leves y autolimitadas hace dos temporadas."],
+        ["Dolor inicial (EVA 0-10)", "6/10 al arrancar por la mañana; 4/10 al correr."],
+        ["Medicación actual", "Ninguna pautada."],
+        ["Objetivo deportivo", "Correr una media maratón de nivel autonómico en otoño."],
+        ["Expectativa de vuelta", "Volver a rodajes largos en 2 meses."],
+        ["Calzado y superficie habitual", "Zapatilla de drop 8 mm, mezcla de asfalto y pista."],
+      ]),
       notas: [
         nota(iso(-42), "Dolor matinal en descenso. Se mantiene isometría de tríceps sural como calentamiento."),
         nota(iso(-7), "Primera reintroducción a carrera continua en cinta, 12 min sin dolor >3/10."),
@@ -464,7 +773,8 @@ export function buildSeed(): AppState {
         [iso(-49), iso(-42), iso(-35), iso(-28), iso(-21), iso(-14), iso(-7), iso(0)],
         [4, 4, 3, 3, 3, 2, 2, 2],
         [160, 175, 190, 200, 210, 220, 228, 232],
-        [4, 4, 5, 5, 5, 6, 6, 6]
+        [4, 4, 5, 5, 5, 6, 6, 6],
+        [4, 5, 5, 6, 6, 7, 7, 8]
       ),
     });
 
@@ -497,6 +807,17 @@ export function buildSeed(): AppState {
       fechaNacimiento: "1997-11-30",
       fechaInicioTratamiento: iso(-140),
       estado: "activo",
+      entrenadorId: "alex-rios",
+      suscripcion: suscripcion("Readaptación completa", 95),
+      anamnesis: anamnesis([
+        ["Mecanismo de lesión", "Inversión forzada de tobillo derecho al caer sobre el pie de un rival tras un rebote."],
+        ["Antecedentes en la misma zona", "Dos esguinces leves del mismo tobillo en los últimos 4 años."],
+        ["Dolor inicial (EVA 0-10)", "7/10 con carga en apoyo la primera semana."],
+        ["Medicación actual", "Ninguna desde la fase aguda."],
+        ["Objetivo deportivo", "Reincorporarse a la competición sin vendaje funcional."],
+        ["Expectativa de vuelta", "Alta deportiva en las próximas 2 semanas."],
+        ["Miedo o aprensión", "Refiere leve inseguridad solo en recepciones desequilibradas."],
+      ]),
       notas: [
         nota(iso(-70), "Recuperado el rango completo de dorsiflexión. Progresa a trabajo pliométrico bilateral."),
         nota(iso(-7), "Últimos test de simetría dentro de objetivo. Se planifica alta en 1-2 semanas si mantiene."),
@@ -529,7 +850,8 @@ export function buildSeed(): AppState {
         [iso(-49), iso(-42), iso(-35), iso(-28), iso(-21), iso(-14), iso(-7), iso(0)],
         [2, 2, 1, 1, 1, 0, 0, 0],
         [650, 670, 690, 700, 710, 715, 720, 718],
-        [6, 6, 6, 7, 7, 7, 6, 6]
+        [6, 6, 6, 7, 7, 7, 6, 6],
+        [7, 7, 8, 8, 8, 9, 9, 9]
       ),
     });
 
@@ -562,6 +884,17 @@ export function buildSeed(): AppState {
       fechaNacimiento: "2001-05-19",
       fechaInicioTratamiento: iso(-14),
       estado: "activo",
+      entrenadorId: "marta-pena",
+      suscripcion: suscripcion("Trimestral", 76),
+      anamnesis: anamnesis([
+        ["Mecanismo de lesión", "Luxación anterior de hombro derecho en el gesto de lanzamiento, con reducción en pista."],
+        ["Antecedentes en la misma zona", "Primer episodio. Sin inestabilidad previa conocida."],
+        ["Dolor inicial (EVA 0-10)", "9/10 en el momento de la luxación; 4/10 al alta de urgencias."],
+        ["Medicación actual", "Analgesia a demanda las dos primeras semanas."],
+        ["Objetivo deportivo", "Volver a lanzar a máxima intensidad como extremo derecha."],
+        ["Expectativa de vuelta", "Le han dicho 3-4 meses; quiere entender el plan por fases."],
+        ["Decisión quirúrgica", "Tratamiento conservador de entrada, con reevaluación a las 4 semanas."],
+      ]),
       notas: [
         nota(iso(-14), "Primera visita. Sin cirugía por ahora — se opta por tratamiento conservador con reevaluación en 4 semanas."),
       ],
@@ -582,7 +915,13 @@ export function buildSeed(): AppState {
       ),
       // Datos escasos: solo 2 semanas de antigüedad, no hay ACWR calculable todavía.
       acwr: acwrSemanas(1, [95, 110]),
-      evolucion: evolucionPuntos([iso(-14), iso(-7), iso(0)], [4, 3, 3], [90, 105, 110], [4, 4, 5]),
+      evolucion: evolucionPuntos(
+        [iso(-14), iso(-7), iso(0)],
+        [4, 3, 3],
+        [90, 105, 110],
+        [4, 4, 5],
+        [4, 4, 5]
+      ),
     });
 
     registrosTests.push(
@@ -610,6 +949,18 @@ export function buildSeed(): AppState {
       fechaNacimiento: "1993-02-08",
       fechaInicioTratamiento: iso(-35),
       estado: "activo",
+      // Sin entrenador asignado a propósito (caso vacío de la UI de asignación).
+      suscripcion: suscripcion("Mensual", 14),
+      anamnesis: anamnesis([
+        ["Mecanismo de lesión", "Dolor lumbar tras una sesión de peso muerto con volumen muy por encima de lo habitual."],
+        ["Antecedentes en la misma zona", "Dos episodios de lumbalgia autolimitada en los últimos 3 años."],
+        ["Dolor inicial (EVA 0-10)", "7/10, mecánico, sin irradiación ni déficit neurológico."],
+        ["Medicación actual", "Antiinflamatorio a demanda los primeros 10 días."],
+        ["Objetivo deportivo", "Volver a competir en crossfit sin limitar el peso muerto."],
+        ["Expectativa de vuelta", "Quiere entrenar a tope ya; se trabaja la dosificación de carga."],
+        ["Banderas rojas", "Ninguna: sin pérdida de fuerza, sin dolor nocturno, sin alteración de esfínteres."],
+        ["Adherencia previa", "Tiende a entrenar por su cuenta al mejorar los síntomas."],
+      ]),
       notas: [
         nota(iso(-35), "Inicio con dolor agudo 7/10 tras sesión de peso muerto. Reposo relativo y educación en dolor."),
         nota(iso(-3), "Repunte de dolor tras volver a entrenar por su cuenta sin autorización — se refuerza la pauta de carga controlada."),
@@ -633,7 +984,9 @@ export function buildSeed(): AppState {
         [iso(-35), iso(-28), iso(-21), iso(-14), iso(-7), iso(0)],
         [7, 6, 4, 4, 3, 6],
         [80, 150, 220, 260, 300, 130],
-        [3, 4, 5, 5, 6, 5]
+        [3, 4, 5, 5, 6, 5],
+        // Readiness bajo, con recaída clara al repuntar el dolor.
+        [3, 4, 5, 6, 6, 4]
       ),
     });
 
@@ -665,6 +1018,17 @@ export function buildSeed(): AppState {
       fechaNacimiento: "1998-09-23",
       fechaInicioTratamiento: iso(-63),
       estado: "activo",
+      entrenadorId: "jorge-lema",
+      suscripcion: suscripcion("Readaptación completa", 117),
+      anamnesis: anamnesis([
+        ["Mecanismo de lesión", "Dolor brusco en cara posterior del muslo izquierdo esprintando a por una dejada."],
+        ["Antecedentes en la misma zona", "Sobrecarga isquiotibial izquierda la temporada pasada, sin baja."],
+        ["Dolor inicial (EVA 0-10)", "7/10 al caminar las primeras 48 h."],
+        ["Medicación actual", "Ninguna."],
+        ["Objetivo deportivo", "Volver al circuito de tenis sin limitar el sprint ni el resto."],
+        ["Expectativa de vuelta", "Torneo objetivo en 8 semanas."],
+        ["Carga de entrenamiento previa", "6 sesiones de pista + 3 de gimnasio por semana."],
+      ]),
       notas: [
         nota(iso(-49), "Buena tolerancia a isometría en longitud larga. Se introduce Nordic curl asistido."),
         nota(iso(-7), "Déficit de fuerza excéntrica todavía relevante en el Nordic — se mantiene precaución con el sprint máximo."),
@@ -696,7 +1060,8 @@ export function buildSeed(): AppState {
         [iso(-56), iso(-49), iso(-42), iso(-35), iso(-28), iso(-21), iso(-14), iso(-7), iso(0)],
         [5, 4, 3, 3, 2, 2, 2, 1, 1],
         [150, 170, 190, 205, 220, 232, 240, 250, 255],
-        [4, 4, 5, 5, 5, 6, 6, 6, 6]
+        [4, 4, 5, 5, 5, 6, 6, 6, 6],
+        [5, 5, 6, 6, 7, 7, 7, 8, 8]
       ),
     });
 
@@ -730,6 +1095,18 @@ export function buildSeed(): AppState {
       fechaNacimiento: "1995-01-27",
       fechaInicioTratamiento: iso(-70),
       estado: "activo",
+      entrenadorId: "alex-rios",
+      suscripcion: suscripcion("Trimestral", 52),
+      anamnesis: anamnesis([
+        ["Mecanismo de lesión", "Dolor femoropatelar progresivo tras doblar el desnivel semanal preparando un ultra."],
+        ["Antecedentes en la misma zona", "Dolor anterior de rodilla derecha ocasional en bajadas largas."],
+        ["Dolor inicial (EVA 0-10)", "5/10 al bajar escaleras y en sedestación prolongada."],
+        ["Medicación actual", "Ninguna."],
+        ["Objetivo deportivo", "Terminar un ultra trail de 60 km a final de temporada."],
+        ["Expectativa de vuelta", "Retomar el desnivel progresivo en 4-6 semanas."],
+        ["Carga de entrenamiento previa", "70-90 km y 3.000 m de desnivel positivo por semana."],
+        ["Adherencia previa", "Le cuesta respetar las semanas de descarga."],
+      ]),
       notas: [
         nota(iso(-56), "Dolor anterior de rodilla con la sedestación prolongada y al bajar escaleras. Se introduce fuerza de cuádriceps en rango sin dolor."),
         nota(iso(-3), "Retomó rodaje de montaña por su cuenta este fin de semana — ACWR de la semana muy por encima de lo planificado."),
@@ -760,7 +1137,9 @@ export function buildSeed(): AppState {
         [iso(-56), iso(-49), iso(-42), iso(-35), iso(-28), iso(-21), iso(-14), iso(-7), iso(0)],
         [5, 4, 4, 3, 3, 3, 2, 2, 3],
         [340, 355, 360, 365, 370, 375, 380, 385, 650],
-        [5, 5, 5, 6, 6, 6, 6, 6, 7]
+        [5, 5, 5, 6, 6, 6, 6, 6, 7],
+        // Cae en el último punto: rodaje de montaña no planificado.
+        [5, 6, 6, 7, 7, 7, 8, 8, 6]
       ),
     });
 
@@ -792,6 +1171,17 @@ export function buildSeed(): AppState {
       fechaNacimiento: "2000-04-15",
       fechaInicioTratamiento: iso(-91),
       estado: "activo",
+      entrenadorId: "alex-rios",
+      suscripcion: suscripcion("Readaptación completa", 61),
+      anamnesis: anamnesis([
+        ["Mecanismo de lesión", "Dolor progresivo en el antepié derecho tras encadenar torneos en pista dura."],
+        ["Antecedentes en la misma zona", "Ninguno. Sin fracturas previas."],
+        ["Dolor inicial (EVA 0-10)", "6/10 al apoyar en carga, 2/10 en reposo."],
+        ["Medicación actual", "Suplementación de vitamina D pautada por su médico."],
+        ["Objetivo deportivo", "Volver a competir en pádel a nivel amateur alto."],
+        ["Expectativa de vuelta", "Reintroducción a pista en las próximas semanas."],
+        ["Consolidación radiológica", "Confirmada en el control de las 8 semanas."],
+      ]),
       notas: [
         nota(iso(-77), "Alta de descarga por parte de traumatología. Progresión de carga en cinta según protocolo."),
         nota(iso(-14), "Buena tolerancia a los primeros hops. Se planifica reintroducción a pista la próxima semana."),
@@ -823,7 +1213,8 @@ export function buildSeed(): AppState {
         [iso(-56), iso(-49), iso(-42), iso(-35), iso(-28), iso(-21), iso(-14), iso(-7), iso(0)],
         [3, 3, 2, 2, 2, 1, 1, 1, 0],
         [175, 195, 210, 225, 235, 240, 250, 255, 260],
-        [4, 4, 5, 5, 5, 6, 6, 6, 6]
+        [4, 4, 5, 5, 5, 6, 6, 6, 6],
+        [6, 6, 7, 7, 7, 8, 8, 8, 9]
       ),
     });
 
@@ -855,6 +1246,17 @@ export function buildSeed(): AppState {
       fechaNacimiento: "1994-10-02",
       fechaInicioTratamiento: iso(-133),
       estado: "activo",
+      entrenadorId: "alex-rios",
+      suscripcion: suscripcion("Readaptación completa", 175),
+      anamnesis: anamnesis([
+        ["Mecanismo de lesión", "Dolor inguinal de instauración progresiva por volumen alto de golpeo y giros."],
+        ["Antecedentes en la misma zona", "Sobrecarga aductora recurrente en pretemporada desde hace 3 años."],
+        ["Dolor inicial (EVA 0-10)", "5/10 al golpear y al esprintar; 2/10 en reposo."],
+        ["Medicación actual", "Ninguna."],
+        ["Objetivo deportivo", "Competir la temporada completa sin recaídas de pubalgia."],
+        ["Expectativa de vuelta", "Reincorporación al entrenamiento de equipo esta misma semana."],
+        ["Carga de entrenamiento previa", "4 sesiones + 1 partido, con mucho golpeo unilateral."],
+      ]),
       notas: [
         nota(iso(-98), "Buena respuesta al programa de Copenhagen adductor. Dolor con la resistencia isométrica en descenso."),
         nota(iso(-7), "Tolera bien el golpeo a máxima intensidad. Se planifica reincorporación a entrenamiento de equipo."),
@@ -889,7 +1291,8 @@ export function buildSeed(): AppState {
         [iso(-56), iso(-49), iso(-42), iso(-35), iso(-28), iso(-21), iso(-14), iso(-7), iso(0)],
         [3, 3, 2, 2, 1, 1, 1, 0, 0],
         [500, 520, 535, 545, 555, 565, 575, 585, 595],
-        [5, 5, 6, 6, 6, 6, 7, 7, 7]
+        [5, 5, 6, 6, 6, 6, 7, 7, 7],
+        [7, 7, 8, 8, 8, 9, 9, 9, 9]
       ),
     });
 
@@ -922,6 +1325,17 @@ export function buildSeed(): AppState {
       fechaNacimiento: "1998-12-11",
       fechaInicioTratamiento: iso(-168),
       estado: "alta",
+      // Sin entrenador asignado: dada de alta, ya no ocupa plaza de nadie.
+      // Sin suscripción activa: el plan venció con el alta deportiva.
+      anamnesis: anamnesis([
+        ["Mecanismo de lesión", "Dolor y bloqueo de rodilla en la recepción de un remate, con rotación de la tibia."],
+        ["Antecedentes en la misma zona", "Ninguno previo en esa rodilla."],
+        ["Dolor inicial (EVA 0-10)", "6/10 con bloqueo mecánico intermitente antes de la cirugía."],
+        ["Medicación actual", "Ninguna."],
+        ["Objetivo deportivo", "Volver a jugar de central en su equipo de voleibol."],
+        ["Expectativa de vuelta", "Reincorporación completa al equipo en 5-6 meses."],
+        ["Evolución postquirúrgica", "Sin derrame ni bloqueos desde la meniscectomía parcial."],
+      ]),
       notas: [
         nota(iso(-105), "Evolución muy favorable desde el inicio, sin derrame ni bloqueos tras la cirugía."),
         nota(iso(0), "Alta deportiva: simetría, fuerza y cuestionarios de rodilla en objetivo. Reincorporada al equipo con normalidad."),
@@ -955,7 +1369,8 @@ export function buildSeed(): AppState {
         [iso(-56), iso(-49), iso(-42), iso(-35), iso(-28), iso(-21), iso(-14), iso(-7), iso(0)],
         [1, 1, 0, 0, 0, 0, 0, 0, 0],
         [430, 445, 455, 460, 465, 468, 470, 472, 470],
-        [5, 5, 6, 6, 6, 6, 6, 6, 6]
+        [5, 5, 6, 6, 6, 6, 6, 6, 6],
+        [8, 8, 9, 9, 9, 9, 9, 10, 10]
       ),
     });
 
@@ -1284,6 +1699,82 @@ export function buildSeed(): AppState {
   // formulario que la originó, coherente con `testDefId`.)
 
   // ---------------------------------------------------------------------------
+  // Ampliación de registrosTests — histórico para TODOS los tests del catálogo.
+  //
+  // Dos caminos, y ninguno pisa lo escrito a mano arriba:
+  // - El par atleta/test YA tiene registros → solo se añade histórico ANTERIOR
+  //   al más antiguo, extrapolado desde él. La medición más reciente (de la que
+  //   cuelgan los hallazgos de la demo) queda intacta.
+  // - El par no tiene registros → serie nueva completa dentro de la ventana del
+  //   atleta, según su perfil.
+  // ---------------------------------------------------------------------------
+
+  const offsetDeIso = (fechaIso: string): number => {
+    const d = new Date(`${fechaIso}T00:00:00`);
+    const base = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+    return Math.round((d.getTime() - base.getTime()) / 86_400_000);
+  };
+
+  const atletasGenerados = Object.keys(PERFILES_SEMILLA);
+
+  atletasGenerados.forEach((atletaId, indiceAtleta) => {
+    const perfil = PERFILES_SEMILLA[atletaId];
+
+    catalogoSemilla.forEach((test, indiceTest) => {
+      const mejora = mejoraDeTest(test);
+      if (mejora === null) return;
+
+      const existentes = registrosTests
+        .filter((r) => r.atletaId === atletaId && r.testId === test.id)
+        .sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+      if (existentes.length > 0) {
+        const aAgregar = REGISTROS_OBJETIVO - existentes.length;
+        if (aAgregar <= 0) return;
+
+        const ref = existentes[0];
+        const offsetRef = offsetDeIso(ref.fecha);
+        const margen = Math.max(aAgregar * 5, offsetRef - perfil.diaInicio);
+        const paso = Math.max(5, Math.round(margen / (aAgregar + 1)));
+        const decremento = mejora / (aAgregar + 1);
+
+        for (let k = aAgregar; k >= 1; k -= 1) {
+          registrosTests.push({
+            id: id("reg"),
+            atletaId,
+            testId: test.id,
+            fecha: iso(offsetRef - paso * k),
+            valores: valoresRetro(test, ref, decremento, k),
+          });
+        }
+        return;
+      }
+
+      // 7 de los 9 atletas generados por test → cada test supera el mínimo de 6.
+      const cubierto = (indiceAtleta + indiceTest * 3) % atletasGenerados.length >= 2;
+      if (!cubierto) return;
+
+      const semilla = huella(`${atletaId}:${test.id}`);
+      const nRegistros = 3 + (semilla % 4);
+      const offsetFin = -5 - (semilla % 9);
+      const offsetInicio = Math.min(perfil.diaInicio, offsetFin - (nRegistros - 1));
+
+      for (let i = 0; i < nRegistros; i += 1) {
+        const p = i / (nRegistros - 1);
+        const valores = valoresGenerados(test, perfil, p);
+        if (!valores) break;
+        registrosTests.push({
+          id: id("reg"),
+          atletaId,
+          testId: test.id,
+          fecha: iso(Math.round(lerp(offsetInicio, offsetFin, p))),
+          valores,
+        });
+      }
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // Plantillas de sesión y de programa
   // ---------------------------------------------------------------------------
 
@@ -1509,15 +2000,16 @@ export function buildSeed(): AppState {
     tema: "fisiofles",
     acento: ACENTO_DEFECTO,
     umbrales: { ...UMBRALES_DEFECTO },
-    metricasVisiblesDashboard: ["perfil-fisico", "acwr", "simetrias", "evolucion"],
-    ordenDashboard: ["perfil-fisico", "acwr", "simetrias", "evolucion"],
     vistaAtletas: "grid",
-    dashboardMetricas: METRICAS_DASHBOARD_IDS,
-    dashboardOrden: METRICAS_DASHBOARD_IDS,
+    dashboardGraficos: GRAFICOS_DASHBOARD_DEFECTO,
+    dashboardGraficosOrden: GRAFICOS_DASHBOARD_DEFECTO,
+    fichaGraficos: FICHA_GRAFICOS_DEFECTO,
+    fichaGraficosOrden: FICHA_GRAFICOS_DEFECTO,
   };
 
   return {
     atletas,
+    entrenadores,
     sesiones,
     bloques,
     ejercicios,

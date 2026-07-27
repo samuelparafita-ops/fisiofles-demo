@@ -26,6 +26,7 @@ import {
 import { accionActualizar, useDispatch, type Atleta, type TipoHito } from "@/lib/store";
 import { fmtFechaLarga, hoyIso } from "@/components/atletas/ficha/fecha-utils";
 import { colors } from "@/lib/tokens";
+import { useStateColors } from "@/lib/theme";
 
 const ICONO_HITO: Record<TipoHito, LucideIcon> = {
   lesion: AlertTriangle,
@@ -43,17 +44,6 @@ const LABEL_HITO: Record<TipoHito, string> = {
   "cambio-fase": "Cambio de fase",
   alta: "Alta",
   otro: "Otro",
-};
-
-// Paleta categórica de tipos de hito — siempre desde tokens (ver CLAUDE.md,
-// "no hardcodees hex sueltos"). Cada valor coincide con un token existente.
-const COLOR_HITO: Record<TipoHito, string> = {
-  lesion: colors.state.bad,
-  cirugia: colors.comparison[1],
-  test: colors.dataLight.primary,
-  "cambio-fase": colors.dataLight.warn,
-  alta: colors.dataLight.good,
-  otro: colors.dataLight.base,
 };
 
 function NuevoHitoDialog({ atleta }: { atleta: Atleta }) {
@@ -144,6 +134,17 @@ function NuevoHitoDialog({ atleta }: { atleta: Atleta }) {
 
 export function Timeline({ atleta }: { atleta: Atleta }) {
   const hitos = [...atleta.hitos].sort((a, b) => b.fecha.localeCompare(a.fecha));
+  const estado = useStateColors();
+  // Paleta categórica de tipos de hito — siempre desde tokens (ver CLAUDE.md,
+  // "no hardcodees hex sueltos"). Cada valor coincide con un token existente.
+  const COLOR_HITO: Record<TipoHito, string> = {
+    lesion: estado.bad,
+    cirugia: colors.comparison[1],
+    test: colors.dataLight.primary,
+    "cambio-fase": colors.dataLight.warn,
+    alta: colors.dataLight.good,
+    otro: colors.dataLight.base,
+  };
 
   return (
     <div className="rounded-xl border border-borderSoft bg-surface2 p-6 shadow-sm">

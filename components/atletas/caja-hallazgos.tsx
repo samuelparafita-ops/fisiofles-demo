@@ -15,17 +15,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { colors } from "@/lib/tokens";
+import { useStateColors } from "@/lib/theme";
 import { useAtleta } from "@/lib/store";
 import type { Hallazgo, SeveridadHallazgo } from "@/lib/insights";
 
 const ORDEN_SEVERIDAD: Record<SeveridadHallazgo, number> = { critico: 0, atencion: 1, info: 2 };
-
-const COLOR_SEVERIDAD: Record<SeveridadHallazgo, string> = {
-  critico: colors.state.bad,
-  atencion: colors.state.warn,
-  info: colors.state.good,
-};
 
 const ICONOS_HALLAZGO: { prefijo: string; icon: LucideIcon }[] = [
   { prefijo: "hallazgo-racha-acwr-", icon: CheckCircle2 },
@@ -44,7 +38,13 @@ function iconoDeHallazgo(id: string): LucideIcon {
 function FilaHallazgo({ hallazgo, mostrarAtleta }: { hallazgo: Hallazgo; mostrarAtleta: boolean }) {
   const atleta = useAtleta(hallazgo.atletaId);
   const Icon = iconoDeHallazgo(hallazgo.id);
-  const color = COLOR_SEVERIDAD[hallazgo.severidad];
+  const estado = useStateColors();
+  const colorPorSeveridad: Record<SeveridadHallazgo, string> = {
+    critico: estado.bad,
+    atencion: estado.warn,
+    info: estado.good,
+  };
+  const color = colorPorSeveridad[hallazgo.severidad];
 
   return (
     <Link href={hallazgo.enlace} className="group flex items-start gap-3 py-3">
@@ -75,6 +75,7 @@ export function CajaHallazgos({
   titulo,
   mostrarAtleta = true,
   colapsableInicial,
+  maxVisibles = 3,
   vacioTitulo = "Sin hallazgos activos",
   vacioDescripcion = "No hay hallazgos que mostrar ahora mismo.",
   className,
@@ -84,11 +85,15 @@ export function CajaHallazgos({
   mostrarAtleta?: boolean;
   /** true = la caja arranca colapsada. */
   colapsableInicial?: boolean;
+  /** Nº de hallazgos visibles (por severidad) antes de "Mostrar N más". */
+  maxVisibles?: number;
   vacioTitulo?: string;
   vacioDescripcion?: string;
   className?: string;
 }) {
   const [colapsada, setColapsada] = useState(Boolean(colapsableInicial));
+  const [expandida, setExpandida] = useState(false);
+  const estado = useStateColors();
 
   const ordenados = [...hallazgos].sort((a, b) => {
     const porSeveridad = ORDEN_SEVERIDAD[a.severidad] - ORDEN_SEVERIDAD[b.severidad];
@@ -97,6 +102,8 @@ export function CajaHallazgos({
   });
 
   const tieneUrgentes = ordenados.some((h) => h.severidad !== "info");
+  const hayOcultos = ordenados.length > maxVisibles;
+  const visibles = expandida ? ordenados : ordenados.slice(0, maxVisibles);
 
   return (
     <div className={cn("rounded-xl border border-borderSoft bg-surface2 shadow-sm", className)}>
@@ -109,10 +116,11 @@ export function CajaHallazgos({
           <h3 className="font-display text-base font-bold text-textStrong">{titulo}</h3>
           {ordenados.length > 0 && (
             <span
-              className={cn(
-                "rounded-full px-2 py-0.5 text-xs font-semibold",
-                tieneUrgentes ? "bg-state-bad/10 text-state-bad" : "bg-state-good/10 text-state-good"
-              )}
+              className="rounded-full px-2 py-0.5 text-xs font-semibold"
+              style={{
+                color: tieneUrgentes ? estado.bad : estado.good,
+                background: `${tieneUrgentes ? estado.bad : estado.good}1A`,
+              }}
             >
               {ordenados.length}
             </span>
@@ -126,14 +134,28 @@ export function CajaHallazgos({
       {!colapsada && (
         <div className="border-t border-borderSoft px-5 pb-2">
           {ordenados.length > 0 ? (
-            <div className="divide-y divide-borderSoft">
-              {ordenados.map((h) => (
-                <FilaHallazgo key={h.id} hallazgo={h} mostrarAtleta={mostrarAtleta} />
-              ))}
-            </div>
+            <>
+              <div className="divide-y divide-borderSoft">
+                {visibles.map((h) => (
+                  <FilaHallazgo key={h.id} hallazgo={h} mostrarAtleta={mostrarAtleta} />
+                ))}
+              </div>
+              {hayOcultos && (
+                <button
+                  type="button"
+                  onClick={() => setExpandida((e) => !e)}
+                  className="flex w-full items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-brand-ink transition-colors hover:underline"
+                >
+                  {expandida ? "Mostrar menos" : `Mostrar ${ordenados.length - maxVisibles} más`}
+                  <ChevronDown
+                    className={cn("size-3.5 shrink-0 transition-transform", expandida && "rotate-180")}
+                  />
+                </button>
+              )}
+            </>
           ) : (
             <div className="flex flex-col items-center py-6 text-center">
-              <ShieldCheck className="mb-2 size-6 text-state-good" />
+              <ShieldCheck className="mb-2 size-6" style={{ color: estado.good }} />
               <p className="text-sm font-medium text-textStrong">{vacioTitulo}</p>
               <p className="mt-1 text-xs text-textDim">{vacioDescripcion}</p>
             </div>

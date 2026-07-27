@@ -7,7 +7,7 @@ import {
   type EstadoSimetria,
   type UmbralesSimetria,
 } from "@/lib/calculations";
-import { colors } from "@/lib/tokens";
+import { useStateColors } from "@/lib/theme";
 import type {
   RegistroTest,
   TestDef,
@@ -22,12 +22,6 @@ const ESTADO_LABEL: Record<EstadoSimetria, string> = {
   deficit: "Déficit",
   aceptable: "Aceptable",
   optimo: "Óptimo",
-};
-
-const ESTADO_COLOR: Record<EstadoSimetria, string> = {
-  deficit: colors.state.bad,
-  aceptable: colors.state.warn,
-  optimo: colors.state.good,
 };
 
 const selectClass =
@@ -91,6 +85,12 @@ export function TestsTable({
   umbrales?: UmbralesSimetria;
 }) {
   const [filtro, setFiltro] = useState("todos");
+  const estado = useStateColors();
+  const ESTADO_COLOR: Record<EstadoSimetria, string> = {
+    deficit: estado.bad,
+    aceptable: estado.warn,
+    optimo: estado.good,
+  };
 
   const testsConRegistros = useMemo(() => {
     const ids = Array.from(new Set(registros.map((r) => r.testId)));

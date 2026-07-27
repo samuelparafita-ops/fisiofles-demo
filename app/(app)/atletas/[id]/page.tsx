@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Activity, CalendarDays, ClipboardList, Dumbbell, UserRound, UserX } from "lucide-react";
+import { Activity, CalendarDays, ClipboardList, Dumbbell, History, UserX } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FichaHeader } from "@/components/atletas/ficha/ficha-header";
-import { TabGeneral } from "@/components/atletas/ficha/tab-general";
+import { DatosGeneralesFicha } from "@/components/atletas/ficha/datos-generales";
+import { TabHistorial } from "@/components/atletas/ficha/tab-historial";
 import { TabCalendario } from "@/components/atletas/ficha/tab-calendario";
 import { TabDatos } from "@/components/atletas/ficha/tab-datos";
 import { TabProgramacion } from "@/components/atletas/ficha/tab-programacion";
@@ -22,8 +23,11 @@ import {
 } from "@/lib/store";
 import { generarHallazgos } from "@/lib/insights";
 
+// El value del tab "Historial" se mantiene como "general" (antiguo nombre):
+// los enlaces de notificaciones/hallazgos (`lib/notificaciones/desde-hallazgos.ts`)
+// enlazan por defecto a `?tab=general` y no hace falta migrar esos enlaces.
 const TABS = [
-  { value: "general", label: "General", icon: UserRound },
+  { value: "general", label: "Historial", icon: History },
   { value: "calendario", label: "Calendario", icon: CalendarDays },
   { value: "datos", label: "Datos", icon: Activity },
   { value: "programacion", label: "Programación", icon: Dumbbell },
@@ -80,6 +84,8 @@ export default function AtletaDetailPage({ params }: { params: { id: string } })
     <>
       <FichaHeader atleta={atleta} />
 
+      <DatosGeneralesFicha atleta={atleta} />
+
       <CajaHallazgos
         hallazgos={hallazgosAtleta}
         titulo="Hallazgos"
@@ -102,7 +108,7 @@ export default function AtletaDetailPage({ params }: { params: { id: string } })
         </div>
 
         <TabsContent value="general" className="mt-6">
-          <TabGeneral atleta={atleta} />
+          <TabHistorial atleta={atleta} />
         </TabsContent>
         <TabsContent value="calendario" className="mt-6">
           <TabCalendario atletaId={atleta.id} />

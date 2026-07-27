@@ -1,6 +1,6 @@
 /**
  * Series semanales agregadas para /dashboard (FASE E): comparan la
- * plantilla activa entera (serie agregada) con hasta 4 atletas superpuestos.
+ * plantilla activa entera (serie agregada) con hasta 6 atletas superpuestos.
  * Funciones PURAS (mismo estándar que lib/calculations/ y lib/insights/),
  * sin React ni estado — ver CLAUDE.md > Motor de cálculo.
  *
@@ -208,6 +208,35 @@ export function serieDolorMedio(
     puntosPorAtleta.set(
       atleta.id,
       atleta.evolucion.map((e) => ({ fecha: e.fecha, valor: e.dolor }))
+    );
+  }
+
+  return semanasOffset(hoy, semanas).map(({ label, fecha }) => {
+    const porAtleta: Record<string, number | null> = {};
+    for (const atleta of atletas) {
+      porAtleta[atleta.id] = interpolarEnFecha(puntosPorAtleta.get(atleta.id) ?? [], fecha);
+    }
+    return { semana: label, agregado: promedio(Object.values(porAtleta)), porAtleta };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Readiness medio — interpolado entre los puntos de `Atleta.evolucion`
+// (mismo patrón que `serieDolorMedio`). Agregado = MEDIA.
+// ---------------------------------------------------------------------------
+
+type AtletaConReadiness = { id: string; evolucion: { fecha: string; readiness: number }[] };
+
+export function serieReadinessMedia(
+  atletas: AtletaConReadiness[],
+  semanas: number,
+  hoy: Date = new Date()
+): PuntoSerie[] {
+  const puntosPorAtleta = new Map<string, PuntoFecha[]>();
+  for (const atleta of atletas) {
+    puntosPorAtleta.set(
+      atleta.id,
+      atleta.evolucion.map((e) => ({ fecha: e.fecha, valor: e.readiness }))
     );
   }
 

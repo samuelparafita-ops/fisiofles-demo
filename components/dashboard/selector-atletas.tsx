@@ -6,13 +6,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import type { Atleta } from "@/lib/store";
 
-const MAX_ATLETAS = 4;
+const MAX_ATLETAS = 6;
 
 /**
  * Multi-selector de atletas a superponer en los gráficos de /dashboard.
  * `seleccionados` es un array de ids EN ORDEN DE SELECCIÓN — ese orden es el
- * que asigna el color (colores[i] para seleccionados[i]), igual en las 5
- * métricas de la página. No persiste entre sesiones (es una comparación
+ * que asigna el color (colores[i] para seleccionados[i]), igual en todos los
+ * gráficos de la página. No persiste entre sesiones (es una comparación
  * puntual, no config de la app).
  */
 export function SelectorAtletas({

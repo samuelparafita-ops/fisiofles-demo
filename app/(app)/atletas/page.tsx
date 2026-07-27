@@ -16,6 +16,7 @@ import {
   useCatalogoTests,
   useConfig,
   useDispatch,
+  useEntrenadores,
   useFormulariosEnvios,
   useRegistrosTests,
   useSesiones,
@@ -33,8 +34,11 @@ const ESTADO_FILTROS: { value: EstadoAtleta | "todos"; label: string }[] = [
 const selectClass =
   "flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
 
+const SIN_ASIGNAR_FILTRO = "sin-asignar";
+
 export default function AtletasPage() {
   const atletas = useAtletas();
+  const entrenadores = useEntrenadores();
   const sesiones = useSesiones();
   const registrosTests = useRegistrosTests();
   const catalogoTests = useCatalogoTests();
@@ -45,6 +49,7 @@ export default function AtletasPage() {
   const [busqueda, setBusqueda] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoAtleta | "todos">("todos");
   const [faseFiltro, setFaseFiltro] = useState<string>("todas");
+  const [entrenadorFiltro, setEntrenadorFiltro] = useState<string>("todos");
 
   const fasesDisponibles = useMemo(
     () => ordenarFases(Array.from(new Set(atletas.map((a) => fasePrefijo(a.fase))))),
@@ -57,9 +62,12 @@ export default function AtletasPage() {
       const matchBusqueda = !q || a.nombre.toLowerCase().includes(q);
       const matchEstado = estadoFiltro === "todos" || a.estado === estadoFiltro;
       const matchFase = faseFiltro === "todas" || fasePrefijo(a.fase) === faseFiltro;
-      return matchBusqueda && matchEstado && matchFase;
+      const matchEntrenador =
+        entrenadorFiltro === "todos" ||
+        (entrenadorFiltro === SIN_ASIGNAR_FILTRO ? !a.entrenadorId : a.entrenadorId === entrenadorFiltro);
+      return matchBusqueda && matchEstado && matchFase && matchEntrenador;
     });
-  }, [busqueda, atletas, estadoFiltro, faseFiltro]);
+  }, [busqueda, atletas, estadoFiltro, faseFiltro, entrenadorFiltro]);
 
   const hallazgos = useMemo(
     () =>
@@ -137,6 +145,20 @@ export default function AtletasPage() {
             {fasesDisponibles.map((f) => (
               <option key={f} value={f}>
                 {f}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={entrenadorFiltro}
+            onChange={(e) => setEntrenadorFiltro(e.target.value)}
+            className={selectClass}
+          >
+            <option value="todos">Todos los entrenadores</option>
+            <option value={SIN_ASIGNAR_FILTRO}>Sin asignar</option>
+            {entrenadores.map((en) => (
+              <option key={en.id} value={en.id}>
+                {en.nombre}
               </option>
             ))}
           </select>

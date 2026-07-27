@@ -1,5 +1,5 @@
 /**
- * Modelo de datos v2 — única fuente de verdad para todo lo editable de la
+ * Modelo de datos v3 — única fuente de verdad para todo lo editable de la
  * demo. Vive en el store (`lib/store/`); `lib/mock/seed.ts` solo aporta los
  * valores iniciales. Ver CLAUDE.md > "Única fuente de verdad".
  */
@@ -20,6 +20,19 @@ export const DIAS_SEMANA = [
   "Domingo",
 ] as const;
 export type DiaSemana = (typeof DIAS_SEMANA)[number];
+
+// ---------------------------------------------------------------------------
+// Entrenador
+// ---------------------------------------------------------------------------
+
+export type Entrenador = {
+  id: string;
+  nombre: string;
+  iniciales: string;
+  rol: string;
+  /** Nº máximo de atletas que puede llevar — base del cálculo de saturación. */
+  capacidadMaxima: number;
+};
 
 // ---------------------------------------------------------------------------
 // Atleta
@@ -49,6 +62,32 @@ export type Hito = {
 
 export type EstadoAtleta = "activo" | "alta" | "pausa";
 
+/** Cuestionario inicial estático del atleta (pares pregunta/respuesta). */
+export type PreguntaAnamnesis = {
+  pregunta: string;
+  respuesta: string;
+};
+
+/** Suscripción del atleta a la plataforma. Fechas ISO yyyy-mm-dd. */
+export type Suscripcion = {
+  plan: string;
+  fechaInicio: string;
+  fechaFin: string;
+};
+
+/**
+ * Punto de evolución diario/semanal del atleta. Valores BRUTOS: dolor, RPE y
+ * `readiness` en 0–10 (misma escala, comparten eje en el gráfico de Evolución),
+ * carga en sRPE. `readiness` = cuánto de preparado/motivado se siente ese día.
+ */
+export type PuntoEvolucion = {
+  fecha: string;
+  dolor: number;
+  carga: number;
+  rpe: number;
+  readiness: number;
+};
+
 export type Atleta = {
   id: string;
   nombre: string;
@@ -64,6 +103,12 @@ export type Atleta = {
   fechaNacimiento?: string;
   fechaInicioTratamiento?: string;
   estado: EstadoAtleta;
+  /** Profesional que lleva el caso. Ausente = sin asignar. */
+  entrenadorId?: string;
+  /** Siempre `undefined` en la semilla: las vistas pintan un icono placeholder. */
+  fotoUrl?: string;
+  anamnesis?: PreguntaAnamnesis[];
+  suscripcion?: Suscripcion;
   notas: NotaClinica[];
   hitos: Hito[];
   /**
@@ -74,7 +119,7 @@ export type Atleta = {
   perfilFisico: { eje: Capacidad; inicial: number; actual: number; objetivo: number }[];
   /** Carga aguda semanal (sRPE), bruta. El componente calcula crónica/ratio/zona. */
   acwr: { semana: string; agudo: number }[];
-  evolucion: { fecha: string; dolor: number; carga: number; rpe: number }[];
+  evolucion: PuntoEvolucion[];
 };
 
 // ---------------------------------------------------------------------------
@@ -251,13 +296,22 @@ export type Config = {
   /** Paleta cerrada de 6 acentos — ver lib/personalizacion/acentos.ts. No es un color libre. */
   acento: AcentoId;
   umbrales: UmbralesConfig;
-  /** Paneles visibles/orden del tab Datos de la ficha de atleta (perfil-fisico/acwr/simetrias/evolucion). */
-  metricasVisiblesDashboard: string[];
-  ordenDashboard: string[];
   vistaAtletas: VistaAtletas;
-  /** Métricas visibles/orden de /dashboard (carga/acwr/simetria/dolor/sesiones) — ver lib/dashboard/metricas.ts. */
-  dashboardMetricas: string[];
-  dashboardOrden: string[];
+  /**
+   * Gráficos visibles del dashboard v3. Ids `test:<testId>` (uno por test del
+   * catálogo) y `resultado:<id>` para los derivados — ver lib/dashboard/graficos.ts.
+   */
+  dashboardGraficos: string[];
+  /** Orden de render de los gráficos del dashboard v3. */
+  dashboardGraficosOrden: string[];
+  /**
+   * Gráficos visibles del tab Datos de la ficha de atleta — MISMO catálogo
+   * que `dashboardGraficos` (`lib/dashboard/graficos.ts`), config propia
+   * porque la selección tiene sentido distinto por atleta (ver FASE 7).
+   */
+  fichaGraficos: string[];
+  /** Orden de render de los gráficos de la ficha de atleta. */
+  fichaGraficosOrden: string[];
 };
 
 // ---------------------------------------------------------------------------
@@ -266,6 +320,7 @@ export type Config = {
 
 export type AppState = {
   atletas: Atleta[];
+  entrenadores: Entrenador[];
   sesiones: Sesion[];
   bloques: BloqueSemanal[];
   ejercicios: import("@/lib/mock/ejercicios").Ejercicio[];

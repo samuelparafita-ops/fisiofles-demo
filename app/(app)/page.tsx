@@ -1,26 +1,31 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
   AlertTriangle,
   ArrowRight,
+  Briefcase,
   CalendarCheck2,
   CalendarX,
   Check,
   CheckCircle2,
+  ChartNoAxesCombined,
+  ChevronDown,
   ClipboardList,
   Frown,
+  LayoutTemplate,
   Scale,
   ShieldCheck,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { StatCard } from "@/components/shared/stat-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
-import { ActividadPlantillaChart } from "@/components/charts";
 import { useToast } from "@/components/shared/toast";
+import { cn } from "@/lib/utils";
 import {
   accionActualizar,
   useAtleta,
@@ -36,9 +41,10 @@ import {
   type Sesion,
 } from "@/lib/store";
 import { generarHallazgos, type Hallazgo, type SeveridadHallazgo } from "@/lib/insights";
-import { colors } from "@/lib/tokens";
+import { useStateColors } from "@/lib/theme";
 
 const NOMBRE_PROFESIONAL = "Álex";
+const LIMITE_VISIBLE = 3;
 
 function saludoSegunHora(hora: number) {
   if (hora < 12) return "Buenos días";
@@ -49,12 +55,6 @@ function saludoSegunHora(hora: number) {
 function isoLocal(d: Date) {
   const pad = (n: number) => n.toString().padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-function semanasDesde(fechaIso: string, hoy: Date) {
-  const inicio = new Date(`${fechaIso}T00:00:00`);
-  const dias = (hoy.getTime() - inicio.getTime()) / 86_400_000;
-  return dias / 7;
 }
 
 const ORDEN_ESTADO_SESION: Record<Sesion["estado"], number> = {
@@ -82,15 +82,56 @@ function iconoDeHallazgo(id: string): LucideIcon {
   return ICONOS_HALLAZGO.find((h) => id.startsWith(h.prefijo))?.icon ?? AlertTriangle;
 }
 
-const COLOR_SEVERIDAD: Record<HallazgoRelevante["severidad"], string> = {
-  critico: colors.state.bad,
-  atencion: colors.state.warn,
-};
+// Accesos rápidos a las secciones clave.
+const ACCESOS_RAPIDOS: { href: string; label: string; icon: LucideIcon }[] = [
+  { href: "/dashboard", label: "Dashboard", icon: ChartNoAxesCombined },
+  { href: "/atletas", label: "Atletas", icon: Users },
+  { href: "/plantillas", label: "Plantillas", icon: LayoutTemplate },
+  { href: "/formularios", label: "Formularios", icon: ClipboardList },
+  { href: "/clinica", label: "Clínica", icon: Briefcase },
+];
+
+function AccesoRapidoCard({ href, label, icon: Icon }: { href: string; label: string; icon: LucideIcon }) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-3 rounded-xl border border-borderSoft bg-surface2 p-4 shadow-sm transition-colors hover:border-brand hover:bg-brand-tint"
+    >
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-tint text-brand-ink">
+        <Icon className="size-4" />
+      </div>
+      <span className="font-display text-sm font-bold text-textStrong">{label}</span>
+    </Link>
+  );
+}
+
+function BotonMostrarMas({
+  expandido,
+  resto,
+  onClick,
+}: {
+  expandido: boolean;
+  resto: number;
+  onClick: () => void;
+}) {
+  if (resto <= 0) return null;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="mt-1 flex w-full items-center justify-center gap-1 py-2 text-xs font-medium text-textDim hover:text-textStrong"
+    >
+      {expandido ? "Mostrar menos" : `Mostrar ${resto} más`}
+      <ChevronDown className={cn("size-3.5 transition-transform", expandido && "rotate-180")} />
+    </button>
+  );
+}
 
 function SesionHoyRow({ sesion }: { sesion: Sesion }) {
   const atleta = useAtleta(sesion.atletaId);
   const dispatch = useDispatch();
   const toast = useToast();
+  const estado = useStateColors();
 
   if (!atleta) return null;
 
@@ -127,7 +168,10 @@ function SesionHoyRow({ sesion }: { sesion: Sesion }) {
           Marcar completada
         </Button>
       ) : sesion.estado === "completada" ? (
-        <span className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-state-good">
+        <span
+          className="flex shrink-0 items-center gap-1.5 text-xs font-medium"
+          style={{ color: estado.good }}
+        >
           <CheckCircle2 className="size-3.5" />
           Completada
         </span>
@@ -141,7 +185,12 @@ function SesionHoyRow({ sesion }: { sesion: Sesion }) {
 function HallazgoRow({ hallazgo }: { hallazgo: HallazgoRelevante }) {
   const atleta = useAtleta(hallazgo.atletaId);
   const Icon = iconoDeHallazgo(hallazgo.id);
-  const color = COLOR_SEVERIDAD[hallazgo.severidad];
+  const estado = useStateColors();
+  const colorPorSeveridad: Record<HallazgoRelevante["severidad"], string> = {
+    critico: estado.bad,
+    atencion: estado.warn,
+  };
+  const color = colorPorSeveridad[hallazgo.severidad];
 
   return (
     <Link href={hallazgo.enlace} className="group flex items-start gap-3 py-3">
@@ -169,21 +218,14 @@ export default function InicioPage() {
   const formulariosEnvios = useFormulariosEnvios();
   const notificaciones = useNotificaciones();
   const config = useConfig();
+  const estado = useStateColors();
+
+  const [sesionesExpandido, setSesionesExpandido] = useState(false);
+  const [alertasExpandido, setAlertasExpandido] = useState(false);
 
   const ahora = useMemo(() => new Date(), []);
   const hoyIso = isoLocal(ahora);
   const sesionesHoy = useSesionesDelDia(hoyIso);
-
-  const activos = useMemo(() => atletas.filter((a) => a.estado === "activo"), [atletas]);
-
-  const retencionSemanas = useMemo(() => {
-    const semanas = activos
-      .map((a) => a.fechaInicioTratamiento)
-      .filter((f): f is string => Boolean(f))
-      .map((f) => semanasDesde(f, ahora));
-    if (semanas.length === 0) return null;
-    return semanas.reduce((acc, s) => acc + s, 0) / semanas.length;
-  }, [activos, ahora]);
 
   const revisionesHoy = useMemo(
     () => sesionesHoy.filter((s) => s.estado === "programada"),
@@ -194,10 +236,16 @@ export default function InicioPage() {
     [sesionesHoy]
   );
 
-  const alertasSinRevisar = useMemo(
-    () => notificaciones.filter((n) => n.tipo === "alerta" && !n.leida),
+  // "Tareas de hoy" agrega dos bandejas de trabajo pendiente del fisio: las
+  // notificaciones tipo "tarea" abiertas (no tienen fecha de vencimiento, son
+  // pendientes en curso, no solo de hoy) y las sesiones de hoy sin completar.
+  // El nº de completadas solo cuenta sesiones (las notificaciones no guardan
+  // cuándo se completaron, así que no se pueden atribuir "a hoy").
+  const tareasNotifPendientes = useMemo(
+    () => notificaciones.filter((n) => n.tipo === "tarea" && !n.completada).length,
     [notificaciones]
   );
+  const tareasPendientes = tareasNotifPendientes + revisionesHoy.length;
 
   const sesionesHoyOrdenadas = useMemo(
     () =>
@@ -208,6 +256,10 @@ export default function InicioPage() {
       }),
     [sesionesHoy]
   );
+  const sesionesVisibles = sesionesExpandido
+    ? sesionesHoyOrdenadas
+    : sesionesHoyOrdenadas.slice(0, LIMITE_VISIBLE);
+  const restoSesiones = Math.max(0, sesionesHoyOrdenadas.length - LIMITE_VISIBLE);
 
   const hallazgos = useMemo(
     () =>
@@ -223,6 +275,11 @@ export default function InicioPage() {
     [atletas, sesiones, registrosTests, catalogoTests, formulariosEnvios, config, ahora]
   );
 
+  const criticosActivos = useMemo(
+    () => hallazgos.filter((h) => h.severidad === "critico").length,
+    [hallazgos]
+  );
+
   const alertasDelDia = useMemo(() => {
     const relevantes = hallazgos.filter(
       (h): h is HallazgoRelevante => h.severidad === "critico" || h.severidad === "atencion"
@@ -231,6 +288,8 @@ export default function InicioPage() {
       .sort((a, b) => ORDEN_SEVERIDAD[a.severidad] - ORDEN_SEVERIDAD[b.severidad])
       .slice(0, 6);
   }, [hallazgos]);
+  const alertasVisibles = alertasExpandido ? alertasDelDia : alertasDelDia.slice(0, LIMITE_VISIBLE);
+  const restoAlertas = Math.max(0, alertasDelDia.length - LIMITE_VISIBLE);
 
   const fechaCapitalizada = useMemo(() => {
     const fecha = ahora.toLocaleDateString("es-ES", {
@@ -249,53 +308,59 @@ export default function InicioPage() {
           {saludoSegunHora(ahora.getHours())}, {NOMBRE_PROFESIONAL}
         </h1>
         <p className="mt-1 text-sm text-textDim">{fechaCapitalizada}</p>
-        <p className="mt-2 text-sm text-foreground">
-          <span className="font-semibold text-textStrong">{revisionesHoy.length}</span> sesiones hoy
-          <span className="mx-1.5 text-border">·</span>
-          <span className="font-semibold text-textStrong">{alertasSinRevisar.length}</span> alertas sin
-          revisar
-        </p>
       </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Atletas activos"
-          value={activos.length}
-          variation={{ label: `${atletas.length} en la plantilla`, tone: "neutral" }}
-        />
-        <StatCard
-          label="Retención media"
-          value={retencionSemanas !== null ? retencionSemanas.toFixed(1) : "N/D"}
-          unit={retencionSemanas !== null ? "sem." : undefined}
-        />
-        <StatCard
-          label="Revisiones hoy"
-          value={revisionesHoy.length}
-          variation={
-            completadasHoy.length > 0
-              ? { label: `${completadasHoy.length} completada(s) ya`, tone: "good" }
-              : undefined
-          }
-        />
-        <StatCard
-          label="Alertas sin revisar"
-          value={alertasSinRevisar.length}
-          variation={{
-            label: alertasSinRevisar.length > 0 ? "Requieren revisión" : "Todo revisado",
-            tone: alertasSinRevisar.length > 0 ? "bad" : "good",
-          }}
-        />
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Link href="/notificaciones" className="block transition-transform hover:-translate-y-0.5">
+          <StatCard
+            label="Tareas de hoy"
+            value={tareasPendientes}
+            variation={
+              completadasHoy.length > 0
+                ? { label: `${completadasHoy.length} completada(s) hoy`, tone: "good" }
+                : undefined
+            }
+          />
+        </Link>
+        <Link href="#sesiones-hoy" className="block transition-transform hover:-translate-y-0.5">
+          <StatCard
+            label="Revisiones de hoy"
+            value={revisionesHoy.length}
+            variation={
+              completadasHoy.length > 0
+                ? { label: `${completadasHoy.length} completada(s) ya`, tone: "good" }
+                : undefined
+            }
+          />
+        </Link>
+        <Link href="#alertas-dia" className="block transition-transform hover:-translate-y-0.5">
+          <StatCard
+            label="Alertas críticas"
+            value={criticosActivos}
+            variation={{
+              label: criticosActivos > 0 ? "Requieren acción" : "Ninguna activa",
+              tone: criticosActivos > 0 ? "bad" : "good",
+            }}
+          />
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <section className="rounded-xl border border-borderSoft bg-surface2 p-6 shadow-sm">
+        <section id="sesiones-hoy" className="scroll-mt-20 rounded-xl border border-borderSoft bg-surface2 p-6 shadow-sm">
           <h2 className="font-display text-base font-bold text-textStrong">Hoy</h2>
           {sesionesHoyOrdenadas.length > 0 ? (
-            <div className="mt-1 divide-y divide-borderSoft">
-              {sesionesHoyOrdenadas.map((s) => (
-                <SesionHoyRow key={s.id} sesion={s} />
-              ))}
-            </div>
+            <>
+              <div className="mt-1 divide-y divide-borderSoft">
+                {sesionesVisibles.map((s) => (
+                  <SesionHoyRow key={s.id} sesion={s} />
+                ))}
+              </div>
+              <BotonMostrarMas
+                expandido={sesionesExpandido}
+                resto={restoSesiones}
+                onClick={() => setSesionesExpandido((v) => !v)}
+              />
+            </>
           ) : (
             <div className="mt-3">
               <EmptyState
@@ -307,21 +372,31 @@ export default function InicioPage() {
           )}
         </section>
 
-        <section className="rounded-xl border border-borderSoft bg-surface2 p-6 shadow-sm">
+        <section id="alertas-dia" className="scroll-mt-20 rounded-xl border border-borderSoft bg-surface2 p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-base font-bold text-textStrong">Alertas del día</h2>
             {alertasDelDia.length > 0 && (
-              <span className="rounded-full bg-state-bad/10 px-2 py-0.5 text-xs font-semibold text-state-bad">
+              <span
+                className="rounded-full px-2 py-0.5 text-xs font-semibold"
+                style={{ color: estado.bad, background: `${estado.bad}1A` }}
+              >
                 {alertasDelDia.length}
               </span>
             )}
           </div>
           {alertasDelDia.length > 0 ? (
-            <div className="mt-1 divide-y divide-borderSoft">
-              {alertasDelDia.map((h) => (
-                <HallazgoRow key={h.id} hallazgo={h} />
-              ))}
-            </div>
+            <>
+              <div className="mt-1 divide-y divide-borderSoft">
+                {alertasVisibles.map((h) => (
+                  <HallazgoRow key={h.id} hallazgo={h} />
+                ))}
+              </div>
+              <BotonMostrarMas
+                expandido={alertasExpandido}
+                resto={restoAlertas}
+                onClick={() => setAlertasExpandido((v) => !v)}
+              />
+            </>
           ) : (
             <div className="mt-3">
               <EmptyState
@@ -344,10 +419,14 @@ export default function InicioPage() {
       </div>
 
       <div className="mt-6">
-        <ActividadPlantillaChart
-          atletas={activos.map((a) => ({ id: a.id, acwr: a.acwr }))}
-          umbrales={{ bajo: config.umbrales.acwrBajo, alto: config.umbrales.acwrAlto }}
-        />
+        <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-textDim">
+          Accesos rápidos
+        </h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+          {ACCESOS_RAPIDOS.map((a) => (
+            <AccesoRapidoCard key={a.href} {...a} />
+          ))}
+        </div>
       </div>
     </>
   );

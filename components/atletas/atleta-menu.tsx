@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { NuevoAtletaDialog } from "@/components/atletas/nuevo-atleta-dialog";
 import { EliminarAtletaDialog } from "@/components/atletas/eliminar-atleta-dialog";
+import { AsignarEntrenadorDialog } from "@/components/atletas/asignar-entrenador-dialog";
 import type { Atleta } from "@/lib/store";
 
 /**
@@ -22,6 +23,7 @@ import type { Atleta } from "@/lib/store";
 export function AtletaMenu({ atleta, className }: { atleta: Atleta; className?: string }) {
   const [editando, setEditando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+  const [asignandoEntrenador, setAsignandoEntrenador] = useState(false);
 
   return (
     <>
@@ -55,6 +57,15 @@ export function AtletaMenu({ atleta, className }: { atleta: Atleta; className?: 
             Editar
           </DropdownMenuItem>
           <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              setAsignandoEntrenador(true);
+            }}
+          >
+            <UserCog className="mr-2 size-4" />
+            Asignar entrenador…
+          </DropdownMenuItem>
+          <DropdownMenuItem
             className="text-destructive focus:text-destructive"
             onSelect={(e) => {
               e.preventDefault();
@@ -68,6 +79,7 @@ export function AtletaMenu({ atleta, className }: { atleta: Atleta; className?: 
       </DropdownMenu>
 
       <NuevoAtletaDialog atleta={atleta} trigger={null} open={editando} onOpenChange={setEditando} />
+      <AsignarEntrenadorDialog atleta={atleta} open={asignandoEntrenador} onOpenChange={setAsignandoEntrenador} />
       <EliminarAtletaDialog atleta={atleta} open={eliminando} onOpenChange={setEliminando} />
     </>
   );
