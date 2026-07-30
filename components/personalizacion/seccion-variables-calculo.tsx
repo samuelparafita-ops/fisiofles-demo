@@ -75,6 +75,91 @@ function UmbralField({
   );
 }
 
+/**
+ * Los dos cortes de intensidad de sesión (`intensidadSesion()` en
+ * lib/calculations/intensidad.ts) tienen su propia validación cruzada
+ * (rpeLow < rpeHigh) y su leyenda en vivo — por eso viven en un campo propio
+ * en vez de sumarse a `UMBRALES_DEFS` (ese catálogo vive fuera del alcance de
+ * esta fase, ver CLAUDE.md > FASE 2).
+ */
+function CamposRpe({
+  umbrales,
+  onGuardar,
+}: {
+  umbrales: UmbralesConfig;
+  onGuardar: (key: "rpeLow" | "rpeHigh", valor: number) => void;
+}) {
+  const { rpeLow, rpeHigh } = umbrales;
+  const [low, setLow] = useState(String(rpeLow));
+  const [high, setHigh] = useState(String(rpeHigh));
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => setLow(String(rpeLow)), [rpeLow]);
+  useEffect(() => setHigh(String(rpeHigh)), [rpeHigh]);
+
+  function commit(key: "rpeLow" | "rpeHigh", raw: string) {
+    const n = Number(raw);
+    if (Number.isNaN(n) || n < 0 || n > 10) {
+      setError("Debe estar entre 0 y 10.");
+      return;
+    }
+    const nextLow = key === "rpeLow" ? n : rpeLow;
+    const nextHigh = key === "rpeHigh" ? n : rpeHigh;
+    if (nextLow >= nextHigh) {
+      setError("El corte bajo debe ser menor que el alto.");
+      return;
+    }
+    setError(null);
+    onGuardar(key, n);
+  }
+
+  return (
+    <>
+      <CampoControl
+        label="Corte RPE bajo / moderado"
+        description="Sesiones con RPE objetivo igual o por debajo de este valor se clasifican como intensidad Low."
+      >
+        <Input
+          type="number"
+          inputMode="decimal"
+          value={low}
+          min={0}
+          max={10}
+          step={0.5}
+          className="h-9 w-24 text-right"
+          onChange={(e) => setLow(e.target.value)}
+          onBlur={(e) => commit("rpeLow", e.target.value)}
+        />
+      </CampoControl>
+      <CampoControl
+        label="Corte RPE moderado / alto"
+        description="Sesiones con RPE objetivo por encima de este valor se clasifican como intensidad High."
+      >
+        <Input
+          type="number"
+          inputMode="decimal"
+          value={high}
+          min={0}
+          max={10}
+          step={0.5}
+          className="h-9 w-24 text-right"
+          onChange={(e) => setHigh(e.target.value)}
+          onBlur={(e) => commit("rpeHigh", e.target.value)}
+        />
+      </CampoControl>
+      <div className="border-t border-borderSoft py-3">
+        {error ? (
+          <p className="text-xs text-state-bad">{error}</p>
+        ) : (
+          <p className="text-xs text-textDim">
+            Low ≤ {rpeLow} · Moderate {rpeLow}–{rpeHigh} · High &gt; {rpeHigh}
+          </p>
+        )}
+      </div>
+    </>
+  );
+}
+
 export function SeccionVariablesCalculo() {
   const config = useConfig();
   const dispatch = useDispatch();
@@ -110,6 +195,7 @@ export function SeccionVariablesCalculo() {
             onGuardar={(v) => guardarUmbral(def.key, v)}
           />
         ))}
+        <CamposRpe umbrales={config.umbrales} onGuardar={guardarUmbral} />
       </div>
 
       <div className="mt-5 flex justify-end border-t border-borderSoft pt-4">
