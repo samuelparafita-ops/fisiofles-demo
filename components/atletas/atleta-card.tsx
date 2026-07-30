@@ -5,8 +5,9 @@ import { UserCog } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { colors } from "@/lib/tokens";
+import { colorSemaforo, colorSemaforoTexto } from "@/lib/calculations";
 import { useStateColors } from "@/lib/theme";
-import { useEntrenador, useReadinessActual, type Atleta } from "@/lib/store";
+import { useEntrenador, useFaseDeAtleta, useReadinessActual, type Atleta } from "@/lib/store";
 import { AtletaAvatar } from "@/components/atletas/atleta-avatar";
 import { AtletaMenu } from "@/components/atletas/atleta-menu";
 import { estadoReadiness } from "@/components/atletas/readiness-utils";
@@ -20,6 +21,7 @@ const ESTADO_ATLETA_LABEL: Record<Atleta["estado"], string> = {
 export function AtletaCard({ atleta }: { atleta: Atleta }) {
   const router = useRouter();
   const entrenador = useEntrenador(atleta.entrenadorId);
+  const faseDe = useFaseDeAtleta(atleta);
   const readiness = useReadinessActual(atleta.id);
   const estadoColores = useStateColors();
   const ESTADO_ATLETA_DOT: Record<Atleta["estado"], string> = {
@@ -71,9 +73,21 @@ export function AtletaCard({ atleta }: { atleta: Atleta }) {
       <p className="mt-4 line-clamp-1 text-sm text-text">{atleta.lesion}</p>
 
       <div className="mt-3 flex items-center justify-between gap-2">
-        <Badge variant="secondary" className="min-w-0">
-          <span className="block truncate">{atleta.fase}</span>
-        </Badge>
+        {faseDe ? (
+          <span
+            className="min-w-0 max-w-[65%] rounded-full px-2.5 py-0.5 text-xs font-semibold"
+            style={{
+              background: `${colorSemaforo(faseDe.indiceFase, faseDe.totalFases)}1A`,
+              color: colorSemaforoTexto(faseDe.indiceFase, faseDe.totalFases),
+            }}
+          >
+            <span className="block truncate">{faseDe.fase.nombre}</span>
+          </span>
+        ) : (
+          <Badge variant="secondary" className="min-w-0">
+            <span className="block truncate">{atleta.fase}</span>
+          </Badge>
+        )}
         <span className="shrink-0 text-xs text-muted-foreground">
           Semana {atleta.semanaProceso}
         </span>

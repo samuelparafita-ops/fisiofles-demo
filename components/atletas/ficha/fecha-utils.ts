@@ -50,3 +50,14 @@ export function diasHasta(fechaIso: string): number {
   const fecha = new Date(`${fechaIso}T00:00:00`);
   return Math.round((fecha.getTime() - hoy.getTime()) / 86400000);
 }
+
+/** Edad en años cumplidos a partir de una fecha de nacimiento ISO. */
+export function edadDesde(fechaNacimientoIso: string): number {
+  const nacimiento = new Date(`${fechaNacimientoIso}T00:00:00`);
+  const hoy = new Date();
+  const edad = hoy.getFullYear() - nacimiento.getFullYear();
+  const noCumplidaAun =
+    hoy.getMonth() < nacimiento.getMonth() ||
+    (hoy.getMonth() === nacimiento.getMonth() && hoy.getDate() < nacimiento.getDate());
+  return noCumplidaAun ? edad - 1 : edad;
+}

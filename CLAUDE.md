@@ -35,14 +35,20 @@ deportiva. Es un PROTOTIPO para enseñar a fisioterapeutas, NO producción.
   especial `esRendimiento: true` ("Rendimiento", una única fase) no es eliminable
   en UI — para atletas sin lesión activa.
 - `Atleta.lesionId`/`faseId` son la fuente de verdad v4, pero **opcionales**:
-  `components/atletas/nuevo-atleta-dialog.tsx` todavía crea atletas solo con
-  `lesion`/`fase` (texto) y no se ha migrado. `/dashboard` ya lee `lesionId`/
-  `faseId` en vez de `Atleta.lesion`/`fase` (texto) — FASE 3; `/atletas` y la
-  ficha siguen en el texto legado, se migran en FASE 4. Resuelve `lesionId`/
+  `components/atletas/nuevo-atleta-dialog.tsx` todavía crea/edita atletas solo
+  con `lesion`/`fase` (texto) y no se ha migrado — sigue siendo el ÚNICO sitio
+  que escribe esos campos, así que `lib/store/types.ts::Atleta.lesion`/`fase`
+  y `components/atletas/fase-utils.ts` (`FASE_OPCIONES`/`fasePrefijo`/
+  `ordenarFases`) NO se retiran todavía. `/dashboard` (FASE 3), la ficha de
+  atleta y las cards/tabla de `/atletas` (FASE 4) ya PINTAN el badge de fase
+  vía `lesionId`/`faseId` + semáforo; el FILTRO "Fase" de `/atletas` y el
+  formulario "Nuevo atleta" siguen en el texto legado. Resuelve `lesionId`/
   `faseId` contra el catálogo con el hook `useFaseDeAtleta(atleta)`, o la
   versión pura `resolverFaseDeAtleta(atleta, tiposLesion)` (`lib/store/hooks.ts`)
   para listas — no se puede llamar un hook dentro de un `.map()`. Ambas
-  devuelven `{ tipoLesion, fase, indiceFase, totalFases } | null`.
+  devuelven `{ tipoLesion, fase, indiceFase, totalFases } | null`; si es
+  `null` (atleta sin `lesionId`/`faseId`, ej. creado a mano), las vistas caen
+  al badge de texto legado (`atleta.fase`) — no lo des por garantizado.
 - Semáforo de proceso: `lib/calculations/semaforo.ts` `colorSemaforo(indice,
   total)`/`colorSemaforoTexto(indice, total)` interpola en HSL entre
   `colors.semaforo.inicio` (rojo) y `colors.semaforo.fin` (verde fosforito) —
@@ -79,6 +85,33 @@ deportiva. Es un PROTOTIPO para enseñar a fisioterapeutas, NO producción.
 - `BloqueSemanal.semanaPostOpInicio?`/`semanasTest?` (del BLOCK OUTLINE del
   Excel) documentan en qué semana post-operatoria arranca el bloque y qué
   semanas (índices 0-based) son "semana de test".
+
+## Ficha de atleta (v4, FASE 4)
+- `FichaHeader` (`components/atletas/ficha/ficha-header.tsx`) reemplaza y
+  fusiona el antiguo `DatosGeneralesFicha` (retirado): identidad + badge de
+  fase (semáforo)/entrenador a la izquierda, fila de métricas SELECCIONABLES
+  al centro, `RadarPerfil` en modo `compact` a la derecha. Todo en una sola
+  fila sin card propia (salvo el radar, que ya es un `ChartPanel`) para que
+  cueste poca altura — la exigencia del cliente es que los tabs se vean SIN
+  scroll en ~1366×768. El resto de datos del atleta (contacto, fechas,
+  detalle de la lesión) vive en el popover "Ver datos completos" del header,
+  editable con `CampoEditable` igual que antes.
+- Métricas del header: `config.fichaMetricas` (3-5 ids de `MetricaFicha`,
+  `lib/store/types.ts`), seleccionables desde un popover del propio header
+  que dispatcha `CONFIG_ACTUALIZAR` — es GLOBAL (afecta a todos los atletas),
+  no por atleta. Los valores se leen de los hooks/cálculos ya existentes
+  (`useResumenAtleta`, `useReadinessActual`, `atleta.acwr`/`semanaProceso`) o
+  de helpers locales sin motor propio (adherencia 28 días, próxima sesión
+  programada) — no dupliques el cálculo en otro sitio.
+- Tabs de la ficha, en este orden fijo: Calendario (por defecto sin `?tab=`
+  en la URL) → Anamnesis → Datos → Programación → Historial (`value="general"`
+  por los deep-links de notificaciones, no renombrar) → Formularios → Notas
+  clínicas. `TabAnamnesis` (`tab-anamnesis.tsx`) y las notas clínicas
+  (`notas-clinicas.tsx`, ahora tab propio en vez de vivir dentro de
+  Historial/`TabHistorial`) son nuevos/movidos en FASE 4.
+- `CajaHallazgos` de la ficha baja al FINAL de la página (antes de los tabs),
+  colapsada por defecto vía su prop `colapsableInicial` (ya existía, no hizo
+  falta tocar el componente).
 
 ## Notas de calendario (clínica)
 - `NotaCalendario` (`AppState.notasCalendario`, hook `useNotasCalendario()`):
@@ -158,6 +191,10 @@ deportiva. Es un PROTOTIPO para enseñar a fisioterapeutas, NO producción.
   asignado — es el comportamiento existente de FASE 8, no lo cambies sin más.
 - `Atleta.suscripcion` (plan, fechas) y `Atleta.anamnesis` (preguntas/respuestas)
   son datos de semilla editables como cualquier otro campo del atleta.
+  `Atleta.anamnesis` tiene su propio tab en la ficha (`TabAnamnesis`, FASE 4):
+  la PREGUNTA de cada par es fija (como un label de `CampoEditable`), solo la
+  RESPUESTA se edita inline; añadir/eliminar pares es la única forma de tocar
+  las preguntas en sí.
 
 ## Convenciones de código
 - TypeScript estricto. Componentes funcionales.
@@ -179,7 +216,13 @@ deportiva. Es un PROTOTIPO para enseñar a fisioterapeutas, NO producción.
 - `RadarPerfil` usa `outerRadius="55%"` (no más) para que las 12 etiquetas de
   capacidad quepan sin cortarse en el layout de una columna de tablet/ficha; en
   escritorio (2 columnas) sigue viéndose bien. Si tocas este componente, vuelve
-  a comprobar en ~460-540px de ancho de card, no solo en escritorio.
+  a comprobar en ~460-540px de ancho de card, no solo en escritorio. Su prop
+  `compact` (header de la ficha, FASE 4) reduce padding/alto y oculta
+  descripción/leyenda/toggle "Comparar con inicial", pero el contenedor NUNCA
+  puede ir por debajo de ~320px de ancho con las 12 capacidades visibles: por
+  debajo de eso Recharts recorta/superpone las etiquetas de los ejes
+  horizontales (izquierda/derecha) contra el borde del SVG — comprobado a
+  ojo con capturas, no hay test automático para esto.
 
 ## Stack
 Next.js 14 (App Router) · TypeScript · Tailwind · shadcn/ui · Recharts · lucide-react
