@@ -14,6 +14,8 @@ export const UMBRALES_DEFECTO: UmbralesConfig = {
   simetriaObjetivo: 90,
   simetriaAceptable: 85,
   dolorAlerta: 5,
+  rpeLow: 6,
+  rpeHigh: 8,
 };
 
 export type UmbralDef = {

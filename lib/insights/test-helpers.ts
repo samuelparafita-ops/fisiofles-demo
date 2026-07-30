@@ -26,6 +26,8 @@ export const UMBRALES_FIXTURE: Config["umbrales"] = {
   simetriaObjetivo: 90,
   simetriaAceptable: 85,
   dolorAlerta: 5,
+  rpeLow: 6,
+  rpeHigh: 8,
 };
 
 export const CATALOGO_FIXTURE: TestDef[] = [

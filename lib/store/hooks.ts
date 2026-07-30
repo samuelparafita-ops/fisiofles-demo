@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useStore } from "./store-provider";
 import { simetriasDesdeRegistros } from "./simetrias";
 import { simetria, cargaCronica, acwr, zonaAcwr, type ZonaAcwr } from "@/lib/calculations";
-import type { BloqueSemanalConSesiones } from "./types";
+import type { Atleta, BloqueSemanalConSesiones, FaseLesion, TipoLesion } from "./types";
 
 export function useAtletas() {
   return useStore().state.atletas;
@@ -22,6 +22,36 @@ export function useEntrenadores() {
 export function useEntrenador(id: string | undefined) {
   const { entrenadores } = useStore().state;
   return id ? entrenadores.find((e) => e.id === id) : undefined;
+}
+
+export function useTiposLesion() {
+  return useStore().state.tiposLesion;
+}
+
+/** `undefined` tanto si no hay `id` como si no existe en el catálogo. */
+export function useTipoLesion(id: string | undefined) {
+  const { tiposLesion } = useStore().state;
+  return id ? tiposLesion.find((t) => t.id === id) : undefined;
+}
+
+export type FaseDeAtleta = {
+  tipoLesion: TipoLesion;
+  fase: FaseLesion;
+  indiceFase: number;
+  totalFases: number;
+};
+
+/** Resuelve `atleta.lesionId`/`faseId` contra el catálogo — `null` si falta cualquiera de los dos. */
+export function useFaseDeAtleta(atleta: Atleta | undefined): FaseDeAtleta | null {
+  const { tiposLesion } = useStore().state;
+  return useMemo(() => {
+    if (!atleta) return null;
+    const tipoLesion = tiposLesion.find((t) => t.id === atleta.lesionId);
+    if (!tipoLesion) return null;
+    const indiceFase = tipoLesion.fases.findIndex((f) => f.id === atleta.faseId);
+    if (indiceFase === -1) return null;
+    return { tipoLesion, fase: tipoLesion.fases[indiceFase], indiceFase, totalFases: tipoLesion.fases.length };
+  }, [tiposLesion, atleta]);
 }
 
 /** Último readiness registrado (0–10) del atleta, o `null` si no tiene evolución. */
@@ -123,6 +153,10 @@ export function useFormulariosEnvios() {
 
 export function useNotificaciones() {
   return useStore().state.notificaciones;
+}
+
+export function useNotasCalendario() {
+  return useStore().state.notasCalendario;
 }
 
 export function useNotificacionesNoLeidas() {

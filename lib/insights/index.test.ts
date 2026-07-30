@@ -11,6 +11,8 @@ const CONFIG: Config = {
   acento: ACENTO_DEFECTO,
   umbrales: UMBRALES_FIXTURE,
   vistaAtletas: "grid",
+  perfilProfesional: { nombre: "", rol: "", numColegiado: "", clinica: "" },
+  fichaMetricas: [],
   dashboardGraficos: [],
   dashboardGraficosOrden: [],
   fichaGraficos: [],

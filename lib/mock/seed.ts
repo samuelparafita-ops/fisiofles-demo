@@ -16,15 +16,18 @@ import { GRAFICOS_DASHBOARD_DEFECTO, FICHA_GRAFICOS_DEFECTO } from "@/lib/dashbo
 import type {
   AppState,
   Atleta,
+  BloqueEjercicios,
   BloqueSemanal,
   Capacidad,
   Config,
   EjercicioProgramado,
   Entrenador,
   EstadoSesion,
+  FaseLesion,
   FormularioDef,
   FormularioEnvio,
   Hito,
+  NotaCalendario,
   NotaClinica,
   Notificacion,
   PlantillaPrograma,
@@ -35,6 +38,7 @@ import type {
   Suscripcion,
   TestDef,
   TipoHito,
+  TipoLesion,
   ValorCuestionario,
   ValorUnico,
   ValorUnilateral,
@@ -141,7 +145,8 @@ function crearSesion(
   nombre: string,
   ejerciciosSesion: EjercicioProgramado[],
   estado: EstadoSesion,
-  notas?: string
+  notas?: string,
+  extra?: { tipo?: string; rpeObjetivo?: number; bloquesEjercicios?: BloqueEjercicios[] }
 ): Sesion {
   return {
     id: id("ses"),
@@ -152,7 +157,20 @@ function crearSesion(
     ejercicios: ejerciciosSesion,
     estado,
     notas,
+    tipo: extra?.tipo,
+    rpeObjetivo: extra?.rpeObjetivo,
+    bloquesEjercicios: extra?.bloquesEjercicios,
   };
+}
+
+/** Reparte ejercicios en Preparación (1) → Activación (1) → Bloque principal 1 (resto). */
+function bloquesPrepActivPrincipal(ejerciciosSesion: EjercicioProgramado[]): BloqueEjercicios[] {
+  const [preparacion, activacion, ...principal] = ejerciciosSesion;
+  return [
+    { id: id("bq"), nombre: "Preparación", ejercicios: [preparacion] },
+    { id: id("bq"), nombre: "Activación", ejercicios: [activacion] },
+    { id: id("bq"), nombre: "Bloque principal 1", ejercicios: principal },
+  ];
 }
 
 function crearBloque(
@@ -161,7 +179,8 @@ function crearBloque(
   fechaInicio: string,
   fechaFin: string,
   objetivo: string,
-  sesionesBloque: Sesion[]
+  sesionesBloque: Sesion[],
+  extra?: { semanaPostOpInicio?: number; semanasTest?: number[] }
 ): BloqueSemanal {
   return {
     id: id("bloque"),
@@ -171,6 +190,8 @@ function crearBloque(
     fechaFin,
     objetivo,
     sesionIds: sesionesBloque.map((s) => s.id),
+    semanaPostOpInicio: extra?.semanaPostOpInicio,
+    semanasTest: extra?.semanasTest,
   };
 }
 
@@ -252,6 +273,148 @@ const DURACION_PLAN: Record<string, number> = {
   Trimestral: 90,
   "Readaptación completa": 180,
 };
+
+// ---------------------------------------------------------------------------
+// Tipos de lesión y fases — catálogo del profesional (semáforo de proceso,
+// ver lib/calculations/semaforo.ts). Las fases de LCA son las REALES del
+// Excel de periodización del fisio; el resto son nombres/criterios plausibles.
+// ---------------------------------------------------------------------------
+
+function faseLesion(id: string, nombre: string, criterios?: string[]): FaseLesion {
+  return criterios ? { id, nombre, criterios } : { id, nombre };
+}
+
+const tiposLesion: TipoLesion[] = [
+  {
+    id: "lca",
+    nombre: "LCA",
+    fases: [
+      faseLesion("lca-early-stage", "Early stage"),
+      faseLesion("lca-physical-preparation", "Physical preparation", [
+        "No edema ni derrame",
+        "Extensión completa de rodilla",
+        "Flexión ≥95% del ROM contralateral",
+        "Leg extension 5RM ≥80% simetría",
+        "Curl femoral 5RM ≥80% simetría",
+      ]),
+      faseLesion("lca-return-on-field", "Return on field", [
+        "No dolor",
+        "ROM completo",
+        "Leg extension 5RM ≥90% simetría",
+        "Curl femoral 5RM ≥90% simetría",
+        "CMJ + 30-33 cm",
+      ]),
+      faseLesion("lca-return-to-team", "Return to team", [
+        "Leg extension 5RM ≥95% simetría",
+        "Curl femoral 5RM ≥95% simetría",
+        "CMJ + 34-36 cm",
+        "SL CMJ 85% simetría",
+      ]),
+      faseLesion("lca-return-to-match", "Return to match", [
+        "CMJ + 36 cm",
+        "SL CMJ > 95% simetría",
+        "SL CMJ + 18 cm altura",
+        "SL Drop Jump > 95% simetría",
+      ]),
+    ],
+  },
+  {
+    id: "isquiotibiales",
+    nombre: "Rotura isquiotibiales",
+    fases: [
+      faseLesion("isquios-fase-aguda", "Fase aguda — protección y control del dolor", [
+        "Marcha sin dolor",
+        "Sin dolor a la palpación en reposo",
+        "Estiramiento pasivo sin dolor agudo",
+      ]),
+      faseLesion("isquios-fuerza-neuromuscular", "Fuerza y control neuromuscular", [
+        "Fuerza isométrica ≥70% simetría",
+        "Sin dolor en puente monopodal",
+        "Flexibilidad activa recuperada",
+      ]),
+      faseLesion("isquios-fuerza-excentrica", "Fuerza excéntrica y velocidad de carrera", [
+        "Nordic curl ≥85% simetría",
+        "Carrera continua sin dolor a velocidad submáxima",
+        "Buena tolerancia a aceleraciones cortas",
+      ]),
+      faseLesion("isquios-readaptacion-sprint", "Readaptación al sprint y al deporte", [
+        "Sprint a máxima velocidad sin dolor ni aprensión",
+        "Nordic curl ≥95% simetría",
+        "Tolerancia completa a gestos específicos del deporte",
+      ]),
+    ],
+  },
+  {
+    id: "tobillo",
+    nombre: "Esguince de tobillo",
+    fases: [
+      faseLesion("tobillo-fase-aguda", "Fase aguda — control de edema y dolor", [
+        "Sin derrame relevante",
+        "Apoyo completo sin dolor",
+        "ROM de tobillo funcional para la marcha",
+      ]),
+      faseLesion("tobillo-recuperacion-funcional", "Recuperación funcional — fuerza y propiocepción", [
+        "Fuerza de inversores/eversores ≥85% simetría",
+        "Equilibrio monopodal > 30 s ojos abiertos",
+        "Sin dolor en step-down",
+      ]),
+      faseLesion("tobillo-readaptacion-deportiva", "Readaptación deportiva — reactividad y COD", [
+        "Hop test unilateral ≥90% simetría",
+        "Tolerancia completa a cambios de dirección",
+        "Sin aprensión en superficies inestables",
+      ]),
+    ],
+  },
+  {
+    id: "rotuliana",
+    nombre: "Tendinopatía rotuliana",
+    fases: [
+      faseLesion("rotuliana-isometrico", "Isométrico — control del dolor", [
+        "Dolor ≤3/10 en isometría de cuádriceps",
+        "Reducción del dolor matinal",
+      ]),
+      faseLesion("rotuliana-isotonico", "Isotónico — fuerza pesada y lenta", [
+        "Tolera carga pesada y lenta sin dolor >3/10 al día siguiente",
+        "Fuerza de cuádriceps ≥80% simetría",
+      ]),
+      faseLesion("rotuliana-almacenamiento-energia", "Almacenamiento de energía — pliometría", [
+        "Tolera pliometría básica sin dolor",
+        "CMJ ≥85% simetría",
+        "Buena capacidad reactiva en drop jump",
+      ]),
+      faseLesion("rotuliana-readaptacion-deporte", "Readaptación al deporte", [
+        "Tolerancia completa a sprint y salto específico",
+        "Fuerza de cuádriceps ≥95% simetría",
+        "Sin dolor tras la sesión de máxima exigencia",
+      ]),
+    ],
+  },
+  {
+    id: "pubalgia",
+    nombre: "Pubalgia",
+    fases: [
+      faseLesion("pubalgia-fase-aguda", "Fase aguda — control del dolor e isometría", [
+        "Isometría de aductores sin dolor",
+        "Marcha y sedestación sin dolor",
+      ]),
+      faseLesion("pubalgia-fuerza-dinamica", "Fuerza dinámica — aductores y core", [
+        "Copenhagen adductor ≥80% simetría",
+        "Tolerancia a rotación de tronco sin dolor",
+      ]),
+      faseLesion("pubalgia-readaptacion-golpeo", "Readaptación al golpeo y al campo", [
+        "Tolerancia completa al golpeo a máxima intensidad",
+        "Dinamometría aductores ≥95% simetría",
+        "Sin dolor tras entrenamiento de equipo",
+      ]),
+    ],
+  },
+  {
+    id: "rendimiento",
+    nombre: "Rendimiento",
+    esRendimiento: true,
+    fases: [faseLesion("rendimiento-unica", "Rendimiento")],
+  },
+];
 
 // Ejercicios de librería reutilizados en la programación de todos los atletas.
 const EJ = {
@@ -639,6 +802,8 @@ export function buildSeed(): AppState {
       lesionDetalle:
         "Reconstrucción de LCA con injerto HTH, rotura completa en entrada a destiempo. Sin lesiones meniscales asociadas.",
       fase: "Fase 3 · Readaptación al campo",
+      lesionId: "lca",
+      faseId: "lca-return-on-field",
       semanaProceso: 14,
       avatarInitials: "MV",
       sexo: "Hombre",
@@ -723,6 +888,8 @@ export function buildSeed(): AppState {
       lesion: "Tendinopatía aquílea",
       lesionDetalle: "Tendinopatía aquílea reactiva-degenerativa mixta, tendón derecho, de inicio insidioso por sobreuso.",
       fase: "Fase 2 · Reintroducción a carrera",
+      lesionId: "rotuliana",
+      faseId: "rotuliana-isotonico",
       semanaProceso: 8,
       avatarInitials: "LS",
       sexo: "Mujer",
@@ -799,6 +966,8 @@ export function buildSeed(): AppState {
       lesion: "Esguince de tobillo grado II",
       lesionDetalle: "Esguince lateral de tobillo derecho (LPAA), inversión forzada al caer tras un rebote.",
       fase: "Fase 4 · Alta próxima",
+      lesionId: "tobillo",
+      faseId: "tobillo-readaptacion-deportiva",
       semanaProceso: 20,
       avatarInitials: "DT",
       sexo: "Hombre",
@@ -876,6 +1045,10 @@ export function buildSeed(): AppState {
       lesion: "Inestabilidad de hombro (luxación anterior)",
       lesionDetalle: "Luxación anterior de hombro derecho durante lanzamiento, primer episodio, tratamiento conservador.",
       fase: "Fase 1 · Evaluación y protección",
+      // Sin tipo de lesión propio en el catálogo (hombro) — analogía de proceso por
+      // fase (protección inicial), no por anatomía; ver CLAUDE.md > lesiones/fases.
+      lesionId: "lca",
+      faseId: "lca-early-stage",
       semanaProceso: 2,
       avatarInitials: "NO",
       sexo: "Mujer",
@@ -941,6 +1114,10 @@ export function buildSeed(): AppState {
       lesion: "Lumbalgia mecánica",
       lesionDetalle: "Lumbalgia mecánica inespecífica tras sesión de peso muerto con volumen elevado. Sin banderas rojas, sin irradiación.",
       fase: "Fase 1 · Control del dolor",
+      // Lumbalgia sin tipo propio en el catálogo — Pubalgia es la analogía de
+      // región (tronco/core) más cercana disponible.
+      lesionId: "pubalgia",
+      faseId: "pubalgia-fase-aguda",
       semanaProceso: 5,
       avatarInitials: "RC",
       sexo: "Hombre",
@@ -1010,6 +1187,8 @@ export function buildSeed(): AppState {
       lesion: "Lesión de isquiotibiales (HSI)",
       lesionDetalle: "Rotura miofascial de bíceps femoral izquierdo en sprint durante un punto, grado II.",
       fase: "Fase 2 · Fuerza excéntrica",
+      lesionId: "isquiotibiales",
+      faseId: "isquios-fuerza-neuromuscular",
       semanaProceso: 9,
       avatarInitials: "MI",
       sexo: "Mujer",
@@ -1087,6 +1266,10 @@ export function buildSeed(): AppState {
       lesion: "Condropatía rotuliana",
       lesionDetalle: "Dolor femoropatelar anterior bilateral (predominio derecho) por incremento brusco de volumen de entrenamiento en montaña.",
       fase: "Fase 2 · Fuerza y control de carga",
+      // Condropatía rotuliana sin tipo propio en el catálogo — Tendinopatía
+      // rotuliana es la analogía anatómica (rodilla anterior) más cercana.
+      lesionId: "rotuliana",
+      faseId: "rotuliana-isotonico",
       semanaProceso: 10,
       avatarInitials: "PS",
       sexo: "Hombre",
@@ -1163,6 +1346,10 @@ export function buildSeed(): AppState {
       lesion: "Fractura por estrés (2º metatarsiano)",
       lesionDetalle: "Fractura por estrés del 2º metatarsiano del pie derecho, sin desplazamiento. Consolidación radiológica confirmada.",
       fase: "Fase 3 · Retorno a superficie de juego",
+      // Fractura de metatarsiano sin tipo propio en el catálogo — Esguince de
+      // tobillo es la analogía anatómica (pie/tobillo) más cercana.
+      lesionId: "tobillo",
+      faseId: "tobillo-readaptacion-deportiva",
       semanaProceso: 13,
       avatarInitials: "CD",
       sexo: "Mujer",
@@ -1238,6 +1425,8 @@ export function buildSeed(): AppState {
       lesion: "Pubalgia del deportista",
       lesionDetalle: "Pubalgia atlética con componente de sobrecarga aductora, de instauración progresiva por volumen de golpeo.",
       fase: "Fase 4 · Readaptación al campo",
+      lesionId: "pubalgia",
+      faseId: "pubalgia-readaptacion-golpeo",
       semanaProceso: 19,
       avatarInitials: "IR",
       sexo: "Hombre",
@@ -1317,6 +1506,8 @@ export function buildSeed(): AppState {
       lesion: "Meniscectomía parcial (menisco externo)",
       lesionDetalle: "Rotura de menisco externo en apoyo tras remate, meniscectomía parcial artroscópica. Proceso completado con éxito.",
       fase: "Alta · Readaptación completada",
+      lesionId: "rendimiento",
+      faseId: "rendimiento-unica",
       semanaProceso: 24,
       avatarInitials: "SM",
       sexo: "Mujer",
@@ -1397,6 +1588,10 @@ export function buildSeed(): AppState {
     nombre: string;
     objetivo: string;
     offsetHoy: number; // día de "esta semana" que cae hoy (0) o cerca (±1/±2)
+    tipo: string; // "Gym", "Campo", "Readaptación"...
+    rpeObjetivo: number; // fases tempranas 4-6, avanzadas 7-9 — variedad de las 3 intensidades
+    /** Si es true, la sesión de "esta semana" (offsetHoy) lleva `bloquesEjercicios`. */
+    bloques?: boolean;
     sesion: (offset: number) => EjercicioProgramado[];
   };
 
@@ -1407,6 +1602,9 @@ export function buildSeed(): AppState {
       objetivo:
         "Progresar la carga en tren inferior y reintroducir gestos pliométricos y de campo, controlando el dolor y verificando simetría antes de aumentar la exposición a cambios de dirección.",
       offsetHoy: 0,
+      tipo: "Gym",
+      rpeObjetivo: 7.5,
+      bloques: true,
       sesion: () => [EJ.bulgara(), EJ.pesoMuertoUnaPierna(), EJ.talonesUnilateral(), EJ.nordic()],
     },
     {
@@ -1414,6 +1612,8 @@ export function buildSeed(): AppState {
       nombre: "Semana 8 · Reintroducción a carrera",
       objetivo: "Progresar el volumen de carrera continua sin dolor, manteniendo fuerza de tríceps sural.",
       offsetHoy: 0,
+      tipo: "Campo",
+      rpeObjetivo: 6,
       sesion: () => [EJ.talonesUnilateral(), EJ.movilidadTobillo(), EJ.marchaBanda()],
     },
     {
@@ -1421,6 +1621,9 @@ export function buildSeed(): AppState {
       nombre: "Semana 20 · Alta próxima",
       objetivo: "Confirmar simetría y tolerancia a pliometría de alta intensidad antes del alta deportiva.",
       offsetHoy: -1,
+      tipo: "Gym",
+      rpeObjetivo: 8.5,
+      bloques: true,
       sesion: () => [EJ.cmj(), EJ.dropJump(), EJ.hopUnilateral(), EJ.perturbaciones()],
     },
     {
@@ -1428,6 +1631,8 @@ export function buildSeed(): AppState {
       nombre: "Semana 2 · Evaluación y protección",
       objetivo: "Proteger el hombro, mantener movilidad indolora y comenzar activación escapular suave.",
       offsetHoy: 2,
+      tipo: "Readaptación",
+      rpeObjetivo: 4,
       sesion: () => [EJ.isoQuad(), EJ.equilibrioMonopodal()],
     },
     {
@@ -1435,6 +1640,8 @@ export function buildSeed(): AppState {
       nombre: "Semana 5 · Control del dolor",
       objetivo: "Reducir el dolor lumbar con carga controlada y educación en manejo de cargas de crossfit.",
       offsetHoy: -2,
+      tipo: "Readaptación",
+      rpeObjetivo: 5,
       sesion: () => [EJ.puenteGluteo(), EJ.movilidadCadera(), EJ.isoQuad()],
     },
     {
@@ -1442,6 +1649,9 @@ export function buildSeed(): AppState {
       nombre: "Semana 9 · Fuerza excéntrica",
       objetivo: "Progresar la fuerza excéntrica de isquiotibiales y reintroducir sprint submáximo.",
       offsetHoy: 0,
+      tipo: "Gym",
+      rpeObjetivo: 7,
+      bloques: true,
       sesion: () => [EJ.nordic(), EJ.pesoMuertoUnaPierna(), EJ.marchaBanda()],
     },
     {
@@ -1449,6 +1659,9 @@ export function buildSeed(): AppState {
       nombre: "Semana 10 · Fuerza y control de carga",
       objetivo: "Fuerza de cuádriceps en rango sin dolor y control de la carga tras el pico de esta semana.",
       offsetHoy: 1,
+      tipo: "Gym",
+      rpeObjetivo: 6.5,
+      bloques: true,
       sesion: () => [EJ.stepDown(), EJ.isoQuad(), EJ.movilidadCadera()],
     },
     {
@@ -1456,6 +1669,8 @@ export function buildSeed(): AppState {
       nombre: "Semana 13 · Retorno a superficie de juego",
       objetivo: "Reintroducción a pista de pádel con hops y cambios de dirección controlados.",
       offsetHoy: 0,
+      tipo: "Campo",
+      rpeObjetivo: 7.5,
       sesion: () => [EJ.hopUnilateral(), EJ.equilibrioMonopodal(), EJ.movilidadTobillo()],
     },
     {
@@ -1463,6 +1678,9 @@ export function buildSeed(): AppState {
       nombre: "Semana 19 · Readaptación al campo",
       objetivo: "Entrenamiento de equipo con exposición progresiva a golpeo y cambios de dirección.",
       offsetHoy: -1,
+      tipo: "Campo",
+      rpeObjetivo: 9,
+      bloques: true,
       sesion: () => [EJ.puenteGluteo(), EJ.pesoMuertoUnaPierna(), EJ.perturbaciones()],
     },
   ];
@@ -1476,7 +1694,9 @@ export function buildSeed(): AppState {
         iso(offset),
         `${plan.nombre.split(" · ")[1] ?? "Sesión"} (${i + 1})`,
         plan.sesion(offset),
-        "completada"
+        "completada",
+        undefined,
+        { tipo: plan.tipo, rpeObjetivo: plan.rpeObjetivo }
       )
     );
     const bloqueAnterior = crearBloque(
@@ -1485,26 +1705,41 @@ export function buildSeed(): AppState {
       semanaPasadaInicio,
       semanaPasadaFin,
       plan.objetivo,
-      sesionesSemanaPasada
+      sesionesSemanaPasada,
+      plan.atletaId === "marcos-vidal" ? { semanaPostOpInicio: 12 } : undefined
     );
 
     const offsetsEstaSemana = [plan.offsetHoy - 2, plan.offsetHoy, plan.offsetHoy + 2];
-    const sesionesEstaSemana = offsetsEstaSemana.map((offset, i) =>
-      crearSesion(
+    const sesionesEstaSemana = offsetsEstaSemana.map((offset, i) => {
+      const ejerciciosSesion = plan.sesion(offset);
+      const esSesionHoy = offset === plan.offsetHoy;
+      return crearSesion(
         plan.atletaId,
         iso(offset),
         `${plan.nombre.split(" · ")[1] ?? "Sesión"} (${i + 1})`,
-        plan.sesion(offset),
-        "programada"
-      )
-    );
+        ejerciciosSesion,
+        "programada",
+        undefined,
+        {
+          tipo: plan.tipo,
+          rpeObjetivo: plan.rpeObjetivo,
+          bloquesEjercicios:
+            esSesionHoy && plan.bloques ? bloquesPrepActivPrincipal(ejerciciosSesion) : undefined,
+        }
+      );
+    });
     const bloqueActual = crearBloque(
       plan.atletaId,
       plan.nombre,
       iso(offsetsEstaSemana[0]),
       iso(offsetsEstaSemana[2]),
       plan.objetivo,
-      sesionesEstaSemana
+      sesionesEstaSemana,
+      plan.atletaId === "marcos-vidal"
+        ? { semanaPostOpInicio: 13, semanasTest: [0] }
+        : plan.atletaId === "diego-torres"
+          ? { semanasTest: [0] }
+          : undefined
     );
 
     const offsetsSemanaSiguiente = offsetsEstaSemana.map((o) => o + 7);
@@ -1514,7 +1749,9 @@ export function buildSeed(): AppState {
         iso(offset),
         `${plan.nombre.split(" · ")[1] ?? "Sesión"} (${i + 1})`,
         plan.sesion(offset),
-        "programada"
+        "programada",
+        undefined,
+        { tipo: plan.tipo, rpeObjetivo: plan.rpeObjetivo }
       )
     );
     const bloqueSiguiente = crearBloque(
@@ -1523,7 +1760,8 @@ export function buildSeed(): AppState {
       iso(offsetsSemanaSiguiente[0]),
       iso(offsetsSemanaSiguiente[2]),
       plan.objetivo,
-      sesionesSemanaSiguiente
+      sesionesSemanaSiguiente,
+      plan.atletaId === "marcos-vidal" ? { semanaPostOpInicio: 14 } : undefined
     );
 
     sesiones.push(...sesionesSemanaPasada, ...sesionesEstaSemana, ...sesionesSemanaSiguiente);
@@ -1993,6 +2231,17 @@ export function buildSeed(): AppState {
   ];
 
   // ---------------------------------------------------------------------------
+  // Notas de calendario (clínica)
+  // ---------------------------------------------------------------------------
+
+  const notasCalendario: NotaCalendario[] = [
+    { id: id("nota-cal"), fecha: iso(3), texto: "Marcos de vacaciones toda la semana — reprogramar sesiones.", atletaId: "marcos-vidal" },
+    { id: id("nota-cal"), fecha: iso(1), texto: "Llamar a la aseguradora de Nerea Otxoa para confirmar la cobertura de la resonancia.", atletaId: "nerea-otxoa" },
+    { id: id("nota-cal"), fecha: iso(5), texto: "Revisión de material: reponer bandas elásticas y bosu." },
+    { id: id("nota-cal"), fecha: iso(-2), texto: "Reunión de equipo clínico — revisión de casos complejos." },
+  ];
+
+  // ---------------------------------------------------------------------------
   // Config
   // ---------------------------------------------------------------------------
 
@@ -2001,6 +2250,13 @@ export function buildSeed(): AppState {
     acento: ACENTO_DEFECTO,
     umbrales: { ...UMBRALES_DEFECTO },
     vistaAtletas: "grid",
+    perfilProfesional: {
+      nombre: "Álex Ríos",
+      rol: "Fisioterapeuta - Readaptador",
+      numColegiado: "Col. 28-12345",
+      clinica: "Fisiofles Clínica de Readaptación Deportiva",
+    },
+    fichaMetricas: ["readiness", "dolor", "acwr", "simetria", "semana-proceso"],
     dashboardGraficos: GRAFICOS_DASHBOARD_DEFECTO,
     dashboardGraficosOrden: GRAFICOS_DASHBOARD_DEFECTO,
     fichaGraficos: FICHA_GRAFICOS_DEFECTO,
@@ -2010,6 +2266,7 @@ export function buildSeed(): AppState {
   return {
     atletas,
     entrenadores,
+    tiposLesion,
     sesiones,
     bloques,
     ejercicios,
@@ -2020,6 +2277,7 @@ export function buildSeed(): AppState {
     formulariosDef,
     formulariosEnvios,
     notificaciones,
+    notasCalendario,
     config,
   };
 }

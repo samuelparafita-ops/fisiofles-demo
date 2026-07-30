@@ -68,6 +68,15 @@ export const colors = {
     base: "#94A3B8", // gris claro (~6.6:1)
   },
 
+  // Semáforo de fases de lesión (lib/calculations/semaforo.ts) — continuum
+  // rojo (fase más temprana) → verde fosforito (fase final / rendimiento),
+  // interpolado en HSL. Únicos hex de este continuum: nadie más los importa
+  // directamente, siempre a través de `colorSemaforo`/`colorSemaforoTexto`.
+  semaforo: {
+    inicio: "#980000",
+    fin: "#8BF200",
+  },
+
   // Paleta de comparación (Dashboard /dashboard FASE E; motor de gráficos por
   // test FASE 3) — hasta 6 atletas superpuestos sobre la serie agregada gris
   // o resaltados en barras/dispersión. Deliberadamente fuera de la familia

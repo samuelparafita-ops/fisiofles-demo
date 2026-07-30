@@ -14,18 +14,21 @@ import type {
   Entrenador,
   FormularioDef,
   FormularioEnvio,
+  NotaCalendario,
   Notificacion,
   PlantillaPrograma,
   PlantillaSesion,
   RegistroTest,
   Sesion,
   TestDef,
+  TipoLesion,
   AppState,
 } from "./types";
 
 export type EntityMap = {
   atletas: Atleta;
   entrenadores: Entrenador;
+  tiposLesion: TipoLesion;
   sesiones: Sesion;
   bloques: BloqueSemanal;
   ejercicios: Ejercicio;
@@ -36,6 +39,7 @@ export type EntityMap = {
   formulariosDef: FormularioDef;
   formulariosEnvios: FormularioEnvio;
   notificaciones: Notificacion;
+  notasCalendario: NotaCalendario;
 };
 
 export type EntityKey = keyof EntityMap;

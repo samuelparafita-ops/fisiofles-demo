@@ -6,7 +6,7 @@ deportiva. Es un PROTOTIPO para enseñar a fisioterapeutas, NO producción.
 
 ## Reglas duras
 - Sin backend, sin base de datos, sin auth real. Todo es mock en `lib/mock/`.
-- El store se persiste en `localStorage` bajo la clave única `fisiofles-demo-v3`
+- El store se persiste en `localStorage` bajo la clave única `fisiofles-demo-v4`
   (ver `lib/store/`). Hay una acción "Restablecer demo" (menú del avatar) que
   borra esa clave y re-siembra desde `lib/mock/seed.ts`.
 - Única fuente de verdad: todo dato editable vive en el store (`lib/store/`).
@@ -26,6 +26,62 @@ deportiva. Es un PROTOTIPO para enseñar a fisioterapeutas, NO producción.
 - Implementación en `lib/calculations/` como funciones PURAS (sin React, sin estado), con tests.
 - Los datos mock guardan valores BRUTOS; las fórmulas se aplican en tiempo de render llamando a `lib/calculations/`. El dashboard calcula de verdad, no pinta números fijos.
 - No cambies una fórmula sin que yo lo pida. Si algo no cuadra con `docs/formulas-dashboard.md`, para y pregunta.
+
+## Lesiones, fases y semáforo (v4)
+- `TipoLesion`/`FaseLesion` (`lib/store/types.ts`) son entidades del profesional,
+  no texto libre: `TipoLesion.fases` es un array ORDENADO (el orden = el orden
+  del proceso = el orden del semáforo). `AppState.tiposLesion` hereda
+  CREAR/ACTUALIZAR/ELIMINAR gratis vía `EntityMap` (reducer genérico). El tipo
+  especial `esRendimiento: true` ("Rendimiento", una única fase) no es eliminable
+  en UI — para atletas sin lesión activa.
+- `Atleta.lesionId`/`faseId` son la fuente de verdad v4, pero **opcionales**:
+  `components/atletas/nuevo-atleta-dialog.tsx` todavía crea atletas solo con
+  `lesion`/`fase` (texto) y no se ha migrado en esta fase. `Atleta.lesion`/`fase`
+  (texto) siguen siendo lo que leen TODAS las vistas actuales — legado en
+  retirada, se migran en FASE 3/4. Resuelve `lesionId`/`faseId` contra el
+  catálogo con el hook `useFaseDeAtleta(atleta)` (`{ tipoLesion, fase,
+  indiceFase, totalFases } | null`).
+- Semáforo de proceso: `lib/calculations/semaforo.ts` `colorSemaforo(indice,
+  total)`/`colorSemaforoTexto(indice, total)` interpola en HSL entre
+  `colors.semaforo.inicio` (rojo) y `colors.semaforo.fin` (verde fosforito) —
+  ambos hex viven SOLO en `lib/tokens.ts`, nadie más los importa directamente.
+  `total=1` pinta siempre verde fosforito (proceso de una fase = rendimiento).
+
+## Ejercicios: etiquetas
+- `Ejercicio.etiquetas: string[]` (`lib/mock/ejercicios.ts`) es la taxonomía
+  libre del fisio (patrón + zona corporal + lesiones típicas: "Tren superior",
+  "CORE", "Isométricos", "LCA", "Tendinopatía rotuliana"...) — un mismo
+  ejercicio puede llevar etiquetas de zonas y lesiones que no coinciden con su
+  `categoria` legado (ej. `press-banca` es "Tren superior" pero lleva la
+  etiqueta "LCA" porque se prescribe dentro de un proceso de LCA para mantener
+  fuerza general). `categoria` no se elimina (vistas actuales lo usan).
+  `Ejercicio.enlaceVideo?` es un link de vídeo opcional.
+
+## Sesiones: sub-bloques, tipo/RPE e intensidad (v4)
+- `Sesion.bloquesEjercicios?: BloqueEjercicios[]` organiza los ejercicios en
+  sub-bloques ORDENADOS (Preparación → Activación → Bloque principal 1..n, del
+  Excel REHAB CREATION). Es opcional y coexiste con el `Sesion.ejercicios`
+  plano legado: ninguno de los dos se ha retirado porque `nueva-sesion-dialog.tsx`
+  y `lib/store/aplicar-plantilla.ts` siguen creando sesiones solo con
+  `ejercicios`. Usa `bloquesDeSesion(sesion)` (`lib/store/sesiones.ts`) para leer
+  el desglose correcto sin distinguir el caso legado: devuelve
+  `bloquesEjercicios` si existe y tiene contenido, si no envuelve `ejercicios`
+  en un único bloque "Principal". Las vistas actuales no llaman a este helper
+  todavía (se migran en FASE 5).
+- `Sesion.tipo?`/`rpeObjetivo?` son texto corto ("Gym", "Campo",
+  "Readaptación") y RPE objetivo (0-10, admite medios). **Regla dura: la
+  intensidad de una sesión SIEMPRE se calcula, NUNCA se guarda** (misma regla
+  que el LSI) — `intensidadSesion(rpe, { rpeLow, rpeHigh })` en
+  `lib/calculations/intensidad.ts`, con los umbrales siempre de
+  `config.umbrales.rpeLow`/`rpeHigh` (defecto 6/8), nunca hardcodeados.
+- `BloqueSemanal.semanaPostOpInicio?`/`semanasTest?` (del BLOCK OUTLINE del
+  Excel) documentan en qué semana post-operatoria arranca el bloque y qué
+  semanas (índices 0-based) son "semana de test".
+
+## Notas de calendario (clínica)
+- `NotaCalendario` (`AppState.notasCalendario`, hook `useNotasCalendario()`):
+  nota libre de fecha con `atletaId?` opcional para ligarla a un atleta (ej.
+  "Marcos de vacaciones"). Entidad CRUD genérica vía `EntityMap`.
 
 ## Motor de gráficos por test (dashboard + ficha)
 - `lib/dashboard/graficos.ts` → `catalogoGraficos()`/`GraficoDef`: catálogo único de
