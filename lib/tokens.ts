@@ -78,13 +78,15 @@ export const colors = {
   },
 
   // Paleta de comparación (Dashboard /dashboard FASE E; motor de gráficos por
-  // test FASE 3) — hasta 6 atletas superpuestos sobre la serie agregada gris
-  // o resaltados en barras/dispersión. Deliberadamente fuera de la familia
-  // semántica rojo/verde/naranja de `dataLight` (reservada para zonas de
-  // estado) y del cyan de `dataLight.primary`, para que un atleta
+  // test FASE 3) — atletas superpuestos sobre la serie agregada gris o
+  // resaltados en barras/dispersión, sin tope de cantidad (FASE 3: del 7º en
+  // adelante se generan más tonos por rotación HSL, ver
+  // `useComparisonColorsExtended` en lib/theme.ts). Deliberadamente fuera de
+  // la familia semántica rojo/verde/naranja de `dataLight` (reservada para
+  // zonas de estado) y del cyan de `dataLight.primary`, para que un atleta
   // seleccionado nunca se confunda con una banda de estado. Los 6 contrastan
   // ≥4.5:1 sobre blanco y son distinguibles entre sí. Acceder siempre vía
-  // `useComparisonColors()` (lib/theme.ts).
+  // `useComparisonColorsExtended()` (lib/theme.ts).
   comparison: ["#2563EB", "#7C3AED", "#DB2777", "#0F766E", "#92400E", "#475569"],
 
   // Superficie oscura de los gráficos (el "cockpit")

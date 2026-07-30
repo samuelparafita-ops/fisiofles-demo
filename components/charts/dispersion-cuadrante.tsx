@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
   type TooltipContentProps,
 } from "recharts";
-import { useChartColors, useChartGridColors, useComparisonColors } from "@/lib/theme";
+import { useChartColors, useChartGridColors, useComparisonColorsExtended } from "@/lib/theme";
 import { mediana } from "@/lib/dashboard/series-tests";
 import { ChartPanel, ChartTooltipBox } from "./chart-panel";
 
@@ -94,7 +94,7 @@ export function DispersionCuadrante({
 }: DispersionCuadranteProps) {
   const chartColors = useChartColors();
   const gridColors = useChartGridColors();
-  const comparisonColors = useComparisonColors();
+  const comparisonColors = useComparisonColorsExtended(seleccionados.length);
   const TooltipContent = crearTooltip(ejeXLabel, ejeYLabel, unidadX, unidadY);
 
   if (puntos.length === 0) {
@@ -124,7 +124,7 @@ export function DispersionCuadrante({
   function colorDe(atletaId: string): string {
     const idx = seleccionados.indexOf(atletaId);
     if (idx === -1) return seleccionados.length > 0 ? gridColors.line : chartColors.primary;
-    return comparisonColors[idx % comparisonColors.length];
+    return comparisonColors[idx];
   }
 
   const labelEstilo = { fill: gridColors.axis, fontSize: 10 } as const;

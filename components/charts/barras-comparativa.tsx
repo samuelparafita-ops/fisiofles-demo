@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
   type TooltipContentProps,
 } from "recharts";
-import { useChartColors, useChartGridColors, useComparisonColors } from "@/lib/theme";
+import { useChartColors, useChartGridColors, useComparisonColorsExtended } from "@/lib/theme";
 import { promedio } from "@/lib/dashboard/series";
 import { ChartPanel, ChartTooltipBox } from "./chart-panel";
 
@@ -52,8 +52,9 @@ function BarraTooltip({ active, payload, unidad }: TooltipContentProps & { unida
 
 /**
  * Barras por atleta (último valor) — usada por `GraficoTest` en modo
- * "Por atleta". Los atletas seleccionados se resaltan con `useComparisonColors()`;
- * el resto queda en `chartColors.base` (gris) para que resalten los elegidos.
+ * "Por atleta". Los atletas seleccionados se resaltan con
+ * `useComparisonColorsExtended()`; el resto queda en `chartColors.base`
+ * (gris) para que resalten los elegidos.
  */
 export function BarrasComparativa({
   titulo,
@@ -68,7 +69,7 @@ export function BarrasComparativa({
 }: BarrasComparativaProps) {
   const chartColors = useChartColors();
   const gridColors = useChartGridColors();
-  const comparisonColors = useComparisonColors();
+  const comparisonColors = useComparisonColorsExtended(seleccionados.length);
 
   const data = datos.filter((d): d is BarraComparativaDato & { valor: number } => d.valor !== null);
   const media = promedio(data.map((d) => d.valor));
@@ -76,7 +77,7 @@ export function BarrasComparativa({
   function colorDe(atletaId: string): string {
     const idx = seleccionados.indexOf(atletaId);
     if (idx === -1) return seleccionados.length > 0 ? gridColors.line : chartColors.primary;
-    return comparisonColors[idx % comparisonColors.length];
+    return comparisonColors[idx];
   }
 
   if (data.length === 0) {

@@ -23,7 +23,7 @@ export type BarrasTemporalProps = {
   descripcion?: string;
   /** Serie semanal ya calculada (`lib/dashboard/series-tests.ts` → `serieTest`). */
   puntos: PuntoSerie[];
-  /** Atletas superpuestos como línea, con color ya asignado — hasta 6 (ver `useComparisonColors()`). */
+  /** Atletas superpuestos como línea, con color ya asignado — sin tope (ver `useComparisonColorsExtended()`). */
   atletas: AtletaSerie[];
   etiquetaAgregado: string;
   unidad?: string;
@@ -69,12 +69,12 @@ function crearTooltip(
 }
 
 /**
- * Barras por semana del agregado del equipo, con overlay de líneas de hasta
- * 6 atletas — usada por `GraficoTest` en modo "Evolución". Mismo patrón
- * visual que `MultiSeriesLine` (dashboard v2 FASE E), pero el agregado se
- * pinta en barras en vez de área, porque aquí la serie no es continua semana
- * a semana (viene interpolada entre registros de test reales, no medida
- * cada semana).
+ * Barras por semana del agregado del equipo, con overlay de líneas de
+ * atletas (sin tope) — usada por `GraficoTest` en modo "Evolución". Mismo
+ * patrón visual que `MultiSeriesLine` (dashboard v2 FASE E), pero el agregado
+ * se pinta en barras en vez de área, porque aquí la serie no es continua
+ * semana a semana (viene interpolada entre registros de test reales, no
+ * medida cada semana).
  */
 export function BarrasTemporal({
   titulo,

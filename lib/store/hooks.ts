@@ -41,17 +41,24 @@ export type FaseDeAtleta = {
   totalFases: number;
 };
 
+/**
+ * Versión pura de `useFaseDeAtleta` — para listas que resuelven la fase de
+ * varios atletas en un `.map()` (no se puede llamar un hook ahí dentro).
+ * `null` si falta `lesionId`/`faseId` o no resuelven contra el catálogo.
+ */
+export function resolverFaseDeAtleta(atleta: Atleta | undefined, tiposLesion: TipoLesion[]): FaseDeAtleta | null {
+  if (!atleta) return null;
+  const tipoLesion = tiposLesion.find((t) => t.id === atleta.lesionId);
+  if (!tipoLesion) return null;
+  const indiceFase = tipoLesion.fases.findIndex((f) => f.id === atleta.faseId);
+  if (indiceFase === -1) return null;
+  return { tipoLesion, fase: tipoLesion.fases[indiceFase], indiceFase, totalFases: tipoLesion.fases.length };
+}
+
 /** Resuelve `atleta.lesionId`/`faseId` contra el catálogo — `null` si falta cualquiera de los dos. */
 export function useFaseDeAtleta(atleta: Atleta | undefined): FaseDeAtleta | null {
   const { tiposLesion } = useStore().state;
-  return useMemo(() => {
-    if (!atleta) return null;
-    const tipoLesion = tiposLesion.find((t) => t.id === atleta.lesionId);
-    if (!tipoLesion) return null;
-    const indiceFase = tipoLesion.fases.findIndex((f) => f.id === atleta.faseId);
-    if (indiceFase === -1) return null;
-    return { tipoLesion, fase: tipoLesion.fases[indiceFase], indiceFase, totalFases: tipoLesion.fases.length };
-  }, [tiposLesion, atleta]);
+  return useMemo(() => resolverFaseDeAtleta(atleta, tiposLesion), [tiposLesion, atleta]);
 }
 
 /** Último readiness registrado (0–10) del atleta, o `null` si no tiene evolución. */

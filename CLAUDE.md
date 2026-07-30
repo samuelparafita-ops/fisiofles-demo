@@ -36,11 +36,13 @@ deportiva. Es un PROTOTIPO para enseñar a fisioterapeutas, NO producción.
   en UI — para atletas sin lesión activa.
 - `Atleta.lesionId`/`faseId` son la fuente de verdad v4, pero **opcionales**:
   `components/atletas/nuevo-atleta-dialog.tsx` todavía crea atletas solo con
-  `lesion`/`fase` (texto) y no se ha migrado en esta fase. `Atleta.lesion`/`fase`
-  (texto) siguen siendo lo que leen TODAS las vistas actuales — legado en
-  retirada, se migran en FASE 3/4. Resuelve `lesionId`/`faseId` contra el
-  catálogo con el hook `useFaseDeAtleta(atleta)` (`{ tipoLesion, fase,
-  indiceFase, totalFases } | null`).
+  `lesion`/`fase` (texto) y no se ha migrado. `/dashboard` ya lee `lesionId`/
+  `faseId` en vez de `Atleta.lesion`/`fase` (texto) — FASE 3; `/atletas` y la
+  ficha siguen en el texto legado, se migran en FASE 4. Resuelve `lesionId`/
+  `faseId` contra el catálogo con el hook `useFaseDeAtleta(atleta)`, o la
+  versión pura `resolverFaseDeAtleta(atleta, tiposLesion)` (`lib/store/hooks.ts`)
+  para listas — no se puede llamar un hook dentro de un `.map()`. Ambas
+  devuelven `{ tipoLesion, fase, indiceFase, totalFases } | null`.
 - Semáforo de proceso: `lib/calculations/semaforo.ts` `colorSemaforo(indice,
   total)`/`colorSemaforoTexto(indice, total)` interpola en HSL entre
   `colors.semaforo.inicio` (rojo) y `colors.semaforo.fin` (verde fosforito) —
@@ -98,10 +100,20 @@ deportiva. Es un PROTOTIPO para enseñar a fisioterapeutas, NO producción.
   bajo nivel. `components/dashboard/selector-graficos.tsx` es genérico (recibe
   `catalogo`/`seleccionados`/`onChange`), lo usan ambas vistas.
 - En `/dashboard`, `GraficoTest`/`GraficoResultado` reciben la plantilla activa y
-  resaltan los atletas de "Comparar atletas" (hasta 6, colores estables vía
-  `colors.comparison`). En el tab Datos de la ficha reciben `activos + el propio
-  atleta` con `atletasSeleccionados = [atleta.id]` — el atleta protagoniza el color,
+  resaltan los atletas de "Comparar atletas" — SIN tope (FASE 3): los 6 primeros
+  usan los colores estables de `colors.comparison`, del 7º en adelante
+  `useComparisonColorsExtended(n)` (`lib/theme.ts`) genera tonos deterministas
+  por rotación de tono HSL con el mismo contraste AA sobre blanco. En el tab
+  Datos de la ficha reciben `activos + el propio atleta` con
+  `atletasSeleccionados = [atleta.id]` — el atleta protagoniza el color,
   el resto del equipo cae en el agregado gris (al revés que en `/dashboard`).
+- El filtro "Lesión" de `/dashboard` solo lista `tiposLesion` con algún atleta
+  activo asignado (derivado de `atletas` en cada render, no cacheado). El
+  filtro "Fase" solo se activa con EXACTAMENTE una lesión seleccionada — sus
+  opciones son las fases de esa lesión, en orden, coloreadas con
+  `colorSemaforo`; con 0 o ≥2 lesiones se deshabilita y limpia la selección de
+  fases. `SelectorFiltro` (`components/dashboard/selector-filtro.tsx`) acepta
+  opciones con color/estado deshabilitado+hint para soportar esto.
 - `BarrasComparativa` (barras "Por atleta") siempre angula las etiquetas del eje X
   (-30°) y las trunca al primer nombre vía `tickFormatter` — con hasta 6-7 atletas
   el nombre completo no cabe aunque solo haya 6 barras; el tooltip sigue mostrando

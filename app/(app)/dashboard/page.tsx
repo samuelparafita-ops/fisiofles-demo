@@ -1,16 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChartNoAxesCombined, Dumbbell, Layers } from "lucide-react";
+import { ChartNoAxesCombined, Dumbbell, HeartPulse, Layers } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
 import { GraficoTest, GraficoResultado } from "@/components/charts";
 import { SelectorAtletas } from "@/components/dashboard/selector-atletas";
 import { SelectorGraficos } from "@/components/dashboard/selector-graficos";
-import { SelectorFiltro } from "@/components/dashboard/selector-filtro";
+import { SelectorFiltro, type OpcionFiltro } from "@/components/dashboard/selector-filtro";
 import { SelectorRango, RANGO_DASHBOARD_DEFECTO, type RangoDashboardValor } from "@/components/dashboard/selector-rango";
-import { FASE_OPCIONES, fasePrefijo, ordenarFases } from "@/components/atletas/fase-utils";
 import {
   catalogoGraficos,
   graficoResultadoId,
@@ -26,8 +25,9 @@ import {
   serieSimetriaMedia,
 } from "@/lib/dashboard/series";
 import { rangoDesdeSemanas } from "@/lib/dashboard/series-tests";
-import { useComparisonColors } from "@/lib/theme";
-import { useAtletas, useCatalogoTests, useConfig, useDispatch, useRegistrosTests, useSesiones } from "@/lib/store";
+import { colorSemaforo } from "@/lib/calculations";
+import { useComparisonColorsExtended } from "@/lib/theme";
+import { useAtletas, useCatalogoTests, useConfig, useDispatch, useRegistrosTests, useSesiones, useTiposLesion } from "@/lib/store";
 
 function fmtEntero(n: number): string {
   return Math.round(n).toLocaleString("es-ES");
@@ -42,17 +42,20 @@ function rangoADesdeHasta(valor: RangoDashboardValor): { desde: Date; hasta: Dat
 
 export default function DashboardPage() {
   const atletas = useAtletas();
+  const tiposLesion = useTiposLesion();
   const sesiones = useSesiones();
   const registrosTests = useRegistrosTests();
   const catalogoTests = useCatalogoTests();
   const config = useConfig();
   const dispatch = useDispatch();
-  const comparisonColors = useComparisonColors();
 
   const [rango, setRango] = useState<RangoDashboardValor>(RANGO_DASHBOARD_DEFECTO);
   const [seleccionados, setSeleccionados] = useState<string[]>([]);
   const [deportesSel, setDeportesSel] = useState<string[]>([]);
+  const [lesionesSel, setLesionesSel] = useState<string[]>([]);
   const [fasesSel, setFasesSel] = useState<string[]>([]);
+
+  const comparisonColors = useComparisonColorsExtended(seleccionados.length);
 
   const { desde, hasta } = useMemo(() => rangoADesdeHasta(rango), [rango]);
   const umbralesAcwr = useMemo(
@@ -62,25 +65,60 @@ export default function DashboardPage() {
 
   const activos = useMemo(() => atletas.filter((a) => a.estado === "activo"), [atletas]);
 
-  const deportesDisponibles = useMemo(
-    () => Array.from(new Set(activos.map((a) => a.deporte))).sort((a, b) => a.localeCompare(b)),
+  const deportesOpciones: OpcionFiltro[] = useMemo(
+    () =>
+      Array.from(new Set(activos.map((a) => a.deporte)))
+        .sort((a, b) => a.localeCompare(b))
+        .map((d) => ({ value: d, label: d })),
     [activos]
   );
-  const fasesDisponibles = useMemo(() => {
-    const presentes = new Set(activos.map((a) => fasePrefijo(a.fase)));
-    return ordenarFases(FASE_OPCIONES.filter((f) => presentes.has(f)));
-  }, [activos]);
 
-  // "Equipo" agregado: plantilla activa filtrada por deporte/fase — alimenta
-  // TODOS los gráficos (agregado + lista del selector de atletas).
+  // Solo lesiones con AL MENOS un atleta activo asignado — regla literal del
+  // fisio: si nadie de la plantilla tiene esa lesión, no aparece en el filtro.
+  const lesionesDisponibles = useMemo(() => {
+    const idsPresentes = new Set(activos.map((a) => a.lesionId).filter((id): id is string => id !== undefined));
+    return tiposLesion.filter((t) => idsPresentes.has(t.id));
+  }, [activos, tiposLesion]);
+  const lesionesOpciones: OpcionFiltro[] = useMemo(
+    () => lesionesDisponibles.map((t) => ({ value: t.id, label: t.nombre })),
+    [lesionesDisponibles]
+  );
+
+  // Si la lesión seleccionada deja de tener atletas activos, se quita.
+  useEffect(() => {
+    setLesionesSel((prev) => prev.filter((id) => lesionesDisponibles.some((t) => t.id === id)));
+  }, [lesionesDisponibles]);
+
+  // El filtro "Fase" solo tiene sentido con UNA lesión seleccionada — sus
+  // opciones son las fases de ESE tipo, en orden, con su color de semáforo.
+  const lesionUnica = lesionesSel.length === 1 ? tiposLesion.find((t) => t.id === lesionesSel[0]) : undefined;
+  const faseFiltroActivo = lesionUnica !== undefined;
+  const fasesOpciones: OpcionFiltro[] = useMemo(() => {
+    if (!lesionUnica) return [];
+    return lesionUnica.fases.map((f, idx) => ({
+      value: f.id,
+      label: f.nombre,
+      color: colorSemaforo(idx, lesionUnica.fases.length),
+    }));
+  }, [lesionUnica]);
+
+  // Cambiar de lesión (o dejar de tener exactamente una) invalida las fases
+  // elegidas — pertenecen al catálogo de la lesión anterior.
+  useEffect(() => {
+    setFasesSel([]);
+  }, [lesionUnica?.id]);
+
+  // "Equipo" agregado: plantilla activa filtrada por deporte/lesión/fase —
+  // alimenta TODOS los gráficos (agregado + lista del selector de atletas).
   const equipo = useMemo(
     () =>
       activos.filter(
         (a) =>
           (deportesSel.length === 0 || deportesSel.includes(a.deporte)) &&
-          (fasesSel.length === 0 || fasesSel.includes(fasePrefijo(a.fase)))
+          (lesionesSel.length === 0 || (a.lesionId !== undefined && lesionesSel.includes(a.lesionId))) &&
+          (fasesSel.length === 0 || (a.faseId !== undefined && fasesSel.includes(a.faseId)))
       ),
-    [activos, deportesSel, fasesSel]
+    [activos, deportesSel, lesionesSel, fasesSel]
   );
 
   // Si un filtro deja fuera a un atleta ya seleccionado para comparar, se quita.
@@ -132,12 +170,13 @@ export default function DashboardPage() {
     <>
       <PageHeader
         title="Dashboard"
-        description="Vista comparativa de la plantilla: agregado del equipo y hasta 6 atletas superpuestos, filtrable por deporte, fase y periodo."
+        description="Vista comparativa de la plantilla: agregado del equipo y atletas superpuestos, filtrable por deporte, lesión, fase y periodo."
       />
 
       <div className="sticky top-16 z-30 -mx-4 mb-6 flex flex-wrap items-center gap-3 border-b border-borderSoft bg-bg/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-bg/80 md:-mx-6 md:px-6">
         <SelectorAtletas
           atletas={equipo}
+          tiposLesion={tiposLesion}
           seleccionados={seleccionados}
           onChange={setSeleccionados}
           colores={comparisonColors}
@@ -150,16 +189,25 @@ export default function DashboardPage() {
         <SelectorFiltro
           label="Deporte"
           icon={Dumbbell}
-          opciones={deportesDisponibles}
+          opciones={deportesOpciones}
           seleccionados={deportesSel}
           onChange={setDeportesSel}
         />
         <SelectorFiltro
+          label="Lesión"
+          icon={HeartPulse}
+          opciones={lesionesOpciones}
+          seleccionados={lesionesSel}
+          onChange={setLesionesSel}
+        />
+        <SelectorFiltro
           label="Fase"
           icon={Layers}
-          opciones={fasesDisponibles}
+          opciones={fasesOpciones}
           seleccionados={fasesSel}
           onChange={setFasesSel}
+          disabled={!faseFiltroActivo}
+          disabledHint="Selecciona una sola lesión para filtrar por fase"
         />
         <SelectorRango valor={rango} onChange={setRango} />
       </div>
@@ -201,7 +249,7 @@ export default function DashboardPage() {
         <EmptyState
           icon={ChartNoAxesCombined}
           title="Ningún atleta coincide con estos filtros"
-          description="Ajusta el filtro de deporte o fase para ver de nuevo el equipo agregado."
+          description="Ajusta el filtro de deporte, lesión o fase para ver de nuevo el equipo agregado."
         />
       ) : graficosVisibles.length === 0 ? (
         <EmptyState

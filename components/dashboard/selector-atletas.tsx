@@ -3,25 +3,30 @@
 import { useState } from "react";
 import { ChevronDown, Search, Users, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import type { Atleta } from "@/lib/store";
+import { colorSemaforo, colorSemaforoTexto } from "@/lib/calculations";
+import { resolverFaseDeAtleta, type Atleta, type TipoLesion } from "@/lib/store";
 
-const MAX_ATLETAS = 6;
+const AVISO_LEGIBILIDAD_DESDE = 8;
 
 /**
- * Multi-selector de atletas a superponer en los gráficos de /dashboard.
- * `seleccionados` es un array de ids EN ORDEN DE SELECCIÓN — ese orden es el
- * que asigna el color (colores[i] para seleccionados[i]), igual en todos los
- * gráficos de la página. No persiste entre sesiones (es una comparación
- * puntual, no config de la app).
+ * Multi-selector de atletas a superponer en los gráficos de /dashboard. Sin
+ * tope de selección (FASE 3) — con muchos atletas los colores dejan de ser
+ * únicos por índice de la paleta base y pasan a generarse por rotación HSL
+ * (ver `useComparisonColorsExtended` en `lib/theme.ts`), pero siguen siendo
+ * deterministas. `seleccionados` es un array de ids EN ORDEN DE SELECCIÓN —
+ * ese orden es el que asigna el color (colores[i] para seleccionados[i]),
+ * igual en todos los gráficos de la página. No persiste entre sesiones (es
+ * una comparación puntual, no config de la app).
  */
 export function SelectorAtletas({
   atletas,
+  tiposLesion,
   seleccionados,
   onChange,
   colores,
 }: {
   atletas: Atleta[];
+  tiposLesion: TipoLesion[];
   seleccionados: string[];
   onChange: (next: string[]) => void;
   colores: string[];
@@ -33,11 +38,7 @@ export function SelectorAtletas({
   );
 
   function toggle(id: string) {
-    if (seleccionados.includes(id)) {
-      onChange(seleccionados.filter((s) => s !== id));
-    } else if (seleccionados.length < MAX_ATLETAS) {
-      onChange([...seleccionados, id]);
-    }
+    onChange(seleccionados.includes(id) ? seleccionados.filter((s) => s !== id) : [...seleccionados, id]);
   }
 
   return (
@@ -68,8 +69,6 @@ export function SelectorAtletas({
               className="flex h-9 w-full rounded-md border border-input bg-transparent pl-8 pr-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
           </div>
-          <p className="mt-2 text-xs text-textDim">Máximo {MAX_ATLETAS} atletas a la vez.</p>
-
           <div className="mt-2 max-h-64 space-y-0.5 overflow-y-auto">
             {filtrados.length === 0 ? (
               <p className="px-2 py-3 text-center text-sm text-textDim">Sin resultados.</p>
@@ -77,25 +76,15 @@ export function SelectorAtletas({
               filtrados.map((a) => {
                 const idx = seleccionados.indexOf(a.id);
                 const activo = idx >= 0;
-                const bloqueado = !activo && seleccionados.length >= MAX_ATLETAS;
+                const faseDe = resolverFaseDeAtleta(a, tiposLesion);
                 return (
                   <button
                     key={a.id}
                     type="button"
-                    disabled={bloqueado}
                     onClick={() => toggle(a.id)}
-                    className={cn(
-                      "flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left transition-colors",
-                      bloqueado ? "cursor-not-allowed opacity-40" : "hover:bg-bg"
-                    )}
+                    className="flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left transition-colors hover:bg-bg"
                   >
-                    <input
-                      type="checkbox"
-                      checked={activo}
-                      readOnly
-                      disabled={bloqueado}
-                      className="size-4 shrink-0 accent-brand"
-                    />
+                    <input type="checkbox" checked={activo} readOnly className="size-4 shrink-0 accent-brand" />
                     {activo && (
                       <span
                         className="size-2 shrink-0 rounded-full"
@@ -105,7 +94,20 @@ export function SelectorAtletas({
                     )}
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-textStrong">{a.nombre}</span>
-                      <span className="block truncate text-xs text-textDim">{a.deporte}</span>
+                      <span className="mt-0.5 flex items-center gap-1.5">
+                        <span className="truncate text-xs text-textDim">{a.deporte}</span>
+                        {faseDe && (
+                          <span
+                            className="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+                            style={{
+                              background: `${colorSemaforo(faseDe.indiceFase, faseDe.totalFases)}1A`,
+                              color: colorSemaforoTexto(faseDe.indiceFase, faseDe.totalFases),
+                            }}
+                          >
+                            {faseDe.fase.nombre}
+                          </span>
+                        )}
+                      </span>
                     </span>
                   </button>
                 );
@@ -114,6 +116,10 @@ export function SelectorAtletas({
           </div>
         </PopoverContent>
       </Popover>
+
+      {seleccionados.length >= AVISO_LEGIBILIDAD_DESDE && (
+        <span className="text-xs text-textDim">Con muchos atletas superpuestos el gráfico pierde legibilidad.</span>
+      )}
 
       {seleccionados.map((id, idx) => {
         const atleta = atletas.find((a) => a.id === id);

@@ -90,13 +90,53 @@ export function useStateColors(): StateColors {
   return tema === "oscuro" ? colors.stateDark : colors.state;
 }
 
+function hslAHex(h: number, s: number, l: number): string {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+
+  let rP = 0;
+  let gP = 0;
+  let bP = 0;
+  if (h < 60) [rP, gP, bP] = [c, x, 0];
+  else if (h < 120) [rP, gP, bP] = [x, c, 0];
+  else if (h < 180) [rP, gP, bP] = [0, c, x];
+  else if (h < 240) [rP, gP, bP] = [0, x, c];
+  else if (h < 300) [rP, gP, bP] = [x, 0, c];
+  else [rP, gP, bP] = [c, 0, x];
+
+  const canal = (v: number) => Math.round((v + m) * 255).toString(16).padStart(2, "0");
+  return `#${canal(rP)}${canal(gP)}${canal(bP)}`.toUpperCase();
+}
+
+// Tono de partida + incremento en ángulo dorado (~137.5°): dispersa los tonos
+// generados lo más lejos posible entre sí incluso en secuencia, y no coincide
+// con ninguno de los 6 tonos base de `colors.comparison`. Saturación/luz fijas
+// y verificadas ≥4.5:1 sobre blanco PARA CUALQUIER TONO (el peor caso es el
+// amarillo puro, h=60°, ~5.1:1 con estos valores) — los colores de comparación
+// se pintan también como texto (chips de `SelectorAtletas`), no solo trazo.
+const COMPARISON_EXT_TONO_INICIAL = 30;
+const COMPARISON_EXT_TONO_PASO = 137.508;
+const COMPARISON_EXT_SATURACION = 0.6;
+const COMPARISON_EXT_LUZ = 0.28;
+
 /**
- * Paleta de hasta 6 colores para superponer/resaltar atletas (dashboard v2
- * FASE E, motor de gráficos por test FASE 3). Se asigna por orden de
- * selección (primer atleta elegido → color[0], etc.), igual en todos los
- * gráficos de una misma página para que un mismo atleta se lea con el mismo
- * color en todos. No varía por tema — ver lib/tokens.ts.
+ * Paleta de colores para superponer/resaltar atletas en /dashboard (dashboard
+ * v2 FASE E; sin tope desde FASE 3). Se asigna por orden de selección (primer
+ * atleta elegido → color[0], etc.), igual en todos los gráficos de una misma
+ * página para que un mismo atleta se lea con el mismo color en todos. No
+ * varía por tema — ver lib/tokens.ts. Los 6 primeros índices son exactamente
+ * `colors.comparison` (mismo color de siempre para quien compara ≤6 atletas);
+ * a partir del 7º se generan por rotación determinista de tono HSL — mismo
+ * índice de selección = siempre el mismo color dentro de la sesión de
+ * comparación, nunca aleatorio.
  */
-export function useComparisonColors(): string[] {
-  return [...colors.comparison];
+export function useComparisonColorsExtended(n: number): string[] {
+  const base = colors.comparison;
+  if (n <= base.length) return [...base.slice(0, n)];
+  const extra = Array.from({ length: n - base.length }, (_, i) => {
+    const tono = (COMPARISON_EXT_TONO_INICIAL + COMPARISON_EXT_TONO_PASO * (i + 1)) % 360;
+    return hslAHex(tono, COMPARISON_EXT_SATURACION, COMPARISON_EXT_LUZ);
+  });
+  return [...base, ...extra];
 }
