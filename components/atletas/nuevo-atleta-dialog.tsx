@@ -15,11 +15,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/shared/toast";
-import { FASE_OPCIONES } from "@/components/atletas/fase-utils";
+import { colorSemaforo } from "@/lib/calculations";
 import {
   accionActualizar,
   accionCrear,
   useDispatch,
+  useTiposLesion,
   type Atleta,
   type EstadoAtleta,
   type Sexo,
@@ -75,7 +76,16 @@ export function NuevoAtletaDialog({
   const setOpen = onOpenChange ?? setOpenState;
   const toast = useToast();
   const dispatch = useDispatch();
+  const tiposLesion = useTiposLesion();
   const editando = Boolean(atleta);
+
+  // El select de fase depende del tipo de lesión elegido (mismo modelo que el
+  // filtro dependiente de /dashboard), así que el tipo sí necesita estado
+  // controlado aunque el resto del formulario vaya por FormData.
+  const tipoInicial =
+    tiposLesion.find((t) => t.id === atleta?.lesionId)?.id ?? tiposLesion[0]?.id ?? "";
+  const [lesionId, setLesionId] = useState(tipoInicial);
+  const tipoSeleccionado = tiposLesion.find((t) => t.id === lesionId);
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -85,7 +95,7 @@ export function NuevoAtletaDialog({
     const sexo = String(form.get("sexo") || "Mujer") as Sexo;
     const lesion = String(form.get("lesion") || "").trim();
     const lesionDetalle = String(form.get("lesionDetalle") || "").trim();
-    const fase = String(form.get("fase") || "").trim();
+    const faseId = String(form.get("faseId") || tipoSeleccionado?.fases[0]?.id || "").trim();
     const estado = String(form.get("estado") || "activo") as EstadoAtleta;
     const email = String(form.get("email") || "").trim();
     const telefono = String(form.get("telefono") || "").trim();
@@ -107,7 +117,8 @@ export function NuevoAtletaDialog({
           deporte,
           sexo,
           lesion,
-          fase,
+          lesionId,
+          faseId,
           estado,
           ...camposOpcionales,
         })
@@ -120,7 +131,8 @@ export function NuevoAtletaDialog({
         deporte,
         sexo,
         lesion,
-        fase,
+        lesionId,
+        faseId,
         semanaProceso: 1,
         avatarInitials: inicialesDe(nombre) || "??",
         estado,
@@ -158,7 +170,7 @@ export function NuevoAtletaDialog({
             <DialogDescription>
               {editando
                 ? "Los cambios se guardan en el store y se reflejan en toda la app."
-                : "Da de alta un atleta en el proceso de readaptación. Solo nombre, deporte, sexo, lesión y fase son obligatorios."}
+                : "Da de alta un atleta en el proceso de readaptación. Solo nombre, deporte, sexo, lesión, tipo de lesión y fase son obligatorios."}
             </DialogDescription>
           </DialogHeader>
 
@@ -197,26 +209,68 @@ export function NuevoAtletaDialog({
                 </select>
               </div>
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="lesion">Lesión (descripción del caso)</Label>
+              <Input
+                id="lesion"
+                name="lesion"
+                placeholder="Ej. Tendinopatía rotuliana bilateral"
+                defaultValue={atleta?.lesion}
+                required
+              />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="lesion">Lesión</Label>
-                <Input
-                  id="lesion"
-                  name="lesion"
-                  placeholder="Ej. Tendinopatía rotuliana"
-                  defaultValue={atleta?.lesion}
+                <Label htmlFor="lesionId">Tipo de lesión</Label>
+                <select
+                  id="lesionId"
+                  name="lesionId"
+                  value={lesionId}
+                  onChange={(e) => setLesionId(e.target.value)}
+                  className={selectClass}
                   required
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="fase">Fase del proceso</Label>
-                <select id="fase" name="fase" defaultValue={atleta?.fase ?? FASE_OPCIONES[0]} className={selectClass} required>
-                  {FASE_OPCIONES.map((f) => (
-                    <option key={f} value={f}>
-                      {f}
+                >
+                  {tiposLesion.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.nombre}
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="faseId">Fase del proceso</Label>
+                <select
+                  id="faseId"
+                  name="faseId"
+                  // `key` fuerza el remontaje al cambiar de tipo: si no, el
+                  // select conserva el value anterior (una fase de otra lesión).
+                  key={lesionId}
+                  defaultValue={
+                    tipoSeleccionado?.fases.some((f) => f.id === atleta?.faseId)
+                      ? atleta?.faseId
+                      : tipoSeleccionado?.fases[0]?.id
+                  }
+                  className={selectClass}
+                  required
+                >
+                  {(tipoSeleccionado?.fases ?? []).map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.nombre}
+                    </option>
+                  ))}
+                </select>
+                {tipoSeleccionado && tipoSeleccionado.fases.length > 0 && (
+                  <div className="flex items-center gap-1 pt-0.5" aria-hidden>
+                    {tipoSeleccionado.fases.map((f, i) => (
+                      <span
+                        key={f.id}
+                        title={f.nombre}
+                        className="h-1 flex-1 rounded-full"
+                        style={{ background: colorSemaforo(i, tipoSeleccionado.fases.length) }}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             <div className="space-y-1.5">

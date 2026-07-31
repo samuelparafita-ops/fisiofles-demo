@@ -801,7 +801,6 @@ export function buildSeed(): AppState {
       lesion: "Reconstrucción LCA rodilla izq.",
       lesionDetalle:
         "Reconstrucción de LCA con injerto HTH, rotura completa en entrada a destiempo. Sin lesiones meniscales asociadas.",
-      fase: "Fase 3 · Readaptación al campo",
       lesionId: "lca",
       faseId: "lca-return-on-field",
       semanaProceso: 14,
@@ -887,7 +886,6 @@ export function buildSeed(): AppState {
       deporte: "Atletismo (fondo)",
       lesion: "Tendinopatía aquílea",
       lesionDetalle: "Tendinopatía aquílea reactiva-degenerativa mixta, tendón derecho, de inicio insidioso por sobreuso.",
-      fase: "Fase 2 · Reintroducción a carrera",
       lesionId: "rotuliana",
       faseId: "rotuliana-isotonico",
       semanaProceso: 8,
@@ -965,7 +963,6 @@ export function buildSeed(): AppState {
       deporte: "Baloncesto",
       lesion: "Esguince de tobillo grado II",
       lesionDetalle: "Esguince lateral de tobillo derecho (LPAA), inversión forzada al caer tras un rebote.",
-      fase: "Fase 4 · Alta próxima",
       lesionId: "tobillo",
       faseId: "tobillo-readaptacion-deportiva",
       semanaProceso: 20,
@@ -1044,7 +1041,6 @@ export function buildSeed(): AppState {
       deporte: "Balonmano",
       lesion: "Inestabilidad de hombro (luxación anterior)",
       lesionDetalle: "Luxación anterior de hombro derecho durante lanzamiento, primer episodio, tratamiento conservador.",
-      fase: "Fase 1 · Evaluación y protección",
       // Sin tipo de lesión propio en el catálogo (hombro) — analogía de proceso por
       // fase (protección inicial), no por anatomía; ver CLAUDE.md > lesiones/fases.
       lesionId: "lca",
@@ -1113,7 +1109,6 @@ export function buildSeed(): AppState {
       deporte: "Crossfit",
       lesion: "Lumbalgia mecánica",
       lesionDetalle: "Lumbalgia mecánica inespecífica tras sesión de peso muerto con volumen elevado. Sin banderas rojas, sin irradiación.",
-      fase: "Fase 1 · Control del dolor",
       // Lumbalgia sin tipo propio en el catálogo — Pubalgia es la analogía de
       // región (tronco/core) más cercana disponible.
       lesionId: "pubalgia",
@@ -1186,7 +1181,6 @@ export function buildSeed(): AppState {
       deporte: "Tenis",
       lesion: "Lesión de isquiotibiales (HSI)",
       lesionDetalle: "Rotura miofascial de bíceps femoral izquierdo en sprint durante un punto, grado II.",
-      fase: "Fase 2 · Fuerza excéntrica",
       lesionId: "isquiotibiales",
       faseId: "isquios-fuerza-neuromuscular",
       semanaProceso: 9,
@@ -1265,7 +1259,6 @@ export function buildSeed(): AppState {
       deporte: "Trail running",
       lesion: "Condropatía rotuliana",
       lesionDetalle: "Dolor femoropatelar anterior bilateral (predominio derecho) por incremento brusco de volumen de entrenamiento en montaña.",
-      fase: "Fase 2 · Fuerza y control de carga",
       // Condropatía rotuliana sin tipo propio en el catálogo — Tendinopatía
       // rotuliana es la analogía anatómica (rodilla anterior) más cercana.
       lesionId: "rotuliana",
@@ -1345,7 +1338,6 @@ export function buildSeed(): AppState {
       deporte: "Pádel",
       lesion: "Fractura por estrés (2º metatarsiano)",
       lesionDetalle: "Fractura por estrés del 2º metatarsiano del pie derecho, sin desplazamiento. Consolidación radiológica confirmada.",
-      fase: "Fase 3 · Retorno a superficie de juego",
       // Fractura de metatarsiano sin tipo propio en el catálogo — Esguince de
       // tobillo es la analogía anatómica (pie/tobillo) más cercana.
       lesionId: "tobillo",
@@ -1424,7 +1416,6 @@ export function buildSeed(): AppState {
       deporte: "Hockey hierba",
       lesion: "Pubalgia del deportista",
       lesionDetalle: "Pubalgia atlética con componente de sobrecarga aductora, de instauración progresiva por volumen de golpeo.",
-      fase: "Fase 4 · Readaptación al campo",
       lesionId: "pubalgia",
       faseId: "pubalgia-readaptacion-golpeo",
       semanaProceso: 19,
@@ -1505,7 +1496,6 @@ export function buildSeed(): AppState {
       deporte: "Voleibol",
       lesion: "Meniscectomía parcial (menisco externo)",
       lesionDetalle: "Rotura de menisco externo en apoyo tras remate, meniscectomía parcial artroscópica. Proceso completado con éxito.",
-      fase: "Alta · Readaptación completada",
       lesionId: "rendimiento",
       faseId: "rendimiento-unica",
       semanaProceso: 24,

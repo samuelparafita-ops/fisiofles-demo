@@ -8,7 +8,14 @@
  */
 
 import { DIAS_SEMANA } from "./types";
-import type { BloqueSemanal, PlantillaPrograma, PlantillaSesion, Sesion } from "./types";
+import type {
+  BloqueEjercicios,
+  BloqueSemanal,
+  EjercicioProgramado,
+  PlantillaPrograma,
+  PlantillaSesion,
+  Sesion,
+} from "./types";
 
 function pad(n: number): string {
   return n.toString().padStart(2, "0");
@@ -45,6 +52,15 @@ function nuevoId(prefijo: string): string {
   return `${prefijo}-${Date.now().toString(36)}-${contadorId}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+/** Envuelve un array plano de ejercicios en el único sub-bloque "Principal"
+ *  (formato v4). Las plantillas son planas por diseño (ver `PlantillaSesion`),
+ *  así que al materializarlas hay que escribir TAMBIÉN `bloquesEjercicios`
+ *  para que la sesión nazca en formato v4, igual que hacen los diálogos de
+ *  creación/edición de sesión. */
+function bloquePrincipal(ejercicios: EjercicioProgramado[]): BloqueEjercicios[] {
+  return [{ id: nuevoId("bloque-ej"), nombre: "Principal", ejercicios }];
+}
+
 export type ResultadoAplicarPlantilla = { sesiones: Sesion[]; bloques: BloqueSemanal[] };
 
 export function generarDesdePrograma(
@@ -69,6 +85,7 @@ export function generarDesdePrograma(
         dia: s.dia,
         nombre: s.nombre,
         ejercicios: s.ejercicios,
+        bloquesEjercicios: bloquePrincipal(s.ejercicios),
         estado: s.estado,
         notas: s.notas,
       };
@@ -101,6 +118,7 @@ export function generarDesdeSesion(
     dia: diaSemanaDeIso(fechaInicio),
     nombre: plantilla.nombre,
     ejercicios: plantilla.ejercicios,
+    bloquesEjercicios: bloquePrincipal(plantilla.ejercicios),
     estado: "programada",
   };
 

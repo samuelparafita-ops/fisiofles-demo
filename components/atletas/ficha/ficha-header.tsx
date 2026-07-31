@@ -220,7 +220,7 @@ function BadgeFase({ atleta }: { atleta: Atleta }) {
   if (!faseDe) {
     return (
       <span className="max-w-[180px] truncate rounded-full border border-borderSoft px-2.5 py-0.5 text-xs font-medium text-textDim">
-        {atleta.fase}
+        Sin fase asignada
       </span>
     );
   }

@@ -113,14 +113,21 @@ export type Atleta = {
   id: string;
   nombre: string;
   deporte: string;
+  /**
+   * Descripción corta del caso concreto ("Fractura por estrés 2º metatarsiano").
+   * NO es el tipo de lesión del catálogo (`lesionId` → `TipoLesion.nombre`, ej.
+   * "Esguince de tobillo") ni el detalle clínico largo (`lesionDetalle`): son
+   * tres niveles distintos y ninguno se deriva de otro. Ver CLAUDE.md.
+   */
   lesion: string;
   lesionDetalle?: string;
-  fase: string;
   /**
-   * Modelo v4 de lesiones/fases (ver `TipoLesion`/`FaseLesion`). `lesion`/
-   * `fase` (texto) son lo que leen las vistas actuales — legado en retirada,
-   * ver CLAUDE.md; se migran en FASE 3/4. Opcionales por compatibilidad con
-   * el diálogo "Nuevo atleta" (aún no migrado a elegir un `TipoLesion`).
+   * Modelo v4 de lesiones/fases (ver `TipoLesion`/`FaseLesion`) — única fuente
+   * de verdad de la fase desde FASE 8. Opcionales porque el catálogo es
+   * editable: borrar un tipo obliga a reasignar (`EliminarLesionDialog`), pero
+   * un estado hidratado de una versión anterior puede no traerlos. Resuélvelos
+   * SIEMPRE con `useFaseDeAtleta`/`resolverFaseDeAtleta`, que devuelven `null`
+   * si no resuelven.
    */
   lesionId?: string;
   faseId?: string;

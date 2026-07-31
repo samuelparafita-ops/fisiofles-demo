@@ -64,7 +64,7 @@ function FilaAtleta({ atleta }: { atleta: Atleta }) {
           </span>
         ) : (
           <Badge variant="secondary" className="min-w-0 max-w-[160px]">
-            <span className="block truncate">{atleta.fase}</span>
+            <span className="block truncate">Sin fase asignada</span>
           </Badge>
         )}
       </td>

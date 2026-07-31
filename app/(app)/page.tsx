@@ -28,6 +28,7 @@ import { useToast } from "@/components/shared/toast";
 import { cn } from "@/lib/utils";
 import {
   accionActualizar,
+  totalEjerciciosSesion,
   useAtleta,
   useAtletas,
   useCatalogoTests,
@@ -95,12 +96,12 @@ function AccesoRapidoCard({ href, label, icon: Icon }: { href: string; label: st
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 rounded-xl border border-borderSoft bg-surface2 p-4 shadow-sm transition-colors hover:border-brand hover:bg-brand-tint"
+      className="flex min-w-0 items-center gap-3 rounded-xl border border-borderSoft bg-surface2 p-4 shadow-sm transition-colors hover:border-brand hover:bg-brand-tint"
     >
       <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-tint text-brand-ink">
         <Icon className="size-4" />
       </div>
-      <span className="font-display text-sm font-bold text-textStrong">{label}</span>
+      <span className="truncate font-display text-sm font-bold text-textStrong">{label}</span>
     </Link>
   );
 }
@@ -157,7 +158,7 @@ function SesionHoyRow({ sesion }: { sesion: Sesion }) {
             {atleta.nombre}
           </Link>
           <p className="truncate text-xs text-textDim">
-            {sesion.nombre} · {sesion.ejercicios.length} ejercicios
+            {sesion.nombre} · {totalEjerciciosSesion(sesion)} ejercicios
           </p>
         </div>
       </div>
@@ -422,7 +423,7 @@ export default function InicioPage() {
         <h2 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-textDim">
           Accesos rápidos
         </h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {ACCESOS_RAPIDOS.map((a) => (
             <AccesoRapidoCard key={a.href} {...a} />
           ))}

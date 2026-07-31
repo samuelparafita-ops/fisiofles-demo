@@ -85,7 +85,7 @@ export function AtletaCard({ atleta }: { atleta: Atleta }) {
           </span>
         ) : (
           <Badge variant="secondary" className="min-w-0">
-            <span className="block truncate">{atleta.fase}</span>
+            <span className="block truncate">Sin fase asignada</span>
           </Badge>
         )}
         <span className="shrink-0 text-xs text-muted-foreground">

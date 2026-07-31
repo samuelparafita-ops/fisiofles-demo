@@ -7,8 +7,31 @@
  * a la vez. Ver lib/tokens.ts para el detalle de cada paleta.
  */
 
+import { createContext, createElement, useContext, type ReactNode } from "react";
 import { useConfig } from "@/lib/store";
 import { colors, colorsDark } from "@/lib/tokens";
+import type { Tema } from "@/lib/store";
+
+const TemaForzadoContext = createContext<Tema | null>(null);
+
+/**
+ * Fuerza un tema para todo lo que cuelgue debajo, ignorando `config.tema`.
+ * Único uso: el documento del informe (`components/informe/paso-preview.tsx`),
+ * que es SIEMPRE claro porque acaba en papel — sin esto, con el tema "oscuro"
+ * activo el documento queda con fondo blanco pero texto y paneles de gráfico
+ * oscuros, ilegible en pantalla y en la impresión. Va emparejado con la clase
+ * `.tema-claro` de `app/globals.css`, que hace lo mismo con las CSS vars (los
+ * hooks de aquí solo cubren los colores INLINE de Recharts).
+ */
+export function TemaForzado({ tema, children }: { tema: Tema; children: ReactNode }) {
+  return createElement(TemaForzadoContext.Provider, { value: tema }, children);
+}
+
+function useTemaEfectivo(): Tema {
+  const forzado = useContext(TemaForzadoContext);
+  const { tema } = useConfig();
+  return forzado ?? tema;
+}
 
 export type StateColors = {
   good: string;
@@ -25,7 +48,7 @@ export type ChartColors = {
 };
 
 export function useChartColors(): ChartColors {
-  const { tema } = useConfig();
+  const tema = useTemaEfectivo();
 
   switch (tema) {
     case "clasico-excel":
@@ -58,7 +81,7 @@ export type ChartGridColors = {
  * mini-paleta `colorsDark`; "fisiofles" usa los tokens claros de siempre.
  */
 export function useChartGridColors(): ChartGridColors {
-  const { tema } = useConfig();
+  const tema = useTemaEfectivo();
 
   switch (tema) {
     case "clasico-excel":
@@ -73,7 +96,7 @@ export function useChartGridColors(): ChartGridColors {
 
 /** true solo para "clasico-excel" — el panel del gráfico pasa a cockpit oscuro (ver ChartPanel). */
 export function useCockpit(): boolean {
-  return useConfig().tema === "clasico-excel";
+  return useTemaEfectivo() === "clasico-excel";
 }
 
 /**
@@ -86,8 +109,7 @@ export function useCockpit(): boolean {
  * así que sigue usando `state.*`.
  */
 export function useStateColors(): StateColors {
-  const { tema } = useConfig();
-  return tema === "oscuro" ? colors.stateDark : colors.state;
+  return useTemaEfectivo() === "oscuro" ? colors.stateDark : colors.state;
 }
 
 function hslAHex(h: number, s: number, l: number): string {

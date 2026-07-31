@@ -3,6 +3,7 @@
 import { ArrowLeft, Building2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GraficoTest, GraficoResultado } from "@/components/charts";
+import { TemaForzado } from "@/lib/theme";
 import { resultadoIdDeGrafico, type GraficoDef } from "@/lib/dashboard/graficos";
 import { rangoDesdeSemanas } from "@/lib/dashboard/series-tests";
 import { colorSemaforo, colorSemaforoTexto } from "@/lib/calculations";
@@ -78,96 +79,101 @@ export function PasoPreview({
         </Button>
       </div>
 
-      <div
-        className="mx-auto bg-white text-[#0D1117] shadow-lg print:shadow-none"
-        style={{ width: ANCHO_INFORME_PX, maxWidth: "100%" }}
-      >
-        <div className="p-10 print:p-0">
-          <header className="flex items-start justify-between gap-6 border-b border-borderSoft pb-5">
-            <div className="flex items-center gap-4">
-              <div className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-dashed border-borderSoft text-textDim">
-                <Building2 className="size-6" />
+      {/* El documento es SIEMPRE claro (acaba en papel): `.tema-claro` deshace
+          `.dark` para las CSS vars y `TemaForzado` hace lo propio con los
+          colores inline de Recharts — ver lib/theme.ts. */}
+      <TemaForzado tema="fisiofles">
+        <div
+          className="tema-claro mx-auto bg-surface2 text-text shadow-lg print:shadow-none"
+          style={{ width: ANCHO_INFORME_PX, maxWidth: "100%" }}
+        >
+          <div className="p-10 print:p-0">
+            <header className="flex items-start justify-between gap-6 border-b border-borderSoft pb-5">
+              <div className="flex items-center gap-4">
+                <div className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-dashed border-borderSoft text-textDim">
+                  <Building2 className="size-6" />
+                </div>
+                <div>
+                  <p className="font-display text-base font-bold text-textStrong">{config.perfilProfesional.nombre}</p>
+                  <p className="text-xs text-textDim">
+                    {config.perfilProfesional.rol} · Nº col. {config.perfilProfesional.numColegiado}
+                  </p>
+                  <p className="text-xs text-textDim">{config.perfilProfesional.clinica}</p>
+                </div>
               </div>
+              <div className="text-right">
+                <p className="font-display text-sm font-bold text-textStrong">Informe clínico</p>
+                <p className="text-xs text-textDim">{fmtFechaLarga(hoyIso())}</p>
+              </div>
+            </header>
+
+            <section className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-borderSoft pb-5">
               <div>
-                <p className="font-display text-base font-bold text-textStrong">{config.perfilProfesional.nombre}</p>
-                <p className="text-xs text-textDim">
-                  {config.perfilProfesional.rol} · Nº col. {config.perfilProfesional.numColegiado}
-                </p>
-                <p className="text-xs text-textDim">{config.perfilProfesional.clinica}</p>
+                <p className="font-display text-lg font-bold text-textStrong">{atleta.nombre}</p>
+                <p className="text-xs text-textDim">{atleta.deporte}</p>
               </div>
-            </div>
-            <div className="text-right">
-              <p className="font-display text-sm font-bold text-textStrong">Informe clínico</p>
-              <p className="text-xs text-textDim">{fmtFechaLarga(hoyIso())}</p>
-            </div>
-          </header>
-
-          <section className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-borderSoft pb-5">
-            <div>
-              <p className="font-display text-lg font-bold text-textStrong">{atleta.nombre}</p>
-              <p className="text-xs text-textDim">{atleta.deporte}</p>
-            </div>
-            {faseDe ? (
-              <span
-                className="rounded-full px-2.5 py-1 text-xs font-semibold"
-                style={{
-                  background: `${colorSemaforo(faseDe.indiceFase, faseDe.totalFases)}1A`,
-                  color: colorSemaforoTexto(faseDe.indiceFase, faseDe.totalFases),
-                }}
-              >
-                {faseDe.tipoLesion.nombre} · {faseDe.fase.nombre}
-              </span>
-            ) : (
-              <span className="rounded-full border border-borderSoft px-2.5 py-1 text-xs font-medium text-textDim">
-                {atleta.lesion} · {atleta.fase}
-              </span>
-            )}
-          </section>
-
-          {draft.comentario.trim() && (
-            <section className="mt-5 break-inside-avoid">
-              <h2 className="font-display text-sm font-bold text-textStrong">Comentario clínico</h2>
-              <p className="mt-1.5 whitespace-pre-wrap text-sm text-text">{draft.comentario}</p>
+              {faseDe ? (
+                <span
+                  className="rounded-full px-2.5 py-1 text-xs font-semibold"
+                  style={{
+                    background: `${colorSemaforo(faseDe.indiceFase, faseDe.totalFases)}1A`,
+                    color: colorSemaforoTexto(faseDe.indiceFase, faseDe.totalFases),
+                  }}
+                >
+                  {faseDe.tipoLesion.nombre} · {faseDe.fase.nombre}
+                </span>
+              ) : (
+                <span className="rounded-full border border-borderSoft px-2.5 py-1 text-xs font-medium text-textDim">
+                  {atleta.lesion}
+                </span>
+              )}
             </section>
-          )}
 
-          <section className="mt-6 space-y-6">
-            {graficosVisibles.map((def) => (
-              <div key={def.id} className="break-inside-avoid">
-                {def.origen === "test" || def.tipo === "dispersion" ? (
-                  <GraficoTest
-                    def={def}
-                    registros={registrosTests}
-                    catalogo={catalogoTests}
-                    atletas={equipo}
-                    atletasSeleccionados={[atleta.id]}
-                    umbrales={config.umbrales}
-                    desde={desde}
-                    hasta={hasta}
-                  />
-                ) : (
-                  <GraficoResultado
-                    id={resultadoIdDeGrafico(def.id)}
-                    def={def}
-                    atletas={equipo}
-                    atletasSeleccionados={[atleta.id]}
-                    registros={registrosTests}
-                    catalogo={catalogoTests}
-                    sesiones={sesiones}
-                    umbrales={config.umbrales}
-                    desde={desde}
-                    hasta={hasta}
-                  />
-                )}
-              </div>
-            ))}
-          </section>
+            {draft.comentario.trim() && (
+              <section className="mt-5 break-inside-avoid">
+                <h2 className="font-display text-sm font-bold text-textStrong">Comentario clínico</h2>
+                <p className="mt-1.5 whitespace-pre-wrap text-sm text-text">{draft.comentario}</p>
+              </section>
+            )}
 
-          <footer className="mt-8 border-t border-borderSoft pt-4 text-center text-[11px] text-textDim">
-            Generado con Fisiofles · Demo, datos ficticios
-          </footer>
+            <section className="mt-6 space-y-6">
+              {graficosVisibles.map((def) => (
+                <div key={def.id} className="break-inside-avoid">
+                  {def.origen === "test" || def.tipo === "dispersion" ? (
+                    <GraficoTest
+                      def={def}
+                      registros={registrosTests}
+                      catalogo={catalogoTests}
+                      atletas={equipo}
+                      atletasSeleccionados={[atleta.id]}
+                      umbrales={config.umbrales}
+                      desde={desde}
+                      hasta={hasta}
+                    />
+                  ) : (
+                    <GraficoResultado
+                      id={resultadoIdDeGrafico(def.id)}
+                      def={def}
+                      atletas={equipo}
+                      atletasSeleccionados={[atleta.id]}
+                      registros={registrosTests}
+                      catalogo={catalogoTests}
+                      sesiones={sesiones}
+                      umbrales={config.umbrales}
+                      desde={desde}
+                      hasta={hasta}
+                    />
+                  )}
+                </div>
+              ))}
+            </section>
+
+            <footer className="mt-8 border-t border-borderSoft pt-4 text-center text-[11px] text-textDim">
+              Generado con Fisiofles · Demo, datos ficticios
+            </footer>
+          </div>
         </div>
-      </div>
+      </TemaForzado>
     </div>
   );
 }

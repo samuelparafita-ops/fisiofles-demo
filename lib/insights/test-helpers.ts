@@ -6,7 +6,6 @@ export function atletaFixture(overrides: Partial<Atleta> = {}): Atleta {
     nombre: "Atleta de prueba",
     deporte: "Fútbol",
     lesion: "Lesión de prueba",
-    fase: "Fase 1",
     semanaProceso: 4,
     avatarInitials: "AP",
     sexo: "Mujer",

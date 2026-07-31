@@ -7,8 +7,10 @@ deportiva. Es un PROTOTIPO para enseñar a fisioterapeutas, NO producción.
 ## Reglas duras
 - Sin backend, sin base de datos, sin auth real. Todo es mock en `lib/mock/`.
 - El store se persiste en `localStorage` bajo la clave única `fisiofles-demo-v4`
-  (ver `lib/store/`). Hay una acción "Restablecer demo" (menú del avatar) que
-  borra esa clave y re-siembra desde `lib/mock/seed.ts`.
+  (ver `lib/store/`). Hay una acción "Restablecer demo" (menú del avatar y
+  Personalización) que re-siembra desde `lib/mock/seed.ts` y borra TODA clave
+  `fisiofles-demo*`, no solo la actual — un navegador que abrió una versión
+  anterior arrastra `fisiofles-demo-v2`/`-v3` muertas.
 - Única fuente de verdad: todo dato editable vive en el store (`lib/store/`).
   Ningún componente importa datos de `lib/mock/` directamente; los mocks son
   solo la SEMILLA inicial del store. Una misma entidad (ej: la sesión del
@@ -27,35 +29,47 @@ deportiva. Es un PROTOTIPO para enseñar a fisioterapeutas, NO producción.
 - Los datos mock guardan valores BRUTOS; las fórmulas se aplican en tiempo de render llamando a `lib/calculations/`. El dashboard calcula de verdad, no pinta números fijos.
 - No cambies una fórmula sin que yo lo pida. Si algo no cuadra con `docs/formulas-dashboard.md`, para y pregunta.
 
-## Lesiones, fases y semáforo (v4)
+## Lesiones, fases, criterios y semáforo (v4)
 - `TipoLesion`/`FaseLesion` (`lib/store/types.ts`) son entidades del profesional,
   no texto libre: `TipoLesion.fases` es un array ORDENADO (el orden = el orden
-  del proceso = el orden del semáforo). `AppState.tiposLesion` hereda
+  del proceso = el orden del semáforo) y cada fase lleva `criterios?: string[]`
+  (checklist clínico INFORMATIVO para entrar en ella — la app los muestra, no
+  los evalúa ni los usa en ningún cálculo). `AppState.tiposLesion` hereda
   CREAR/ACTUALIZAR/ELIMINAR gratis vía `EntityMap` (reducer genérico). El tipo
   especial `esRendimiento: true` ("Rendimiento", una única fase) no es eliminable
-  en UI — para atletas sin lesión activa.
-- `Atleta.lesionId`/`faseId` son la fuente de verdad v4, pero **opcionales**:
-  `components/atletas/nuevo-atleta-dialog.tsx` todavía crea/edita atletas solo
-  con `lesion`/`fase` (texto) y no se ha migrado — sigue siendo el ÚNICO sitio
-  que escribe esos campos, así que `lib/store/types.ts::Atleta.lesion`/`fase`
-  y `components/atletas/fase-utils.ts` (`FASE_OPCIONES`/`fasePrefijo`/
-  `ordenarFases`) NO se retiran todavía. `/dashboard` (FASE 3), la ficha de
-  atleta y las cards/tabla de `/atletas` (FASE 4) ya PINTAN el badge de fase
-  vía `lesionId`/`faseId` + semáforo; el FILTRO "Fase" de `/atletas` y el
-  formulario "Nuevo atleta" siguen en el texto legado. Resuelve `lesionId`/
-  `faseId` contra el catálogo con el hook `useFaseDeAtleta(atleta)`, o la
-  versión pura `resolverFaseDeAtleta(atleta, tiposLesion)` (`lib/store/hooks.ts`)
-  para listas — no se puede llamar un hook dentro de un `.map()`. Ambas
-  devuelven `{ tipoLesion, fase, indiceFase, totalFases } | null`; si es
-  `null` (atleta sin `lesionId`/`faseId`, ej. creado a mano), las vistas caen
-  al badge de texto legado (`atleta.fase`) — no lo des por garantizado.
+  en UI — para atletas sin lesión activa. Borrar un tipo o una fase con atletas
+  asignados OBLIGA a reasignar (`components/personalizacion/eliminar-lesion-dialog.tsx`,
+  un único componente para ambos casos vía discriminated union): nunca quedan
+  `lesionId`/`faseId` huérfanos.
+- `Atleta.lesionId`/`faseId` son la ÚNICA fuente de verdad de la fase. Los
+  escriben la semilla y `components/atletas/nuevo-atleta-dialog.tsx` (select de
+  tipo + select de fase dependiente, con la tira de semáforo bajo el segundo).
+  Siguen siendo `?` opcionales sólo por defensa ante un estado hidratado de una
+  versión anterior. Resuélvelos contra el catálogo con `useFaseDeAtleta(atleta)`
+  o la versión pura `resolverFaseDeAtleta(atleta, tiposLesion)`
+  (`lib/store/hooks.ts`) para listas — no se puede llamar un hook dentro de un
+  `.map()`. Ambas devuelven `{ tipoLesion, fase, indiceFase, totalFases } | null`;
+  si es `null`, las vistas pintan un badge neutro "Sin fase asignada".
+- **Tres campos distintos de lesión, ninguno derivable de otro** — no los
+  confundas ni los "unifiques":
+  `Atleta.lesion` (texto, "Fractura por estrés 2º metatarsiano") = descripción
+  del CASO concreto · `lesionId` → `TipoLesion.nombre` ("Esguince de tobillo") =
+  proceso del CATÁLOGO, que es cerrado y editable por el fisio · `lesionDetalle`
+  (texto largo) = matiz clínico. El catálogo de 6 tipos sembrados NO cubre las
+  10 lesiones reales de la semilla (varias son analogías de región/proceso), de
+  ahí que `lesion` siga existiendo y lo pinten card, tabla e informe.
 - Semáforo de proceso: `lib/calculations/semaforo.ts` `colorSemaforo(indice,
-  total)`/`colorSemaforoTexto(indice, total)` interpola en HSL entre
-  `colors.semaforo.inicio` (rojo) y `colors.semaforo.fin` (verde fosforito) —
-  ambos hex viven SOLO en `lib/tokens.ts`, nadie más los importa directamente.
-  `total=1` pinta siempre verde fosforito (proceso de una fase = rendimiento).
+  total)`/`colorSemaforoTexto(indice, total)`. Interpola en espacio **HSL** (no
+  RGB: por RGB el tramo medio se ensucia en marrones) entre
+  `colors.semaforo.inicio` (#980000, rojo) y `colors.semaforo.fin` (#8BF200,
+  verde fosforito), pasando por naranja → amarillo → lima. `total=1` pinta
+  siempre verde fosforito (proceso de una fase = rendimiento). El color NUNCA se
+  guarda: se deriva de `(indice, total)` en cada render, así que añadir/quitar/
+  reordenar una fase recolorea todos los chips del tipo al instante. Los dos hex
+  extremos viven SOLO en `lib/tokens.ts` y nadie más los importa directamente:
+  todo pasa por esas dos funciones.
 
-## Ejercicios: etiquetas
+## Ejercicios: etiquetas EMERGENTES
 - `Ejercicio.etiquetas: string[]` (`lib/mock/ejercicios.ts`) es la taxonomía
   libre del fisio (patrón + zona corporal + lesiones típicas: "Tren superior",
   "CORE", "Isométricos", "LCA", "Tendinopatía rotuliana"...) — un mismo
@@ -64,24 +78,47 @@ deportiva. Es un PROTOTIPO para enseñar a fisioterapeutas, NO producción.
   etiqueta "LCA" porque se prescribe dentro de un proceso de LCA para mantener
   fuerza general). `categoria` no se elimina (vistas actuales lo usan).
   `Ejercicio.enlaceVideo?` es un link de vídeo opcional.
+- **No hay catálogo cerrado de etiquetas y no debe haberlo.** Son emergentes:
+  se crean escribiéndolas en `components/ejercicios/etiquetas-input.tsx`
+  (`EtiquetasInput`, chip input propio: Enter añade, × quita, Backspace en
+  vacío borra el último) y las SUGERENCIAS se derivan en render de las
+  etiquetas ya usadas en `useEjercicios()`. El filtro "Etiquetas" de
+  `/ejercicios` deriva sus opciones igual (si nadie usa "CORE", la opción no
+  existe) y reutiliza el `SelectorFiltro` genérico de
+  `components/dashboard/selector-filtro.tsx`, con semántica OR. Hay un hint
+  suave de 4-5 etiquetas, SIN tope duro. Personalización no gestiona etiquetas
+  (solo lo explica con una nota) — si alguien pide "administrar etiquetas",
+  eso rompe el modelo.
 
 ## Sesiones: sub-bloques, tipo/RPE e intensidad (v4)
 - `Sesion.bloquesEjercicios?: BloqueEjercicios[]` organiza los ejercicios en
   sub-bloques ORDENADOS (Preparación → Activación → Bloque principal 1..n, del
-  Excel REHAB CREATION). Es opcional y coexiste con el `Sesion.ejercicios`
-  plano legado: ninguno de los dos se ha retirado porque `nueva-sesion-dialog.tsx`
-  y `lib/store/aplicar-plantilla.ts` siguen creando sesiones solo con
-  `ejercicios`. Usa `bloquesDeSesion(sesion)` (`lib/store/sesiones.ts`) para leer
-  el desglose correcto sin distinguir el caso legado: devuelve
-  `bloquesEjercicios` si existe y tiene contenido, si no envuelve `ejercicios`
-  en un único bloque "Principal". Las vistas actuales no llaman a este helper
-  todavía (se migran en FASE 5).
+  Excel REHAB CREATION). **Lee SIEMPRE con `bloquesDeSesion(sesion)` y cuenta
+  con `totalEjerciciosSesion(sesion)`** (`lib/store/sesiones.ts`), nunca
+  `sesion.ejercicios` directamente: el helper devuelve `bloquesEjercicios` si
+  existe y tiene contenido, y si no envuelve `ejercicios` en un único bloque
+  "Principal". Todo lo que ESCRIBE una sesión (los dos diálogos de sesión y
+  `lib/store/aplicar-plantilla.ts`) rellena los DOS campos: `bloquesEjercicios`
+  con el desglose real y `ejercicios` con el aplanado.
+- `Sesion.ejercicios` (plano) es LEGADO CONSCIENTE, no olvido: sigue en el tipo
+  porque (a) es la entrada del helper de compatibilidad para sesiones ya
+  persistidas en `localStorage`, y (b) `PlantillaSesion.ejercicios` y
+  `PlantillaPrograma.semanas[].sesiones` son planos POR DISEÑO — `/plantillas`
+  no tiene sub-bloques y sigue usando `ejercicios-sesion-editor.tsx`, mientras
+  que la ficha usa `bloques-ejercicios-editor.tsx`. Retirarlo del todo obliga a
+  rediseñar plantillas; queda para v5.
 - `Sesion.tipo?`/`rpeObjetivo?` son texto corto ("Gym", "Campo",
   "Readaptación") y RPE objetivo (0-10, admite medios). **Regla dura: la
   intensidad de una sesión SIEMPRE se calcula, NUNCA se guarda** (misma regla
-  que el LSI) — `intensidadSesion(rpe, { rpeLow, rpeHigh })` en
-  `lib/calculations/intensidad.ts`, con los umbrales siempre de
-  `config.umbrales.rpeLow`/`rpeHigh` (defecto 6/8), nunca hardcodeados.
+  que el LSI) — no existe ni debe existir un campo `intensidad` en `Sesion`.
+  Se deriva con `intensidadSesion(rpe, { rpeLow, rpeHigh })`
+  (`lib/calculations/intensidad.ts`: low si `rpe <= rpeLow`, high si
+  `rpe > rpeHigh`, moderate en medio), con los umbrales SIEMPRE de
+  `config.umbrales.rpeLow`/`rpeHigh` (defecto 6/8), nunca hardcodeados. El
+  único componente que la pinta es `components/programacion/intensidad-chip.tsx`
+  (`ChipIntensidad`, labels "Low"/"Moderate"/"High" en inglés a petición del
+  cliente — terminología de su Excel). Consecuencia visible: cambiar `rpeHigh`
+  en Personalización recolorea al instante todos los chips de la parrilla.
 - `BloqueSemanal.semanaPostOpInicio?`/`semanasTest?` (del BLOCK OUTLINE del
   Excel) documentan en qué semana post-operatoria arranca el bloque y qué
   semanas (índices 0-based) son "semana de test".
@@ -109,14 +146,67 @@ deportiva. Es un PROTOTIPO para enseñar a fisioterapeutas, NO producción.
   clínicas. `TabAnamnesis` (`tab-anamnesis.tsx`) y las notas clínicas
   (`notas-clinicas.tsx`, ahora tab propio en vez de vivir dentro de
   Historial/`TabHistorial`) son nuevos/movidos en FASE 4.
-- `CajaHallazgos` de la ficha baja al FINAL de la página (antes de los tabs),
+- `CajaHallazgos` de la ficha baja al FINAL de la página (después de los tabs),
   colapsada por defecto vía su prop `colapsableInicial` (ya existía, no hizo
   falta tocar el componente).
+
+## Programación: UN módulo, DOS entradas (v4, FASE 5)
+- Principio INNEGOCIABLE: el módulo de programación se construye una vez y se
+  monta en dos sitios. Si te encuentras copiando JSX entre `/programacion` y el
+  tab Programación de la ficha, para y extrae componente.
+  - `components/programacion/programacion-view.tsx` (`ProgramacionView`) pinta
+    UN `BloqueSemanal` (cabecera colapsable + `WeekStrip` + `SesionDetalleCard`
+    por sesión). Es la pieza compartida.
+  - `components/atletas/ficha/tab-programacion.tsx` (`TabProgramacion`) la monta
+    por cada bloque del atleta; `components/programacion/modo-atleta.tsx`
+    monta LITERALMENTE `TabProgramacion` — no hay una segunda implementación.
+  - `components/programacion/parrilla-semanal.tsx` es lo único propio de
+    `/programacion` (filas = atletas activos filtrados, columnas = L-D), y aun
+    así reutiliza `NuevaSesionDialog`/`SesionDetalleDialog` de la ficha. Cada
+    celda-sesión lleva el acento izquierdo con el `colorSemaforo` de la fase del
+    atleta + `ChipIntensidad`. `NuevaSesionDialog` acepta `trigger?: ReactNode`
+    justo para colgarse del "+" que aparece al hover de una celda vacía.
+- **Pertenencia sesión↔bloque: por `sesionIds` O por FECHA.**
+  `useProgramacionDeAtleta` (`lib/store/hooks.ts`) resuelve las sesiones de cada
+  bloque como `sesionIds` ∪ (sesiones del atleta dentro de
+  `fechaInicio`–`fechaFin`), y agrupa las que no caen en ningún bloque en uno
+  sintético "Sesiones fuera de bloque" al final. Es imprescindible: los diálogos
+  de creación escriben en `sesiones`, nunca en `bloque.sesionIds`, así que sin
+  la vía de la fecha una sesión creada desde la parrilla salía allí y en el
+  Calendario pero jamás en el tab Programación (bug real de FASE 5, corregido
+  en FASE 8). No "arregles" esto haciendo que los diálogos empujen ids a
+  `sesionIds`: duplicaría la fuente de verdad.
 
 ## Notas de calendario (clínica)
 - `NotaCalendario` (`AppState.notasCalendario`, hook `useNotasCalendario()`):
   nota libre de fecha con `atletaId?` opcional para ligarla a un atleta (ej.
-  "Marcos de vacaciones"). Entidad CRUD genérica vía `EntityMap`.
+  "Marcos de vacaciones"). Entidad CRUD genérica vía `EntityMap`. Una ausencia
+  de varios días son N notas sueltas, NO un rango: no inventes rangos.
+  Se editan desde el popover de cada día de `calendario-renovaciones.tsx`.
+
+## Informe imprimible (v4, FASE 7)
+- Vive en `app/(informe)/clinica/informe/` — **grupo de rutas propio, sin
+  sidebar ni topbar**. Por eso `@media print` en `app/globals.css` solo fija el
+  tamaño de página (A4): no hay chrome de app que ocultar. Lo demás son
+  utilidades Tailwind en `components/informe/paso-preview.tsx`: `print:hidden`
+  en la barra de acciones y `break-inside-avoid` en cada gráfica.
+- Wizard de 2 pasos (`informe-wizard.tsx`): Configurar (atleta + gráficas del
+  catálogo EXISTENTE `catalogoGraficos()` reordenables con `ListaReordenable` —
+  checkboxes + flechas, nunca drag&drop — + comentario + rango) → Vista previa.
+  Cero gráficas nuevas: el informe CONSUME el motor, no lo amplía. El único
+  texto interpretativo del documento es el comentario que escribe el profesional.
+- El documento tiene ancho FIJO `ANCHO_INFORME_PX = 794` (A4 a 96dpi), igual en
+  pantalla que en impresión, para que los `ResponsiveContainer` de Recharts
+  midan siempre lo mismo (si el contenedor cambia de tamaño al imprimir, las
+  gráficas salen deformadas).
+- **El documento es SIEMPRE claro**, aunque el usuario tenga el tema "oscuro":
+  acaba en papel. Se consigue con DOS piezas que van siempre juntas — la clase
+  `.tema-claro` de `app/globals.css` (deshace `.dark` para las CSS vars de su
+  subárbol) y `<TemaForzado tema="fisiofles">` de `lib/theme.ts` (context que
+  `useChartColors`/`useChartGridColors`/`useStateColors`/`useCockpit` consultan
+  antes que `config.tema`, porque esos colores son inline en el SVG de Recharts
+  y no pasan por CSS vars). Sin las dos, el informe salía con fondo blanco,
+  texto casi blanco y paneles de gráfico negros.
 
 ## Motor de gráficos por test (dashboard + ficha)
 - `lib/dashboard/graficos.ts` → `catalogoGraficos()`/`GraficoDef`: catálogo único de
@@ -223,6 +313,26 @@ deportiva. Es un PROTOTIPO para enseñar a fisioterapeutas, NO producción.
   debajo de eso Recharts recorta/superpone las etiquetas de los ejes
   horizontales (izquierda/derecha) contra el borde del SVG — comprobado a
   ojo con capturas, no hay test automático para esto.
+
+## Qué legado se retiró en v4 (y qué NO)
+Retirado del todo en FASE 8 — si lo ves en un ejemplo viejo, ya no existe:
+- `Atleta.fase` (texto libre tipo "Fase 3 · Readaptación al campo") y
+  `components/atletas/fase-utils.ts` (`FASE_OPCIONES`/`fasePrefijo`/
+  `ordenarFases`). La fase es SIEMPRE `faseId` resuelto contra el catálogo.
+- El filtro "Fase" de `/atletas`, sustituido por un filtro "Lesión" derivado en
+  render (solo tipos con algún atleta), igual que en `/dashboard` y
+  `/programacion`. Desde v4 una fase pertenece a UNA lesión, así que un filtro
+  global "Fase 3" no significaba nada.
+- `useComparisonColors()` (FASE 3), sustituido por `useComparisonColorsExtended(n)`.
+- `DatosGeneralesFicha` y `config.metricasVisiblesDashboard`/`ordenDashboard`.
+
+Legado que se QUEDA a propósito (no lo "limpies" sin leer el porqué):
+- `Atleta.lesion` — descripción del caso, distinta del tipo del catálogo y del
+  `lesionDetalle`; ver "Lesiones, fases, criterios y semáforo".
+- `Sesion.ejercicios` — entrada del helper de compatibilidad y formato de las
+  plantillas; ver "Sesiones: sub-bloques".
+- `Ejercicio.categoria` — el filtro protagonista son las etiquetas, pero la
+  categoría sigue pintándose en las cards y en `/plantillas`.
 
 ## Stack
 Next.js 14 (App Router) · TypeScript · Tailwind · shadcn/ui · Recharts · lucide-react

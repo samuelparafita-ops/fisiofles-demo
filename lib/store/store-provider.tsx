@@ -15,6 +15,8 @@ import { reducer, type Action } from "./reducer";
 import type { AppState } from "./types";
 
 export const STORAGE_KEY = "fisiofles-demo-v4";
+/** Toda clave de la demo (incluidas las de versiones anteriores) empieza así. */
+const STORAGE_PREFIJO = "fisiofles-demo";
 const PERSIST_DEBOUNCE_MS = 300;
 
 type StoreContextValue = {
@@ -78,10 +80,17 @@ export function useStore(): StoreContextValue {
   return ctx;
 }
 
-/** Borra la persistencia y re-siembra el estado desde cero. */
+/**
+ * Borra la persistencia y re-siembra el estado desde cero. Barre TODAS las
+ * claves `fisiofles-demo*`, no solo la actual: los navegadores que hayan
+ * abierto una versión anterior de la demo arrastran `fisiofles-demo-v2`/`-v3`
+ * muertas, y "Restablecer demo" debe dejar el almacenamiento limpio.
+ */
 export function resetDemo(dispatch: Dispatch<Action>) {
   if (typeof window !== "undefined") {
-    window.localStorage.removeItem(STORAGE_KEY);
+    for (const clave of Object.keys(window.localStorage)) {
+      if (clave.startsWith(STORAGE_PREFIJO)) window.localStorage.removeItem(clave);
+    }
   }
   dispatch({ type: "RESET_DEMO" });
 }
