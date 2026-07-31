@@ -5,6 +5,7 @@ import { CalendarX } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ProgramacionView } from "@/components/programacion/programacion-view";
 import { AplicarPlantillaDialog } from "@/components/atletas/ficha/aplicar-plantilla-dialog";
+import { NuevaSesionDialog } from "@/components/atletas/ficha/nueva-sesion-dialog";
 import { SesionDetalleDialog } from "@/components/atletas/ficha/sesion-detalle-dialog";
 import { hoyIso } from "@/components/atletas/ficha/fecha-utils";
 import { useProgramacionDeAtleta, type Sesion } from "@/lib/store";
@@ -22,7 +23,10 @@ export function TabProgramacion({ atletaId }: { atletaId: string }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <h3 className="font-display text-base font-bold text-textStrong">Programación</h3>
-        <AplicarPlantillaDialog atletaId={atletaId} />
+        <div className="flex items-center gap-2">
+          <AplicarPlantillaDialog atletaId={atletaId} />
+          <NuevaSesionDialog atletaId={atletaId} />
+        </div>
       </div>
 
       {bloquesOrdenados.length === 0 ? (

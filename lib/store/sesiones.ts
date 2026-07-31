@@ -13,3 +13,8 @@ export function bloquesDeSesion(sesion: Sesion): BloqueEjercicios[] {
   }
   return [{ id: `${sesion.id}-principal`, nombre: "Principal", ejercicios: sesion.ejercicios }];
 }
+
+/** Nº total de ejercicios de la sesión, sumando todos sus sub-bloques (ver `bloquesDeSesion`). */
+export function totalEjerciciosSesion(sesion: Sesion): number {
+  return bloquesDeSesion(sesion).reduce((total, b) => total + b.ejercicios.length, 0);
+}

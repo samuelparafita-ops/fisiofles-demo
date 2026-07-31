@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,25 +15,27 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/shared/toast";
-import { EjerciciosSesionEditor } from "@/components/atletas/ficha/ejercicios-sesion-editor";
+import { BloquesEjerciciosEditor } from "@/components/atletas/ficha/bloques-ejercicios-editor";
+import { RpeSelector } from "@/components/programacion/rpe-selector";
+import { TipoSesionInput } from "@/components/programacion/tipo-sesion-input";
 import { diaSemanaDeIso, hoyIso } from "@/components/atletas/ficha/fecha-utils";
 import {
   accionCrear,
   useDispatch,
   usePlantillasSesion,
-  type EjercicioProgramado,
+  type BloqueEjercicios,
   type Sesion,
 } from "@/lib/store";
-
-const selectClass =
-  "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
 
 export function NuevaSesionDialog({
   atletaId,
   fechaPorDefecto,
+  trigger,
 }: {
   atletaId: string;
   fechaPorDefecto?: string;
+  /** Trigger custom (ej. botón "+" al hover de una celda vacía en /programacion) — por defecto el botón "Nueva sesión". */
+  trigger?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const dispatch = useDispatch();
@@ -42,8 +44,10 @@ export function NuevaSesionDialog({
 
   const [nombre, setNombre] = useState("");
   const [fecha, setFecha] = useState(fechaPorDefecto ?? hoyIso());
+  const [tipo, setTipo] = useState("");
+  const [rpeObjetivo, setRpeObjetivo] = useState(7);
   const [plantillaId, setPlantillaId] = useState("");
-  const [ejercicios, setEjercicios] = useState<EjercicioProgramado[]>([]);
+  const [bloques, setBloques] = useState<BloqueEjercicios[]>([{ id: "principal", nombre: "Principal", ejercicios: [] }]);
 
   useEffect(() => {
     if (open) setFecha(fechaPorDefecto ?? hoyIso());
@@ -54,7 +58,7 @@ export function NuevaSesionDialog({
     const plantilla = plantillas.find((p) => p.id === id);
     if (plantilla) {
       setNombre(plantilla.nombre);
-      setEjercicios(plantilla.ejercicios);
+      setBloques([{ id: "principal", nombre: "Principal", ejercicios: plantilla.ejercicios }]);
     }
   }
 
@@ -66,13 +70,18 @@ export function NuevaSesionDialog({
       fecha,
       dia: diaSemanaDeIso(fecha),
       nombre: nombre.trim(),
-      ejercicios,
+      ejercicios: bloques.flatMap((b) => b.ejercicios),
       estado: "programada",
+      tipo: tipo.trim() || undefined,
+      rpeObjetivo,
+      bloquesEjercicios: bloques,
     };
     dispatch(accionCrear("sesiones", nueva));
     toast("Sesión creada", `${nueva.nombre} se ha añadido el ${fecha}.`);
     setNombre("");
-    setEjercicios([]);
+    setTipo("");
+    setRpeObjetivo(7);
+    setBloques([{ id: "principal", nombre: "Principal", ejercicios: [] }]);
     setPlantillaId("");
     setOpen(false);
   }
@@ -80,12 +89,14 @@ export function NuevaSesionDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus className="size-3.5" />
-          Nueva sesión
-        </Button>
+        {trigger ?? (
+          <Button size="sm">
+            <Plus className="size-3.5" />
+            Nueva sesión
+          </Button>
+        )}
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nueva sesión</DialogTitle>
           <DialogDescription>Se añade al Calendario y a la Programación del atleta.</DialogDescription>
@@ -113,6 +124,13 @@ export function NuevaSesionDialog({
             </div>
           </div>
 
+          <div className="space-y-1.5">
+            <Label htmlFor="nueva-sesion-tipo">Tipo</Label>
+            <TipoSesionInput id="nueva-sesion-tipo" value={tipo} onChange={setTipo} />
+          </div>
+
+          <RpeSelector id="nueva-sesion-rpe" value={rpeObjetivo} onChange={setRpeObjetivo} />
+
           {plantillas.length > 0 && (
             <div className="space-y-1.5">
               <Label htmlFor="nueva-sesion-plantilla">Partir de una plantilla de sesión (opcional)</Label>
@@ -120,7 +138,7 @@ export function NuevaSesionDialog({
                 id="nueva-sesion-plantilla"
                 value={plantillaId}
                 onChange={(e) => aplicarPlantilla(e.target.value)}
-                className={selectClass}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
                 <option value="">Sin plantilla</option>
                 {plantillas.map((p) => (
@@ -134,7 +152,7 @@ export function NuevaSesionDialog({
 
           <div className="space-y-1.5">
             <Label>Ejercicios</Label>
-            <EjerciciosSesionEditor ejercicios={ejercicios} onChange={setEjercicios} />
+            <BloquesEjerciciosEditor bloques={bloques} onChange={setBloques} />
           </div>
         </div>
 

@@ -34,6 +34,18 @@ export function addDias(base: Date, dias: number): Date {
   return d;
 }
 
+export const DIAS_CORTOS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"] as const;
+
+/** Lunes de la semana que contiene `d` (semana ISO, lunes-domingo). */
+export function inicioSemana(d: Date): Date {
+  const copia = new Date(d);
+  copia.setHours(0, 0, 0, 0);
+  const dia = copia.getDay();
+  const diff = dia === 0 ? -6 : 1 - dia;
+  copia.setDate(copia.getDate() + diff);
+  return copia;
+}
+
 export function fmtFechaCorta(iso: string): string {
   const [, m, d] = iso.split("-");
   return `${d}/${m}`;

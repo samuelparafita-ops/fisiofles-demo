@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Bell,
   Briefcase,
+  CalendarRange,
   ChartNoAxesCombined,
   ClipboardList,
   Dumbbell,
@@ -20,6 +21,7 @@ export const navItems = [
   { href: "/", label: "Inicio", icon: House },
   { href: "/dashboard", label: "Dashboard", icon: ChartNoAxesCombined },
   { href: "/atletas", label: "Atletas", icon: Users },
+  { href: "/programacion", label: "Programación", icon: CalendarRange },
   { href: "/ejercicios", label: "Ejercicios", icon: Dumbbell },
   { href: "/plantillas", label: "Plantillas", icon: LayoutTemplate },
   { href: "/formularios", label: "Formularios", icon: ClipboardList },
