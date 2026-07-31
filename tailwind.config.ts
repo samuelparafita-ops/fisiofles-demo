@@ -66,36 +66,16 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        chart: {
-          1: "hsl(var(--chart-1))",
-          2: "hsl(var(--chart-2))",
-          3: "hsl(var(--chart-3))",
-          4: "hsl(var(--chart-4))",
-          5: "hsl(var(--chart-5))",
-        },
 
-        // Tokens exactos de lib/tokens.ts (hoja de cálculo del producto).
-        // `brand.DEFAULT/tint/ink` viven en CSS vars (--brand*) porque son el
-        // ÚNICO acento dinámico (Personalización > Apariencia, 6 opciones,
-        // ver lib/personalizacion/acentos.ts) — `light`/`deep` no se usan hoy
-        // en ningún componente, se dejan fijos. `bg/surface1/surface2/
-        // borderSoft/textDim/textStrong` también van por CSS var para que el
-        // tema "Oscuro" reteñina toda la UI sin tocar cada componente — ver
-        // app/globals.css `.dark` y `border`/`card`/`popover`/`secondary`/
-        // `muted` (ya eran CSS vars) más arriba en este mismo objeto `colors`.
+        // Tokens exactos de lib/tokens.ts. `brand.*` vive en CSS vars
+        // (--brand*): acento dinámico (Personalización > Apariencia) con
+        // variante oscura por tema (theme-effect.tsx). Neutros/superficies
+        // también por CSS var para que "Oscuro" reteñina toda la UI. `rail.*`
+        // es el rail de navegación carbón, constante en ambos temas.
         brand: {
           DEFAULT: "hsl(var(--brand))",
-          light: "#67DBF6",
           tint: "hsl(var(--brand-tint))",
           ink: "hsl(var(--brand-ink))",
-          deep: "#0062FF",
-        },
-        data: {
-          primary: "#1DC4EB",
-          compare: "#FF0000",
-          good: "#00FF44",
-          warn: "#FF9900",
-          base: "#B7B7B7",
         },
         dataLight: {
           primary: "#0891B2",
@@ -104,20 +84,29 @@ const config: Config = {
           warn: "#D97706",
           base: "#64748B",
         },
-        chartBg: "#181C20",
-        chartGrid: "#2E343A",
-        chartText: "#C9CED4",
         state: {
           good: "#15803D",
           warn: "#B45309",
           bad: "#DC2626",
         },
+        rail: {
+          DEFAULT: "hsl(var(--rail-bg))",
+          hover: "hsl(var(--rail-hover))",
+          border: "hsl(var(--rail-border))",
+          muted: "hsl(var(--rail-muted))",
+          text: "hsl(var(--rail-text))",
+        },
         bg: "hsl(var(--background))",
         surface1: "hsl(var(--surface))",
         surface2: "hsl(var(--surface))",
+        surfaceRaised: "hsl(var(--surface-raised))",
         borderSoft: "hsl(var(--border-soft))",
         textDim: "hsl(var(--text-dim))",
         textStrong: "hsl(var(--text-strong))",
+      },
+      boxShadow: {
+        card: "var(--shadow-card)",
+        pop: "var(--shadow-pop)",
       },
       borderRadius: {
         lg: "var(--radius)",

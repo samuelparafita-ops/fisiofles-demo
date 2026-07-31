@@ -349,7 +349,7 @@ export type Notificacion = {
 // Config
 // ---------------------------------------------------------------------------
 
-export type Tema = "fisiofles" | "clasico-excel" | "oscuro";
+export type Tema = "fisiofles" | "oscuro";
 
 export type UmbralesConfig = {
   acwrBajo: number;

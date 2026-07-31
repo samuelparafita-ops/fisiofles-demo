@@ -2,18 +2,13 @@
 
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { useCockpit } from "@/lib/theme";
 
 /**
- * Envoltorio compartido de los gráficos — dos modos:
- * - Claro (temas "fisiofles"/"oscuro"): un único contenedor sobre `surface2`,
- *   sin panel interior oscuro — ver CLAUDE.md > Estética. "Oscuro" lo
- *   retiñe solo (surface2 es CSS var), no hace falta lógica aquí.
- * - Cockpit (tema "clasico-excel"): panel oscuro `chartBg`, homenaje al
- *   Excel original — ver `useCockpit()` (lib/theme.ts) y Personalización >
- *   Apariencia. Los textos internos que usan `text-textStrong`/`text-textDim`
- *   (tooltips de cada gráfico) se sobrescriben vía selector en
- *   `ChartTooltipBox` para no tocar los 6 componentes de gráfico.
+ * Envoltorio compartido de los gráficos — card elevada sobre `surface2` con
+ * la sombra de elevación del sistema (`shadow-card`) y borde hairline. El
+ * tema "Oscuro" la retiñe solo (surface2/borde/sombra son CSS vars). El
+ * modo cockpit del retirado tema "clasico-excel" desapareció en el rediseño
+ * 2026-07.
  */
 export function ChartPanel({
   title,
@@ -31,49 +26,26 @@ export function ChartPanel({
   children: ReactNode;
   className?: string;
 }) {
-  const cockpit = useCockpit();
-
   return (
     <div
       className={cn(
-        "rounded-xl border p-6 shadow-sm",
-        cockpit ? "border-chartGrid bg-chartBg" : "border-borderSoft bg-surface2",
+        "rounded-xl border border-borderSoft bg-surface2 p-6 shadow-card",
         className
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h3
-            className={cn(
-              "font-display text-base font-bold",
-              cockpit ? "text-white" : "text-textStrong"
-            )}
-          >
-            {title}
-          </h3>
-          {description && (
-            <p className={cn("mt-0.5 text-xs", cockpit ? "text-chartText" : "text-textDim")}>
-              {description}
-            </p>
-          )}
+          <h3 className="font-display text-base font-semibold text-textStrong">{title}</h3>
+          {description && <p className="mt-0.5 text-xs text-textDim">{description}</p>}
         </div>
         <div className="flex flex-wrap items-start gap-4">
           {action}
           {metric && (
             <div className="text-right">
-              <p
-                className={cn(
-                  "font-display text-4xl font-bold leading-none tracking-tight md:text-5xl",
-                  cockpit ? "text-white" : "text-textStrong"
-                )}
-              >
+              <p className="font-display text-4xl font-bold leading-none tracking-tight text-textStrong md:text-5xl">
                 {metric.value}
               </p>
-              {metric.label && (
-                <p className={cn("mt-1.5 text-[11px]", cockpit ? "text-chartText" : "text-textDim")}>
-                  {metric.label}
-                </p>
-              )}
+              {metric.label && <p className="mt-1.5 text-[11px] text-textDim">{metric.label}</p>}
             </div>
           )}
         </div>
@@ -83,7 +55,7 @@ export function ChartPanel({
   );
 }
 
-/** Chip de leyenda manual (Recharts <Legend> no encaja con el layout de los 4 gráficos). */
+/** Chip de leyenda manual (Recharts <Legend> no encaja con el layout de los gráficos). */
 export function LegendChip({
   color,
   label,
@@ -93,9 +65,8 @@ export function LegendChip({
   label: string;
   dashed?: boolean;
 }) {
-  const cockpit = useCockpit();
   return (
-    <span className={cn("flex items-center gap-1.5 text-xs", cockpit ? "text-chartText" : "text-textDim")}>
+    <span className="flex items-center gap-1.5 text-xs text-textDim">
       <span
         className="inline-block h-0.5 w-3"
         style={{
@@ -108,23 +79,10 @@ export function LegendChip({
   );
 }
 
-/**
- * Caja de tooltip compartida entre los 6 gráficos. En cockpit, los textos
- * internos de cada tooltip (`text-textStrong`/`text-textDim`, pensados para
- * fondo claro) se fuerzan vía selector de descendiente — así los 6
- * componentes de gráfico no necesitan conocer el tema.
- */
+/** Caja de tooltip compartida entre los gráficos. */
 export function ChartTooltipBox({ children }: { children: ReactNode }) {
-  const cockpit = useCockpit();
   return (
-    <div
-      className={cn(
-        "rounded-md border px-3 py-2 text-xs shadow-lg",
-        cockpit
-          ? "border-chartGrid bg-chartBg text-chartText [&_.text-textStrong]:!text-white [&_.text-textDim]:!text-chartText"
-          : "border-borderSoft bg-surface2"
-      )}
-    >
+    <div className="rounded-md border border-borderSoft bg-surface2 px-3 py-2 text-xs shadow-pop">
       {children}
     </div>
   );

@@ -34,8 +34,6 @@ export function Topbar() {
   const esOscuro = tema === "oscuro";
 
   function toggleTema() {
-    // Desde "clasico-excel" el toggle pasa a "oscuro" (clasico-excel solo se
-    // activa desde Personalización); desde ahí alterna claro/oscuro normal.
     dispatch({ type: "CONFIG_ACTUALIZAR", payload: { tema: esOscuro ? "fisiofles" : "oscuro" } });
   }
 
@@ -61,7 +59,7 @@ export function Topbar() {
         </SheetTrigger>
         <SheetContent side="left" className="flex w-64 flex-col p-0">
           <div className="flex h-16 items-center px-6">
-            <Wordmark />
+            <Wordmark onLight />
           </div>
           <nav className="flex flex-1 flex-col gap-1 p-4">
             {navItems.map((item) => {
@@ -82,7 +80,7 @@ export function Topbar() {
                   <Icon className="size-4" />
                   <span className="flex-1">{item.label}</span>
                   {showBadge && (
-                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1 text-xs font-semibold text-white">
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1 text-xs font-semibold text-rail">
                       {noLeidas.length}
                     </span>
                   )}
@@ -135,7 +133,7 @@ export function Topbar() {
       >
         <Bell className="size-5" />
         {noLeidas.length > 0 && (
-          <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-semibold text-white">
+          <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-semibold text-rail">
             {noLeidas.length}
           </span>
         )}
