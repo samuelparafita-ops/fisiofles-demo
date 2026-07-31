@@ -1,0 +1,1411 @@
+From 81bdf1f8b004faa1c59c06ea401802beb9ad239a Mon Sep 17 00:00:00 2001
+From: Claude <claude@demo>
+Date: Fri, 31 Jul 2026 13:59:46 +0000
+Subject: [PATCH] =?UTF-8?q?Redise=C3=B1o=20v5=20=C2=B7=20Fase=20A:=20funda?=
+ =?UTF-8?q?ci=C3=B3n=20visual=20premium?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Dirección comprometida: estándar premium del sector (listón VALD Hub / Whoop).
+- Dos temas gemelos claro/oscuro; retirado clasico-excel (con migración de
+  localStorage y Personalización a 2 temas)
+- Nueva paleta neutra AA en ambos temas + rampa cyan de un solo matiz
+  (fuera brandDeep); acentos con variante oscura (tint/ink por tema)
+- Rail de navegación carbón constante en ambos temas (firma del rediseño)
+- Sistema de elevación: sombras reales por CSS var (shadow-card/shadow-pop)
+- Tipografía: Archivo (datos/titulares, numerales tabulares) + Inter
+- ChartPanel sin modo cockpit; tooltips con elevación pop
+- PRODUCT.md + contrato de dirección emitido en el HTML de producción
+---
+ PRODUCT.md                                    |  93 ++++++++
+ app/globals.css                               | 217 ++++++++++--------
+ app/layout.tsx                                |  25 +-
+ app/styleguide/page.tsx                       |  49 ++--
+ components/charts/chart-panel.tsx             |  70 ++----
+ components/layout/sidebar.tsx                 |  42 +++-
+ components/layout/topbar.tsx                  |   8 +-
+ .../personalizacion/seccion-apariencia.tsx    |  17 +-
+ components/theme/theme-effect.tsx             |  20 +-
+ lib/personalizacion/acentos.ts                |  15 ++
+ lib/store/store-provider.tsx                  |  10 +-
+ lib/store/types.ts                            |   2 +-
+ lib/theme.ts                                  |  45 +---
+ lib/tokens.ts                                 | 191 +++++++--------
+ tailwind.config.ts                            |  45 ++--
+ 15 files changed, 457 insertions(+), 392 deletions(-)
+ create mode 100644 PRODUCT.md
+
+diff --git a/PRODUCT.md b/PRODUCT.md
+new file mode 100644
+index 0000000..359586a
+--- /dev/null
++++ b/PRODUCT.md
+@@ -0,0 +1,93 @@
++# Product
++
++<!-- impeccable:product-schema 1 -->
++
++## Platform
++
++web
++
++## Users
++
++Fisioterapeutas y readaptadores deportivos que llevan atletas lesionados y quieren
++todas las variables de cada atleta bajo control. Usuario tipo: el fisio de la
++demo, que viene de gestionar su clínica con hojas de cálculo (Excel REHAB
++CREATION). Contexto: clínica / despacho, portátil (~1366×768 como suelo). Uso
++diario, entre sesiones con pacientes. Audiencia secundaria: partners e
++inversores que ven la demo comercial.
++
++## Product Purpose
++
++Fisiofles es una plataforma de seguimiento y análisis para readaptación
++deportiva. Esta build es una DEMO clicable (prototipo, no producción) cuyo éxito
++es doble: que el fisio cliente valide el flujo con datos ficticios creíbles, y
++que transmita nivel premium en demos comerciales.
++
++## Positioning
++
++La app MUESTRA datos calculados de verdad (ACWR, simetría/LSI, readiness,
++intensidad por RPE, semáforo de fases de lesión) desde un motor de fórmulas
++espejo de la hoja de cálculo real del profesional; el profesional DECIDE. Nunca
++recomendaciones clínicas automáticas. Frente a un SaaS genérico de salud, su
++mecanismo es el proceso de readaptación por fases con criterios clínicos del
++propio fisio.
++
++## Operating Context
++
++- Flujo demo: entrar → lista de atletas → ficha (7 tabs) → gráficos poblados →
++  programación semanal → formulario que actualiza un gráfico.
++- Rutas: Inicio, Dashboard, Atletas (+ficha), Programación, Ejercicios,
++  Plantillas, Formularios, Notificaciones, Clínica (negocio), Personalización,
++  más informe imprimible A4 sin chrome.
++- Terminología del cliente: fases de lesión con semáforo rojo→verde, ACWR,
++  simetría, readiness, RPE, bloques Low/Moderate/High (en inglés, de su Excel),
++  sub-bloques de sesión (Preparación → Activación → Bloque principal).
++
++## Capabilities and Constraints
++
++- Next.js 14 App Router + TypeScript + Tailwind + shadcn/ui + Recharts +
++  lucide-react. Sin backend: mock + store en localStorage (`fisiofles-demo-v4`).
++- Tokens centralizados: `lib/tokens.ts` espejado en CSS vars
++  (`app/globals.css`) y `tailwind.config.ts`; gráficos consumen color solo vía
++  `useChartColors()` (`lib/theme.ts`).
++- Desktop only. Sin responsive móvil (decisión explícita del rediseño 2026-07).
++- Los tabs de la ficha deben verse SIN scroll en 1366×768.
++- Informe A4 con ancho fijo 794px, siempre tema claro (`TemaForzado`).
++- Semáforo de fases: continuum HSL #980000→#8BF200 derivado en render, hex solo
++  en tokens. Los umbrales y métricas visibles se leen de `state.config`.
++- Marca visible "Demo · datos ficticios" obligatoria; todos los datos de
++  pacientes son ficticios.
++
++## Brand Commitments
++
++- Nombre: Fisiofles. Identidad propia (nada de la marca "Air").
++- Cyan como ADN de marca: base #1DC4EB con libertad confirmada para
++  evolucionar el tono y construir la paleta alrededor.
++- DOS temas gemelos al mismo nivel, claro y oscuro, sin jerarquía entre ellos;
++  el tema "clasico-excel" se retira (decisión del rediseño 2026-07).
++- Tipografía actual Space Grotesk + Inter; cambiar solo si mejora claramente.
++- Copy innegociable: la app muestra, el profesional decide.
++- Dirección visual comprometida (2026-07): estándar premium del sector,
++  ejecutado limpio y sin ironía. Listón de acabado: VALD Hub y Whoop. Sin
++  conceptos temáticos; la marca vive en la precisión del detalle.
++
++## Evidence on Hand
++
++- Fórmulas reales del dashboard en `docs/` (fuente de verdad del motor).
++- Semilla mock creíble: 10+ atletas con lesiones, sesiones, tests, formularios.
++- Feedback literal del cliente (motivo del rediseño): interfaz "muy básica",
++  "se nota mucho que es un diseño convencional hecho por IA", colores "muy
++  planos y estériles"; pide algo "más premium, con mejor visual".
++- No existen testimonios, clientes, precios ni benchmarks: no inventar.
++
++## Product Principles
++
++1. La app muestra, el profesional decide — cero interpretación clínica
++   automática en UI o copy.
++2. Una sola fuente de verdad (store); toda entidad editable desde cualquier
++   vista se refleja en todas.
++3. Los números se calculan en render desde el motor de fórmulas; nunca se
++   guardan derivados (intensidad, LSI, color de semáforo).
++4. Densidad operativa: el fisio escanea muchas variables por atleta; la
++   legibilidad del dato manda sobre la expresión.
++5. Premium verificable: contraste AA en ambos temas, jerarquía real, detalle
++   artesanal — nada de plantilla por defecto.
+diff --git a/app/globals.css b/app/globals.css
+index 73354a5..5fd3593 100644
+--- a/app/globals.css
++++ b/app/globals.css
+@@ -4,138 +4,151 @@
+ 
+ @layer base {
+   /**
+-   * Valores derivados EXACTAMENTE de lib/tokens.ts (hex → HSL). No inventar
+-   * tonos aquí: si algo no cuadra con la paleta, corregir en lib/tokens.ts
+-   * primero y luego re-derivar. UI clara — los colores PUROS de `data.*`
+-   * viven solo dentro de paneles `chartBg` (ver StatCard/chart components),
+-   * nunca en estas variables generales.
++   * Rediseño 2026-07 «estándar premium del sector». Valores derivados
++   * EXACTAMENTE de lib/tokens.ts (hex → HSL). No inventar tonos aquí: si
++   * algo no cuadra, corregir en lib/tokens.ts primero y re-derivar.
++   * Dos temas gemelos (claro ↔ oscuro) + rail de navegación carbón
++   * constante en ambos (--rail-*).
+    */
+   :root {
+-    --background: 220 20% 97%; /* bg #F6F7F9 */
+-    --foreground: 217 16% 16%; /* text #232830 */
++    --background: 214 26% 95%; /* bg #EEF1F5 */
++    --foreground: 214 22% 15%; /* text #1D242D */
+ 
+-    /* Superficie elevada compartida (cards/sidebar/topbar/popovers/diálogos) — antes
+-       4 valores idénticos por separado; ahora una sola var para que Oscuro los
+-       cambie todos a la vez. Ver `surface1`/`surface2`/`card`/`popover` en tailwind.config.ts. */
++    /* Superficie elevada compartida (cards/topbar/popovers/diálogos) y su
++       nivel intermedio para hovers/inputs rellenos. */
+     --surface: 0 0% 100%; /* surface1/surface2 #FFFFFF */
++    --surface-raised: 210 29% 97%; /* surfaceRaised #F6F8FA */
+     --card: var(--surface);
+-    --card-foreground: 217 16% 16%; /* text #232830 */
++    --card-foreground: 214 22% 15%;
+ 
+     --popover: var(--surface);
+-    --popover-foreground: 217 16% 16%; /* text #232830 */
++    --popover-foreground: 214 22% 15%;
+ 
+-    /* Acento dinámico — Personalización > Apariencia. Por defecto cyan Fisiofles;
+-       lo reescribe en runtime `components/theme/theme-effect.tsx` según
+-       `config.acento` (ver lib/personalizacion/acentos.ts). NO varía con
+-       Oscuro/Claro, solo con el acento elegido. */
+-    --brand: 191 84% 52%; /* acentos.cyan.hsl.default */
+-    --brand-tint: 194 85% 95%; /* acentos.cyan.hsl.tint */
+-    --brand-ink: 192 89% 38%; /* acentos.cyan.hsl.ink */
++    /* Acento dinámico — Personalización > Apariencia. Por defecto cyan
++       Fisiofles; lo reescribe en runtime components/theme/theme-effect.tsx
++       según `config.acento` Y según el tema (tint/ink tienen variante
++       oscura, ver lib/personalizacion/acentos.ts). */
++    --brand: 191 84% 52%; /* acentos.cyan.hsl.default #1DC4EB */
++    --brand-tint: 194 81% 94%; /* #E3F6FC */
++    --brand-ink: 194 91% 31%; /* #077596 */
+ 
+-    --primary: var(--brand);
+-    --primary-foreground: 0 0% 100%; /* white — texto sobre botón de acento */
++    --primary: var(--brand-ink);
++    --primary-foreground: 0 0% 100%;
+ 
+-    --secondary: 216 2% 94%; /* borderSoft #EEF0F3 */
+-    --secondary-foreground: 217 16% 16%; /* text #232830 */
++    --secondary: 210 24% 93%; /* borderSoft #EAEEF2 */
++    --secondary-foreground: 214 22% 15%;
+ 
+-    --muted: 216 2% 94%; /* borderSoft #EEF0F3 */
+-    --muted-foreground: 214 7% 58%; /* muted #8B929B */
++    --muted: 210 24% 93%;
++    --muted-foreground: 211 10% 45%; /* muted #68737F */
+ 
+     --accent: var(--brand-tint);
+     --accent-foreground: var(--brand-ink);
+ 
+     --destructive: 0 72% 51%; /* state.bad #DC2626 */
+-    --destructive-foreground: 0 0% 100%; /* white */
+-
+-    --border: 214 14% 90%; /* border #E3E6EA */
+-    --border-soft: 216 2% 94%; /* borderSoft #EEF0F3 (alias de --secondary para uso como borde) */
+-    --input: 214 14% 90%; /* border #E3E6EA */
+-    --ring: var(--brand);
+-
+-    /* Texto — dos tonos que NO tienen equivalente shadcn (más oscuro/más
+-       fuerte que --foreground/--muted-foreground). Ver `textDim`/`textStrong`
+-       en tailwind.config.ts. */
+-    --text-dim: 214 8% 39%; /* textDim #5B626B */
+-    --text-strong: 216 28% 7%; /* textStrong #0D1117 */
+-
+-    /* Solo para uso dentro del tema "clasico-excel" — ver lib/tokens.ts `data.*` */
+-    --chart-1: 191 84% 52%; /* data.primary #1DC4EB */
+-    --chart-2: 0 100% 50%; /* data.compare #FF0000 */
+-    --chart-3: 136 100% 50%; /* data.good #00FF44 */
+-    --chart-4: 36 100% 50%; /* data.warn #FF9900 */
+-    --chart-5: 0 0% 72%; /* data.base #B7B7B7 */
+-
+-    /* Paleta de datos sobre fondo claro — ver lib/tokens.ts `dataLight.*` */
+-    --data-light-primary: 192 91% 36%; /* dataLight.primary #0891B2 */
+-    --data-light-compare: 0 72% 51%; /* dataLight.compare #DC2626 */
+-    --data-light-good: 142 76% 36%; /* dataLight.good #16A34A */
+-    --data-light-warn: 32 95% 44%; /* dataLight.warn #D97706 */
+-    --data-light-base: 215 16% 47%; /* dataLight.base #64748B */
+-
+-    --radius: 0.5rem;
++    --destructive-foreground: 0 0% 100%;
++
++    --border: 213 21% 90%; /* border #DFE4EA */
++    --border-soft: 210 24% 93%; /* borderSoft #EAEEF2 */
++    --input: 213 21% 90%;
++    --ring: var(--brand-ink);
++
++    --text-dim: 213 12% 33%; /* textDim #49525D */
++    --text-strong: 218 44% 7%; /* textStrong #0A101A */
++
++    /* Paleta de datos del tema claro — ver lib/tokens.ts `dataLight.*` */
++    --data-light-primary: 192 91% 36%;
++    --data-light-compare: 0 72% 51%;
++    --data-light-good: 142 76% 36%;
++    --data-light-warn: 32 95% 44%;
++    --data-light-base: 215 16% 47%;
++
++    /* Rail de navegación — constante en ambos temas (firma del rediseño). */
++    --rail-bg: 215 35% 7%; /* #0B1017 */
++    --rail-hover: 216 27% 11%; /* #141A23 */
++    --rail-border: 217 23% 15%; /* #1E2530 */
++    --rail-muted: 215 12% 64%; /* #98A1AE */
++    --rail-text: 218 20% 92%; /* #E7EAEF */
++
++    /* Elevación — sombras con offset + blur (nunca halo). El tema oscuro
++       las endurece porque la sombra sobre carbón necesita más peso. */
++    --shadow-card: 0 1px 2px hsl(215 30% 15% / 0.05), 0 2px 8px hsl(215 30% 15% / 0.05);
++    --shadow-pop: 0 4px 12px hsl(215 30% 15% / 0.08), 0 16px 40px hsl(215 30% 15% / 0.14);
++
++    --radius: 0.625rem;
+   }
+ 
+   /**
+-   * Tema "Oscuro" (Personalización > Apariencia) — activado añadiendo la
+-   * clase `dark` a <html> desde `components/theme/theme-effect.tsx` cuando
+-   * `config.tema === "oscuro"`. Reescribe solo neutros/superficies/texto:
+-   * el acento (--brand*), los estados (state.*) y las paletas de datos de
+-   * los gráficos (dataLight/data) NO cambian con el tema claro/oscuro — ver
+-   * CLAUDE.md > Estética y lib/theme.ts `useChartColors()`.
+-   * "Clásico Excel" es independiente de esta clase: solo oscurece el panel
+-   * de cada gráfico (`chartBg`), nunca el resto de la UI — ver ChartPanel.
++   * Tema "Oscuro" — clase `dark` en <html> vía theme-effect.tsx cuando
++   * `config.tema === "oscuro"`. Reescribe neutros/superficies/texto/sombras;
++   * el acento (--brand*) lo reescribe theme-effect con la variante oscura
++   * del acento activo; las paletas de datos de los gráficos van por
++   * `useChartColors()` (lib/theme.ts). El rail NO cambia: es constante.
+    */
+   .dark {
+-    --background: 213 26% 7%; /* dark bg #0D1116 */
+-    --foreground: 214 16% 91%; /* dark text #E5E8EC */
++    --background: 216 33% 6%; /* #0A0E14 */
++    --foreground: 213 20% 91%; /* #E4E8ED */
++
++    --surface: 217 28% 9%; /* #11161E */
++    --surface-raised: 216 25% 12%; /* #171D26 */
++    --card-foreground: 213 20% 91%;
++    --popover-foreground: 213 20% 91%;
++
++    --primary: var(--brand);
++    --primary-foreground: 216 33% 6%;
+ 
+-    --surface: 215 21% 11%; /* dark surface #161B22 */
+-    --card-foreground: 214 16% 91%;
+-    --popover-foreground: 214 16% 91%;
++    --secondary: 215 23% 15%; /* #1D242E */
++    --secondary-foreground: 213 20% 91%;
+ 
+-    --secondary: 214 18% 15%; /* dark borderSoft #1F252D */
+-    --secondary-foreground: 214 16% 91%;
++    --muted: 215 23% 15%;
++    --muted-foreground: 214 11% 59%; /* #8C96A3 */
+ 
+-    --muted: 214 18% 15%;
+-    --muted-foreground: 215 10% 58%; /* dark muted #8A93A0 */
++    --border: 215 19% 20%; /* #29313C */
++    --border-soft: 215 23% 15%;
++    --input: 215 19% 20%;
++    --ring: var(--brand);
+ 
+-    --border: 215 17% 20%; /* dark border #2B323C */
+-    --border-soft: 214 18% 15%;
+-    --input: 215 17% 20%;
++    --text-dim: 215 13% 74%; /* #B3BAC4 */
++    --text-strong: 210 33% 98%; /* #F7F9FB */
+ 
+-    --text-dim: 215 12% 71%; /* dark textDim #ADB4BE */
+-    --text-strong: 216 33% 97%; /* dark textStrong #F5F7FA */
++    --shadow-card: 0 1px 2px hsl(220 40% 2% / 0.6), 0 2px 10px hsl(220 40% 2% / 0.4);
++    --shadow-pop: 0 4px 16px hsl(220 40% 2% / 0.5), 0 16px 48px hsl(220 40% 2% / 0.6);
+   }
+ 
+   /**
+    * Isla de tema CLARO dentro de cualquier tema — deshace `.dark` para su
+-   * subárbol. Único uso: el documento del informe (`/clinica/informe`), que
+-   * acaba en papel y por tanto es siempre claro. Espeja EXACTAMENTE las vars
+-   * que `.dark` sobrescribe arriba, con los valores de `:root`: si tocas una
+-   * allí, tócala aquí. El equivalente para los colores INLINE de Recharts
+-   * (que no pasan por CSS vars) es `<TemaForzado>` en lib/theme.ts — los dos
+-   * van siempre juntos.
++   * subárbol. Único uso: el documento del informe (/clinica/informe), que
++   * acaba en papel. Espeja EXACTAMENTE las vars que `.dark` sobrescribe,
++   * con los valores de :root. Emparejada con <TemaForzado> (lib/theme.ts)
++   * para los colores inline de Recharts.
+    */
+   .tema-claro {
+-    --background: 220 20% 97%;
+-    --foreground: 217 16% 16%;
++    --background: 214 26% 95%;
++    --foreground: 214 22% 15%;
+ 
+     --surface: 0 0% 100%;
+-    --card-foreground: 217 16% 16%;
+-    --popover-foreground: 217 16% 16%;
++    --surface-raised: 210 29% 97%;
++    --card-foreground: 214 22% 15%;
++    --popover-foreground: 214 22% 15%;
++
++    --primary: var(--brand-ink);
++    --primary-foreground: 0 0% 100%;
+ 
+-    --secondary: 216 2% 94%;
+-    --secondary-foreground: 217 16% 16%;
++    --secondary: 210 24% 93%;
++    --secondary-foreground: 214 22% 15%;
+ 
+-    --muted: 216 2% 94%;
+-    --muted-foreground: 214 7% 58%;
++    --muted: 210 24% 93%;
++    --muted-foreground: 211 10% 45%;
+ 
+-    --border: 214 14% 90%;
+-    --border-soft: 216 2% 94%;
+-    --input: 214 14% 90%;
++    --border: 213 21% 90%;
++    --border-soft: 210 24% 93%;
++    --input: 213 21% 90%;
++    --ring: var(--brand-ink);
+ 
+-    --text-dim: 214 8% 39%;
+-    --text-strong: 216 28% 7%;
++    --text-dim: 213 12% 33%;
++    --text-strong: 218 44% 7%;
++
++    --shadow-card: 0 1px 2px hsl(215 30% 15% / 0.05), 0 2px 8px hsl(215 30% 15% / 0.05);
++    --shadow-pop: 0 4px 12px hsl(215 30% 15% / 0.08), 0 16px 40px hsl(215 30% 15% / 0.14);
+   }
+ }
+ 
+@@ -146,6 +159,15 @@
+   body {
+     @apply bg-background text-foreground font-sans antialiased;
+   }
++  /* La voz de datos: titulares y numerales en Archivo, con numerales
++     tabulares para que las cifras alineen en tablas y métricas. */
++  .font-display {
++    font-variant-numeric: tabular-nums lining-nums;
++    letter-spacing: -0.01em;
++  }
++  ::selection {
++    background: hsl(var(--brand) / 0.25);
++  }
+ }
+ 
+ @layer utilities {
+@@ -154,11 +176,8 @@
+   }
+ }
+ 
+-/* Informe imprimible (FASE 7) — `/clinica/informe` no tiene sidebar/topbar
+-   que ocultar (ver `app/(informe)/`), así que lo único que hace falta aquí
+-   es el tamaño de página. El resto (ocultar toolbar, evitar cortes de
+-   gráfica a la mitad) son utilidades Tailwind `print:hidden`/`break-inside-avoid`
+-   directamente en `components/informe/paso-preview.tsx`. */
++/* Informe imprimible — /clinica/informe no tiene sidebar/topbar (ver
++   app/(informe)/); aquí solo el tamaño de página. */
+ @media print {
+   @page {
+     size: A4;
+diff --git a/app/layout.tsx b/app/layout.tsx
+index 7c44ab7..888aa8a 100644
+--- a/app/layout.tsx
++++ b/app/layout.tsx
+@@ -1,14 +1,14 @@
+ import type { Metadata, Viewport } from "next";
+-import { Space_Grotesk, Inter } from "next/font/google";
++import { Archivo, Inter } from "next/font/google";
+ import { ToastProvider } from "@/components/shared/toast";
+ import { ThemeEffect } from "@/components/theme/theme-effect";
+ import { StoreProvider } from "@/lib/store";
+ import { colors } from "@/lib/tokens";
+ import "./globals.css";
+ 
+-const spaceGrotesk = Space_Grotesk({
++const archivo = Archivo({
+   subsets: ["latin"],
+-  weight: ["400", "500", "700"],
++  weight: ["500", "600", "700"],
+   variable: "--font-display",
+   display: "swap",
+ });
+@@ -48,8 +48,25 @@ export default function RootLayout({
+   children: React.ReactNode;
+ }>) {
+   return (
+-    <html lang="es" className={`${spaceGrotesk.variable} ${inter.variable}`} suppressHydrationWarning>
++    <html lang="es" className={`${archivo.variable} ${inter.variable}`} suppressHydrationWarning>
+       <body className="min-h-screen font-sans antialiased">
++        {/* Contrato de dirección (rediseño 2026-07) — emitido como comentario
++            HTML real para que sobreviva al build de producción (los
++            comentarios JSX se eliminan al compilar). */}
++        <div
++          hidden
++          aria-hidden="true"
++          dangerouslySetInnerHTML={{
++            __html: `<!--
++THESIS: instrumento clinico-deportivo premium; rechaza la plantilla SaaS de cards blancas planas con acento timido.
++OWN-WORLD: dos temas gemelos - claro VALD (blanco quirurgico sobre gris frio, sombras reales) y oscuro Whoop (carbon azulado, cifras rotundas); rail de navegacion carbon constante con cyan #1DC4EB; Archivo para datos, Inter para UI; semaforo rojo-verde intacto.
++STORY: el fisio escanea variables de sus atletas y decide; la app muestra con jerarquia inapelable, nunca recomienda.
++FIRST VIEWPORT: rail carbon izquierda; contenido con ficha de atleta: identidad + fase + metricas en numerales tabulares, tabs visibles sin scroll en 1366x768.
++FORM: estandar del sector jugado limpio (canon elegido por el usuario; liston VALD Hub/Whoop). Seed bab0d07a.
++FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md.
++-->`,
++          }}
++        />
+         <StoreProvider>
+           <ThemeEffect />
+           <ToastProvider>{children}</ToastProvider>
+diff --git a/app/styleguide/page.tsx b/app/styleguide/page.tsx
+index d1efb2a..3cb68a6 100644
+--- a/app/styleguide/page.tsx
++++ b/app/styleguide/page.tsx
+@@ -1,5 +1,5 @@
+ import { Sparkles } from "lucide-react";
+-import { colors } from "@/lib/tokens";
++import { colors, colorsDark, rail } from "@/lib/tokens";
+ import { PageHeader } from "@/components/shared/page-header";
+ import { StatCard } from "@/components/shared/stat-card";
+ import { EmptyState } from "@/components/shared/empty-state";
+@@ -68,14 +68,17 @@ function Swatch({ name, hex }: { name: string; hex: string }) {
+ 
+ function DarkSwatch({ name, hex }: { name: string; hex: string }) {
+   return (
+-    <div className="flex items-center gap-3 rounded-xl border border-chartGrid bg-chartBg p-3">
++    <div
++      className="flex items-center gap-3 rounded-xl border p-3"
++      style={{ background: colorsDark.surface, borderColor: colorsDark.border }}
++    >
+       <div
+-        className="size-10 shrink-0 rounded-lg border border-chartGrid"
+-        style={{ background: hex }}
++        className="size-10 shrink-0 rounded-lg border"
++        style={{ background: hex, borderColor: colorsDark.border }}
+       />
+       <div className="min-w-0">
+-        <p className="truncate text-sm font-medium text-white">{name}</p>
+-        <p className="font-mono text-xs text-chartText">{hex}</p>
++        <p className="truncate text-sm font-medium" style={{ color: colorsDark.textStrong }}>{name}</p>
++        <p className="font-mono text-xs" style={{ color: colorsDark.textDim }}>{hex}</p>
+       </div>
+     </div>
+   );
+@@ -122,10 +125,8 @@ export default function StyleguidePage() {
+           title="Marca"
+           swatches={[
+             { name: "brand", hex: colors.brand },
+-            { name: "brandLight", hex: colors.brandLight },
+             { name: "brandTint", hex: colors.brandTint },
+             { name: "brandInk", hex: colors.brandInk },
+-            { name: "brandDeep", hex: colors.brandDeep },
+           ]}
+         />
+         <SwatchGroup
+@@ -162,23 +163,25 @@ export default function StyleguidePage() {
+         />
+         <SwatchGroup
+           dark
+-          title="data — puros del Excel (reservado: tema clasico-excel)"
+-          note="Ya no se usan por defecto. Activables desde Personalización (fase posterior) junto al panel chartBg."
++          title="dataDark — paleta de datos (tema oscuro)"
++          note="Mismos 5 roles que dataLight, verificados ≥6:1 sobre la superficie oscura. Vía useChartColors()."
+           swatches={[
+-            { name: "data.primary", hex: colors.data.primary },
+-            { name: "data.compare", hex: colors.data.compare },
+-            { name: "data.good", hex: colors.data.good },
+-            { name: "data.warn", hex: colors.data.warn },
+-            { name: "data.base", hex: colors.data.base },
++            { name: "dataDark.primary", hex: colors.dataDark.primary },
++            { name: "dataDark.compare", hex: colors.dataDark.compare },
++            { name: "dataDark.good", hex: colors.dataDark.good },
++            { name: "dataDark.warn", hex: colors.dataDark.warn },
++            { name: "dataDark.base", hex: colors.dataDark.base },
+           ]}
+         />
+         <SwatchGroup
+           dark
+-          title="Cockpit — superficie del tema clasico-excel"
++          title="Rail de navegación — carbón constante en ambos temas"
+           swatches={[
+-            { name: "chartBg", hex: colors.chartBg },
+-            { name: "chartGrid", hex: colors.chartGrid },
+-            { name: "chartText", hex: colors.chartText },
++            { name: "rail.bg", hex: rail.bg },
++            { name: "rail.hover", hex: rail.hover },
++            { name: "rail.border", hex: rail.border },
++            { name: "rail.muted", hex: rail.muted },
++            { name: "rail.text", hex: rail.text },
+           ]}
+         />
+       </section>
+@@ -190,18 +193,18 @@ export default function StyleguidePage() {
+         </h2>
+         <div className="space-y-3 rounded-xl border border-borderSoft bg-surface2 p-6 shadow-sm">
+           <h1 className="font-display text-4xl font-bold tracking-tight text-textStrong">
+-            H1 · Space Grotesk 700
++            H1 · Archivo 700
+           </h1>
+           <h2 className="font-display text-2xl font-bold tracking-tight text-textStrong">
+-            H2 · Space Grotesk 700
++            H2 · Archivo 700
+           </h2>
+           <h3 className="font-display text-lg font-medium text-text">
+-            H3 · Space Grotesk 500
++            H3 · Archivo 500
+           </h3>
+           <p className="font-display text-5xl font-bold text-brand-ink">
+             128.4
+             <span className="ml-2 text-lg font-medium text-muted-foreground">
+-              número de métrica · Space Grotesk · brandInk (contrasta en claro)
++              número de métrica · Archivo · brandInk (contrasta en claro)
+             </span>
+           </p>
+           <p className="text-base text-text">
+diff --git a/components/charts/chart-panel.tsx b/components/charts/chart-panel.tsx
+index 80346ab..69f2cea 100644
+--- a/components/charts/chart-panel.tsx
++++ b/components/charts/chart-panel.tsx
+@@ -2,18 +2,13 @@
+ 
+ import type { ReactNode } from "react";
+ import { cn } from "@/lib/utils";
+-import { useCockpit } from "@/lib/theme";
+ 
+ /**
+- * Envoltorio compartido de los gráficos — dos modos:
+- * - Claro (temas "fisiofles"/"oscuro"): un único contenedor sobre `surface2`,
+- *   sin panel interior oscuro — ver CLAUDE.md > Estética. "Oscuro" lo
+- *   retiñe solo (surface2 es CSS var), no hace falta lógica aquí.
+- * - Cockpit (tema "clasico-excel"): panel oscuro `chartBg`, homenaje al
+- *   Excel original — ver `useCockpit()` (lib/theme.ts) y Personalización >
+- *   Apariencia. Los textos internos que usan `text-textStrong`/`text-textDim`
+- *   (tooltips de cada gráfico) se sobrescriben vía selector en
+- *   `ChartTooltipBox` para no tocar los 6 componentes de gráfico.
++ * Envoltorio compartido de los gráficos — card elevada sobre `surface2` con
++ * la sombra de elevación del sistema (`shadow-card`) y borde hairline. El
++ * tema "Oscuro" la retiñe solo (surface2/borde/sombra son CSS vars). El
++ * modo cockpit del retirado tema "clasico-excel" desapareció en el rediseño
++ * 2026-07.
+  */
+ export function ChartPanel({
+   title,
+@@ -31,49 +26,26 @@ export function ChartPanel({
+   children: ReactNode;
+   className?: string;
+ }) {
+-  const cockpit = useCockpit();
+-
+   return (
+     <div
+       className={cn(
+-        "rounded-xl border p-6 shadow-sm",
+-        cockpit ? "border-chartGrid bg-chartBg" : "border-borderSoft bg-surface2",
++        "rounded-xl border border-borderSoft bg-surface2 p-6 shadow-card",
+         className
+       )}
+     >
+       <div className="flex flex-wrap items-start justify-between gap-4">
+         <div>
+-          <h3
+-            className={cn(
+-              "font-display text-base font-bold",
+-              cockpit ? "text-white" : "text-textStrong"
+-            )}
+-          >
+-            {title}
+-          </h3>
+-          {description && (
+-            <p className={cn("mt-0.5 text-xs", cockpit ? "text-chartText" : "text-textDim")}>
+-              {description}
+-            </p>
+-          )}
++          <h3 className="font-display text-base font-semibold text-textStrong">{title}</h3>
++          {description && <p className="mt-0.5 text-xs text-textDim">{description}</p>}
+         </div>
+         <div className="flex flex-wrap items-start gap-4">
+           {action}
+           {metric && (
+             <div className="text-right">
+-              <p
+-                className={cn(
+-                  "font-display text-4xl font-bold leading-none tracking-tight md:text-5xl",
+-                  cockpit ? "text-white" : "text-textStrong"
+-                )}
+-              >
++              <p className="font-display text-4xl font-bold leading-none tracking-tight text-textStrong md:text-5xl">
+                 {metric.value}
+               </p>
+-              {metric.label && (
+-                <p className={cn("mt-1.5 text-[11px]", cockpit ? "text-chartText" : "text-textDim")}>
+-                  {metric.label}
+-                </p>
+-              )}
++              {metric.label && <p className="mt-1.5 text-[11px] text-textDim">{metric.label}</p>}
+             </div>
+           )}
+         </div>
+@@ -83,7 +55,7 @@ export function ChartPanel({
+   );
+ }
+ 
+-/** Chip de leyenda manual (Recharts <Legend> no encaja con el layout de los 4 gráficos). */
++/** Chip de leyenda manual (Recharts <Legend> no encaja con el layout de los gráficos). */
+ export function LegendChip({
+   color,
+   label,
+@@ -93,9 +65,8 @@ export function LegendChip({
+   label: string;
+   dashed?: boolean;
+ }) {
+-  const cockpit = useCockpit();
+   return (
+-    <span className={cn("flex items-center gap-1.5 text-xs", cockpit ? "text-chartText" : "text-textDim")}>
++    <span className="flex items-center gap-1.5 text-xs text-textDim">
+       <span
+         className="inline-block h-0.5 w-3"
+         style={{
+@@ -108,23 +79,10 @@ export function LegendChip({
+   );
+ }
+ 
+-/**
+- * Caja de tooltip compartida entre los 6 gráficos. En cockpit, los textos
+- * internos de cada tooltip (`text-textStrong`/`text-textDim`, pensados para
+- * fondo claro) se fuerzan vía selector de descendiente — así los 6
+- * componentes de gráfico no necesitan conocer el tema.
+- */
++/** Caja de tooltip compartida entre los gráficos. */
+ export function ChartTooltipBox({ children }: { children: ReactNode }) {
+-  const cockpit = useCockpit();
+   return (
+-    <div
+-      className={cn(
+-        "rounded-md border px-3 py-2 text-xs shadow-lg",
+-        cockpit
+-          ? "border-chartGrid bg-chartBg text-chartText [&_.text-textStrong]:!text-white [&_.text-textDim]:!text-chartText"
+-          : "border-borderSoft bg-surface2"
+-      )}
+-    >
++    <div className="rounded-md border border-borderSoft bg-surface2 px-3 py-2 text-xs shadow-pop">
+       {children}
+     </div>
+   );
+diff --git a/components/layout/sidebar.tsx b/components/layout/sidebar.tsx
+index a797240..a920b7f 100644
+--- a/components/layout/sidebar.tsx
++++ b/components/layout/sidebar.tsx
+@@ -40,6 +40,11 @@ function isActive(pathname: string | null, href: string) {
+   return pathname?.startsWith(href) ?? false;
+ }
+ 
++/**
++ * Item del rail carbón. El activo se marca con un lavado del acento sobre
++ * el carbón (`--brand` con alfa, válido para cualquier acento de
++ * Personalización) + texto/icono en el acento; el resto en gris del rail.
++ */
+ function NavLink({
+   item,
+   active,
+@@ -55,16 +60,21 @@ function NavLink({
+     <Link
+       href={item.href}
+       className={cn(
+-        "flex items-center gap-3 rounded-md border-l-2 px-3 py-2 text-sm font-medium transition-colors",
++        "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+         active
+-          ? "border-brand bg-brand-tint text-brand-ink"
+-          : "border-transparent text-muted-foreground hover:bg-borderSoft hover:text-foreground"
++          ? "bg-[hsl(var(--brand)/0.13)] text-[hsl(var(--brand))]"
++          : "text-rail-muted hover:bg-rail-hover hover:text-rail-text"
+       )}
+     >
+-      <Icon className="size-4" />
++      <Icon
++        className={cn(
++          "size-4 transition-colors",
++          active ? "text-[hsl(var(--brand))]" : "text-rail-muted group-hover:text-rail-text"
++        )}
++      />
+       <span className="flex-1">{item.label}</span>
+       {showBadge && (
+-        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1 text-xs font-semibold text-white">
++        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[hsl(var(--brand))] px-1 text-xs font-semibold text-rail">
+           {noLeidas.length}
+         </span>
+       )}
+@@ -72,28 +82,38 @@ function NavLink({
+   );
+ }
+ 
+-export function Wordmark() {
++/** Wordmark — sobre rail carbón por defecto; `onLight` para el sheet móvil. */
++export function Wordmark({ onLight = false }: { onLight?: boolean }) {
+   return (
+-    <span className="font-display text-lg font-bold tracking-tight text-textStrong">
+-      Fisiofles<span className="text-brand">.</span>
++    <span
++      className={cn(
++        "font-display text-lg font-bold tracking-tight",
++        onLight ? "text-textStrong" : "text-rail-text"
++      )}
++    >
++      Fisiofles<span className="text-[hsl(var(--brand))]">.</span>
+     </span>
+   );
+ }
+ 
++/**
++ * Rail de navegación — carbón constante en ambos temas (firma del rediseño
++ * 2026-07): la marca vive aquí; el contenido cambia de tema, el rail no.
++ */
+ export function Sidebar() {
+   const pathname = usePathname();
+ 
+   return (
+-    <aside className="hidden md:flex md:w-64 md:flex-col md:border-r md:border-border md:bg-surface1">
++    <aside className="hidden bg-rail md:flex md:w-60 md:flex-col md:border-r md:border-rail-border">
+       <div className="flex h-16 items-center px-6">
+         <Wordmark />
+       </div>
+-      <nav className="flex flex-1 flex-col space-y-1 px-3 py-4">
++      <nav className="flex flex-1 flex-col space-y-0.5 px-3 py-4">
+         {navItems.map((item) => (
+           <NavLink key={item.href} item={item} active={isActive(pathname, item.href)} />
+         ))}
+       </nav>
+-      <div className="border-t border-border px-3 py-3">
++      <div className="border-t border-rail-border px-3 py-3">
+         <NavLink item={navItemFooter} active={isActive(pathname, navItemFooter.href)} />
+       </div>
+     </aside>
+diff --git a/components/layout/topbar.tsx b/components/layout/topbar.tsx
+index c9468aa..d242c2a 100644
+--- a/components/layout/topbar.tsx
++++ b/components/layout/topbar.tsx
+@@ -34,8 +34,6 @@ export function Topbar() {
+   const esOscuro = tema === "oscuro";
+ 
+   function toggleTema() {
+-    // Desde "clasico-excel" el toggle pasa a "oscuro" (clasico-excel solo se
+-    // activa desde Personalización); desde ahí alterna claro/oscuro normal.
+     dispatch({ type: "CONFIG_ACTUALIZAR", payload: { tema: esOscuro ? "fisiofles" : "oscuro" } });
+   }
+ 
+@@ -61,7 +59,7 @@ export function Topbar() {
+         </SheetTrigger>
+         <SheetContent side="left" className="flex w-64 flex-col p-0">
+           <div className="flex h-16 items-center px-6">
+-            <Wordmark />
++            <Wordmark onLight />
+           </div>
+           <nav className="flex flex-1 flex-col gap-1 p-4">
+             {navItems.map((item) => {
+@@ -82,7 +80,7 @@ export function Topbar() {
+                   <Icon className="size-4" />
+                   <span className="flex-1">{item.label}</span>
+                   {showBadge && (
+-                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1 text-xs font-semibold text-white">
++                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1 text-xs font-semibold text-rail">
+                       {noLeidas.length}
+                     </span>
+                   )}
+@@ -135,7 +133,7 @@ export function Topbar() {
+       >
+         <Bell className="size-5" />
+         {noLeidas.length > 0 && (
+-          <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-semibold text-white">
++          <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-semibold text-rail">
+             {noLeidas.length}
+           </span>
+         )}
+diff --git a/components/personalizacion/seccion-apariencia.tsx b/components/personalizacion/seccion-apariencia.tsx
+index aa5d61a..e98c75a 100644
+--- a/components/personalizacion/seccion-apariencia.tsx
++++ b/components/personalizacion/seccion-apariencia.tsx
+@@ -9,21 +9,18 @@ import { ACENTOS, type AcentoId } from "@/lib/personalizacion/acentos";
+ import { cn } from "@/lib/utils";
+ 
+ const TEMAS: { id: Tema; label: string; descripcion: string }[] = [
+-  { id: "fisiofles", label: "Fisiofles claro", descripcion: "Tema por defecto: fondo claro, gráficos con paleta AA sobre blanco." },
+-  { id: "clasico-excel", label: "Clásico Excel", descripcion: "Homenaje al sistema original: colores puros sobre panel oscuro en cada gráfico." },
+-  { id: "oscuro", label: "Oscuro", descripcion: "Toda la interfaz en modo oscuro, misma paleta de datos que Fisiofles claro." },
++  { id: "fisiofles", label: "Claro", descripcion: "Instrumento clínico: superficie blanca sobre gris frío, paleta de datos AA sobre blanco." },
++  { id: "oscuro", label: "Oscuro", descripcion: "Carbón azulado con la paleta de datos gemela, afinada para superficie oscura." },
+ ];
+ 
+ /** Mini maqueta de barras — representa cómo queda CADA tema sin tener que activarlo. */
+ function PreviewTema({ tema }: { tema: Tema }) {
+   const chrome = tema === "oscuro" ? colorsDark.bg : colors.bg;
+-  const panel = tema === "clasico-excel" ? colors.chartBg : tema === "oscuro" ? colorsDark.surface : colors.surface2;
++  const panel = tema === "oscuro" ? colorsDark.surface : colors.surface2;
+   const barras =
+-    tema === "clasico-excel"
+-      ? [colors.data.primary, colors.data.compare, colors.data.good, colors.data.warn]
+-      : tema === "oscuro"
+-        ? [colors.dataDark.primary, colors.dataDark.compare, colors.dataDark.good, colors.dataDark.warn]
+-        : [colors.dataLight.primary, colors.dataLight.compare, colors.dataLight.good, colors.dataLight.warn];
++    tema === "oscuro"
++      ? [colors.dataDark.primary, colors.dataDark.compare, colors.dataDark.good, colors.dataDark.warn]
++      : [colors.dataLight.primary, colors.dataLight.compare, colors.dataLight.good, colors.dataLight.warn];
+   const alturas = [55, 30, 70, 45];
+ 
+   return (
+@@ -69,7 +66,7 @@ export function SeccionApariencia() {
+     >
+       <div>
+         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-textDim">Tema</p>
+-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
++        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+           {TEMAS.map((t) => {
+             const activo = config.tema === t.id;
+             return (
+diff --git a/components/theme/theme-effect.tsx b/components/theme/theme-effect.tsx
+index 8a59208..2d751f1 100644
+--- a/components/theme/theme-effect.tsx
++++ b/components/theme/theme-effect.tsx
+@@ -7,26 +7,26 @@ import { acentoPorId } from "@/lib/personalizacion/acentos";
+ /**
+  * Aplica `config.tema`/`config.acento` al DOM — sin esto, Personalización
+  * solo cambiaría el store, no la app. "Oscuro" activa `.dark` en <html>
+- * (app/globals.css la resuelve para toda la UI vía CSS var); "clasico-excel"
+- * NO toca esta clase, es un modo por-componente de ChartPanel (ver
+- * lib/theme.ts `useCockpit()`). El acento reescribe `--brand*` en vez de
+- * depender de una recarga, para que la app entera (nav activo, botones,
+- * chips, foco) responda al instante.
++ * (app/globals.css la resuelve para toda la UI vía CSS var). El acento
++ * reescribe `--brand*` al instante; `tint`/`ink` usan la variante del tema
++ * activo (hsl / hslDark, ver lib/personalizacion/acentos.ts) porque los
++ * lavados e inks del tema claro no contrastan sobre carbón.
+  */
+ export function ThemeEffect() {
+   const { tema, acento } = useConfig();
++  const esOscuro = tema === "oscuro";
+ 
+   useEffect(() => {
+-    document.documentElement.classList.toggle("dark", tema === "oscuro");
+-  }, [tema]);
++    document.documentElement.classList.toggle("dark", esOscuro);
++  }, [esOscuro]);
+ 
+   useEffect(() => {
+     const def = acentoPorId(acento);
+     const root = document.documentElement.style;
+     root.setProperty("--brand", def.hsl.default);
+-    root.setProperty("--brand-tint", def.hsl.tint);
+-    root.setProperty("--brand-ink", def.hsl.ink);
+-  }, [acento]);
++    root.setProperty("--brand-tint", esOscuro ? def.hslDark.tint : def.hsl.tint);
++    root.setProperty("--brand-ink", esOscuro ? def.hslDark.ink : def.hsl.ink);
++  }, [acento, esOscuro]);
+ 
+   return null;
+ }
+diff --git a/lib/personalizacion/acentos.ts b/lib/personalizacion/acentos.ts
+index dc14573..38341fd 100644
+--- a/lib/personalizacion/acentos.ts
++++ b/lib/personalizacion/acentos.ts
+@@ -22,6 +22,15 @@ export type AcentoDef = {
+   hex: string;
+   /** "H S% L%" (mismo formato que las CSS vars de app/globals.css). */
+   hsl: { default: string; tint: string; ink: string };
++  /**
++   * Variante para el tema OSCURO — `default` no cambia (los 6 acentos ya
++   * contrastan sobre carbón), pero `tint` (lavados casi blancos) e `ink`
++   * (tintas oscuras) se eligieron para fondo claro y son ilegibles sobre
++   * superficie oscura: aquí tint = campo profundo del mismo matiz e ink =
++   * tono claro-saturado para texto/enlaces (≥4.5:1 sobre #11161E).
++   * theme-effect.tsx elige hsl/hslDark según `config.tema`.
++   */
++  hslDark: { tint: string; ink: string };
+ };
+ 
+ export const ACENTOS: AcentoDef[] = [
+@@ -30,36 +39,42 @@ export const ACENTOS: AcentoDef[] = [
+     label: "Cyan Fisiofles",
+     hex: "#1DC4EB",
+     hsl: { default: "191 84% 52%", tint: "194 85% 95%", ink: "192 89% 38%" },
++    hslDark: { tint: "193 60% 14%", ink: "190 82% 62%" },
+   },
+   {
+     id: "azul",
+     label: "Azul",
+     hex: "#2563EB",
+     hsl: { default: "221 83% 53%", tint: "214 100% 97%", ink: "224 76% 48%" },
++    hslDark: { tint: "221 55% 17%", ink: "217 92% 72%" },
+   },
+   {
+     id: "violeta",
+     label: "Violeta",
+     hex: "#7C3AED",
+     hsl: { default: "262 83% 58%", tint: "250 100% 98%", ink: "263 70% 50%" },
++    hslDark: { tint: "262 45% 18%", ink: "258 90% 78%" },
+   },
+   {
+     id: "rosa",
+     label: "Rosa",
+     hex: "#DB2777",
+     hsl: { default: "333 71% 51%", tint: "327 73% 97%", ink: "335 78% 42%" },
++    hslDark: { tint: "333 45% 16%", ink: "330 81% 72%" },
+   },
+   {
+     id: "teal",
+     label: "Verde azulado",
+     hex: "#0D9488",
+     hsl: { default: "175 84% 32%", tint: "166 76% 97%", ink: "175 77% 26%" },
++    hslDark: { tint: "175 55% 11%", ink: "172 66% 55%" },
+   },
+   {
+     id: "indigo",
+     label: "Índigo",
+     hex: "#4F46E5",
+     hsl: { default: "243 75% 59%", tint: "226 100% 97%", ink: "245 58% 51%" },
++    hslDark: { tint: "240 45% 19%", ink: "234 89% 78%" },
+   },
+ ];
+ 
+diff --git a/lib/store/store-provider.tsx b/lib/store/store-provider.tsx
+index 7bf80bd..3373cd4 100644
+--- a/lib/store/store-provider.tsx
++++ b/lib/store/store-provider.tsx
+@@ -40,7 +40,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
+     try {
+       const raw = window.localStorage.getItem(STORAGE_KEY);
+       if (raw) {
+-        dispatch({ type: "HYDRATE", payload: JSON.parse(raw) as AppState });
++        const payload = JSON.parse(raw) as AppState;
++        // Migración rediseño 2026-07: el tema "clasico-excel" se retiró. Un
++        // estado persistido con él (o cualquier valor desconocido) cae al
++        // tema claro por defecto.
++        const tema = payload?.config?.tema as string | undefined;
++        if (payload?.config && tema !== "fisiofles" && tema !== "oscuro") {
++          payload.config = { ...payload.config, tema: "fisiofles" };
++        }
++        dispatch({ type: "HYDRATE", payload });
+       }
+     } catch {
+       // localStorage corrupto o inaccesible: seguimos con la semilla.
+diff --git a/lib/store/types.ts b/lib/store/types.ts
+index 90c5fb4..ee021b7 100644
+--- a/lib/store/types.ts
++++ b/lib/store/types.ts
+@@ -349,7 +349,7 @@ export type Notificacion = {
+ // Config
+ // ---------------------------------------------------------------------------
+ 
+-export type Tema = "fisiofles" | "clasico-excel" | "oscuro";
++export type Tema = "fisiofles" | "oscuro";
+ 
+ export type UmbralesConfig = {
+   acwrBajo: number;
+diff --git a/lib/theme.ts b/lib/theme.ts
+index 2a92d6b..0822230 100644
+--- a/lib/theme.ts
++++ b/lib/theme.ts
+@@ -2,9 +2,9 @@
+ 
+ /**
+  * Paleta de datos activa según `state.config.tema`. Los gráficos consumen
+- * SIEMPRE colores vía `useChartColors()`, nunca `colors.data`/`colors.dataLight`
+- * directamente — así un cambio de tema en Personalización mueve las 4 gráficas
+- * a la vez. Ver lib/tokens.ts para el detalle de cada paleta.
++ * SIEMPRE colores vía `useChartColors()`, nunca `colors.dataLight`/`dataDark`
++ * directamente — así un cambio de tema en Personalización mueve todas las
++ * gráficas a la vez. Ver lib/tokens.ts para el detalle de cada paleta.
+  */
+ 
+ import { createContext, createElement, useContext, type ReactNode } from "react";
+@@ -49,16 +49,7 @@ export type ChartColors = {
+ 
+ export function useChartColors(): ChartColors {
+   const tema = useTemaEfectivo();
+-
+-  switch (tema) {
+-    case "clasico-excel":
+-      return colors.data;
+-    case "oscuro":
+-      return colors.dataDark;
+-    case "fisiofles":
+-    default:
+-      return colors.dataLight;
+-  }
++  return tema === "oscuro" ? colors.dataDark : colors.dataLight;
+ }
+ 
+ export type ChartGridColors = {
+@@ -75,28 +66,16 @@ export type ChartGridColors = {
+ /**
+  * Colores de rejilla/eje para los 6 componentes de gráfico — el SVG de
+  * Recharts necesita un color final en cada prop, no puede heredar las clases
+- * Tailwind (`border-borderSoft`/`text-textDim`) que sí resuelven solas con
+- * el tema vía CSS var. Mismo criterio que `useChartColors()`: "clasico-excel"
+- * usa el cockpit oscuro (`chartGrid`/`chartText`); "oscuro" usa la
+- * mini-paleta `colorsDark`; "fisiofles" usa los tokens claros de siempre.
++ * Tailwind que sí resuelven con el tema vía CSS var. Mismo criterio que
++ * `useChartColors()`: "oscuro" usa la mini-paleta `colorsDark`; "fisiofles"
++ * los tokens claros.
+  */
+ export function useChartGridColors(): ChartGridColors {
+   const tema = useTemaEfectivo();
+-
+-  switch (tema) {
+-    case "clasico-excel":
+-      return { grid: colors.chartGrid, axis: colors.chartText, cursor: colors.chartGrid, line: colors.chartGrid };
+-    case "oscuro":
+-      return { grid: colorsDark.borderSoft, axis: colorsDark.textDim, cursor: colorsDark.borderSoft, line: colorsDark.border };
+-    case "fisiofles":
+-    default:
+-      return { grid: colors.borderSoft, axis: colors.textDim, cursor: colors.borderSoft, line: colors.border };
++  if (tema === "oscuro") {
++    return { grid: colorsDark.borderSoft, axis: colorsDark.textDim, cursor: colorsDark.borderSoft, line: colorsDark.border };
+   }
+-}
+-
+-/** true solo para "clasico-excel" — el panel del gráfico pasa a cockpit oscuro (ver ChartPanel). */
+-export function useCockpit(): boolean {
+-  return useTemaEfectivo() === "clasico-excel";
++  return { grid: colors.borderSoft, axis: colors.textDim, cursor: colors.borderSoft, line: colors.border };
+ }
+ 
+ /**
+@@ -104,9 +83,7 @@ export function useCockpit(): boolean {
+  * inline (no llegan las clases Tailwind `text-state-*`/`bg-state-*` porque
+  * se combinan con el hex en runtime, ej. `${color}1A` de fondo). `state.*`
+  * está afinado para contrastar sobre BLANCO; en "oscuro" se sustituye por
+- * `stateDark.*` (mismos tonos que `dataDark.compare/warn/good`). "clasico-excel"
+- * no toca la UI general (solo el panel de cada gráfico, ver `useCockpit()`),
+- * así que sigue usando `state.*`.
++ * `stateDark.*` (mismos tonos que `dataDark.compare/warn/good`).
+  */
+ export function useStateColors(): StateColors {
+   return useTemaEfectivo() === "oscuro" ? colors.stateDark : colors.state;
+diff --git a/lib/tokens.ts b/lib/tokens.ts
+index c0c134c..c0d66a5 100644
+--- a/lib/tokens.ts
++++ b/lib/tokens.ts
+@@ -1,154 +1,125 @@
+ /**
+- * Design tokens — UI clara. Los gráficos apoyan directamente sobre superficie
+- * clara (ver ChartPanel v2); ya no hay panel "cockpit" oscuro por defecto.
++ * Design tokens — rediseño 2026-07 «estándar premium del sector».
++ * Listón de acabado: VALD Hub (encarnación clara) y Whoop (encarnación
++ * oscura). Un solo sistema, dos temas gemelos al mismo nivel; el tema
++ * "clasico-excel" se retiró en este rediseño.
+  *
+  * Fuente de verdad para colores fuera de Tailwind (Recharts, inline styles).
+- * Extraídos con exactitud de la hoja de cálculo real del producto (perfil
+- * físico, ACWR, simetrías). Los mismos valores están espejados como CSS vars
+- * en app/globals.css y como colores custom en tailwind.config.ts. Si cambias
+- * un valor aquí, cambia también el equivalente en ambos.
++ * Espejados como CSS vars en app/globals.css y como colores custom en
++ * tailwind.config.ts: si cambias un valor aquí, cambia el equivalente en
++ * ambos.
+  *
+- * `data.*` son colores PUROS del Excel: viven SOLO dentro del tema
+- * "clasico-excel" (panel oscuro `chartBg`, activable desde Personalización);
+- * sobre fondo claro no tienen contraste suficiente y fatigan la vista.
+- * `dataLight.*` es la paleta de datos para fondo claro (tema "fisiofles" por
+- * defecto). `dataDark.*` es su equivalente para el tema "oscuro" (mismos 5
+- * roles, tonos claros-saturados legibles sobre `colorsDark.surface`). Ambas
+- * vía `lib/theme.ts` `useChartColors()`. Ningún gráfico debe importar
+- * `data.*`/`dataLight.*`/`dataDark.*` directamente: todos consumen colores
+- * vía ese hook.
+- * `brand` es para acentos grandes / estado activo / panel oscuro; para texto
+- * y enlaces cyan sobre fondo claro usa `brandInk`, que sí contrasta. `brand`
+- * tampoco sirve para trazos/líneas de gráfico sobre blanco (~2:1, no pasa
+- * AA) — ahí usa `dataLight.primary` vía el hook.
++ * `dataLight.*` es la paleta de datos para el tema claro; `dataDark.*` su
++ * gemela para el oscuro (mismos 5 roles). Ambas SOLO vía `useChartColors()`
++ * (lib/theme.ts); ningún gráfico importa estas paletas directamente.
++ *
++ * `brand` (#1DC4EB) es el cyan identidad: acentos grandes, estado activo,
++ * fills sobre superficies oscuras (rail/tema oscuro). Sobre fondo claro NO
++ * contrasta para texto ni trazos (~2:1): ahí se usa `brandInk` (≥4.5:1
++ * incluso sobre `bg`) o `dataLight.primary` vía hook.
+  */
+ 
+ export const colors = {
+-  // Marca
+-  brand: "#1DC4EB", // cyan · acento grande, estado activo, serie principal en panel oscuro
+-  brandLight: "#67DBF6", // cyan claro · hover
+-  brandTint: "#E7F8FD", // cyan muy claro · fondo de item de nav activo, chips
+-  brandInk: "#0B96B8", // cyan oscuro · TEXTO y enlaces cyan sobre fondo claro (contrasta)
+-  brandDeep: "#0062FF", // azul · botones CTA (texto blanco encima)
+-
+-  // Datos — PUROS del Excel. SOLO dentro del tema "clasico-excel" (panel chartBg).
+-  data: {
+-    primary: "#1DC4EB", // serie "actual" / principal
+-    compare: "#FF0000", // comparación / lado con déficit
+-    good: "#00FF44", // zona óptima
+-    warn: "#FF9900", // riesgo moderado
+-    base: "#B7B7B7", // serie "base" de referencia (punteada)
+-  },
++  // Marca — rampa cyan de un solo matiz. brandDeep (#0062FF) se retiró:
++  // los CTA usan brandInk para no mezclar dos azules sin relación.
++  brand: "#1DC4EB", // cyan identidad · fills, activo sobre oscuro, serie en tema oscuro
++  brandInk: "#077596", // cyan tinta · texto/enlaces/CTA sobre claro (5.3:1 blanco, 4.6:1 bg)
++  brandTint: "#E3F6FC", // lavado cyan · chips/hover/nav activo en claro
+ 
+-  // Datos — paleta para FONDO CLARO (tema "fisiofles" por defecto). Deriva de
+-  // los mismos matices que `data.*` pero con luminosidad que contrasta AA
+-  // sobre blanco. Acceder siempre vía `useChartColors()` (lib/theme.ts).
++  // Datos — tema CLARO. AA sobre blanco (objetos gráficos ≥3:1, texto ≥4.5:1
++  // donde aplica). Acceso vía `useChartColors()`.
+   dataLight: {
+-    primary: "#0891B2", // cyan legible sobre blanco (~3.7:1) — sustituye #1DC4EB como serie
+-    compare: "#DC2626", // rojo (~4.8:1)
+-    good: "#16A34A", // verde (~3.3:1)
+-    warn: "#D97706", // naranja (~3.2:1)
+-    // gris de referencia: el tono #94A3B8 propuesto en el mismo escalón que
+-    // el resto (Tailwind slate-400) solo da ~2.6:1 sobre blanco y no pasa el
+-    // mínimo AA de objetos gráficos (3:1) — se usa slate-500 (~4.8:1).
+-    base: "#64748B",
++    primary: "#0891B2", // serie principal
++    compare: "#DC2626", // comparación / lado con déficit
++    good: "#16A34A", // zona óptima
++    warn: "#D97706", // riesgo moderado
++    base: "#64748B", // serie de referencia (punteada)
+   },
+ 
+-  // Datos — paleta para FONDO OSCURO (tema "oscuro"). Mismos 5 roles que
+-  // `dataLight`, en versión clara-saturada: sobre `colorsDark.surface`
+-  // (#161B22) los tonos de `dataLight` (pensados para contrastar en blanco)
+-  // pierden legibilidad. Verificado ≥6:1 los 5 (líneas/texto) salvo `base`
+-  // (~6.6:1, de sobra para trazos de referencia). Acceder vía
+-  // `useChartColors()` (lib/theme.ts), igual que `dataLight`.
++  // Datos — tema OSCURO. Mismos 5 roles, verificados ≥6:1 sobre
++  // `colorsDark.surface`. Acceso vía `useChartColors()`.
+   dataDark: {
+-    primary: "#22D3EE", // cyan claro (~9.3:1 sobre #161B22)
+-    compare: "#F87171", // rojo claro (~6.1:1)
+-    good: "#4ADE80", // verde claro (~9.7:1)
+-    warn: "#FBBF24", // ámbar claro (~10.1:1)
+-    base: "#94A3B8", // gris claro (~6.6:1)
++    primary: "#22D3EE",
++    compare: "#F87171",
++    good: "#4ADE80",
++    warn: "#FBBF24",
++    base: "#94A3B8",
+   },
+ 
+   // Semáforo de fases de lesión (lib/calculations/semaforo.ts) — continuum
+-  // rojo (fase más temprana) → verde fosforito (fase final / rendimiento),
+-  // interpolado en HSL. Únicos hex de este continuum: nadie más los importa
+-  // directamente, siempre a través de `colorSemaforo`/`colorSemaforoTexto`.
++  // rojo→verde interpolado en HSL. Únicos hex del continuum; siempre a
++  // través de `colorSemaforo`/`colorSemaforoTexto`.
+   semaforo: {
+     inicio: "#980000",
+     fin: "#8BF200",
+   },
+ 
+-  // Paleta de comparación (Dashboard /dashboard FASE E; motor de gráficos por
+-  // test FASE 3) — atletas superpuestos sobre la serie agregada gris o
+-  // resaltados en barras/dispersión, sin tope de cantidad (FASE 3: del 7º en
+-  // adelante se generan más tonos por rotación HSL, ver
+-  // `useComparisonColorsExtended` en lib/theme.ts). Deliberadamente fuera de
+-  // la familia semántica rojo/verde/naranja de `dataLight` (reservada para
+-  // zonas de estado) y del cyan de `dataLight.primary`, para que un atleta
+-  // seleccionado nunca se confunda con una banda de estado. Los 6 contrastan
+-  // ≥4.5:1 sobre blanco y son distinguibles entre sí. Acceder siempre vía
+-  // `useComparisonColorsExtended()` (lib/theme.ts).
++  // Paleta de comparación (Dashboard FASE E; gráficos por test FASE 3) —
++  // fuera de la familia semántica y del cyan. ≥4.5:1 sobre blanco.
++  // Acceso vía `useComparisonColorsExtended()` (lib/theme.ts).
+   comparison: ["#2563EB", "#7C3AED", "#DB2777", "#0F766E", "#92400E", "#475569"],
+ 
+-  // Superficie oscura de los gráficos (el "cockpit")
+-  chartBg: "#181C20", // fondo de los paneles de gráfico
+-  chartGrid: "#2E343A", // gridlines dentro del panel oscuro
+-  chartText: "#C9CED4", // etiquetas de eje dentro del panel oscuro
+-
+-  // Estados — para badges y texto de estado sobre fondo CLARO (contraste verificado)
++  // Estados — badges/texto de estado sobre fondo CLARO (AA verificado).
+   state: {
+     good: "#15803D",
+     warn: "#B45309",
+     bad: "#DC2626",
+   },
+ 
+-  // Estados — misma semántica que `state.*` pero tonos de `dataDark` (ya
+-  // verificados ≥6:1 sobre `colorsDark.surface`): los tonos de `state.*` se
+-  // eligieron oscuros a propósito para contrastar en BLANCO, así que pierden
+-  // legibilidad sobre superficie oscura. Acceder vía `useStateColors()`
+-  // (lib/theme.ts) donde un estado se pinta con `style` inline (icono/badge
+-  // de hallazgo, hito, notificación...). No se usa en gráficos: eso ya lo
+-  // cubre `dataDark` vía `useChartColors()`.
++  // Estados — gemelo para superficie OSCURA (≥6:1 sobre colorsDark.surface).
++  // Acceso vía `useStateColors()` donde el estado se pinta inline.
+   stateDark: {
+     good: "#4ADE80",
+     warn: "#FBBF24",
+     bad: "#F87171",
+   },
+ 
+-  // Neutros — base CLARA
+-  bg: "#F6F7F9", // fondo de página
+-  surface1: "#FFFFFF", // sidebar, superficies
+-  surface2: "#FFFFFF", // cards (con borde + sombra sutil para separar del bg)
+-  border: "#E3E6EA", // bordes, divisores
+-  borderSoft: "#EEF0F3", // divisores sutiles
+-  muted: "#8B929B", // texto tenue, iconos secundarios
+-  textDim: "#5B626B", // texto secundario
+-  text: "#232830", // texto principal
+-  textStrong: "#0D1117", // titulares, números destacados
++  // Neutros — tema CLARO. El fondo baja un punto respecto al blanco de las
++  // cards para que la elevación sea real (sombra + salto de valor), no un
++  // borde dibujado sobre blanco-sobre-blanco.
++  bg: "#EEF1F5", // fondo de página
++  surface1: "#FFFFFF", // sidebar móvil, superficies, cards
++  surface2: "#FFFFFF", // cards (elevadas con shadow-card)
++  surfaceRaised: "#F6F8FA", // hover de fila, celda activa, inputs rellenos
++  border: "#DFE4EA", // bordes, divisores
++  borderSoft: "#EAEEF2", // divisores sutiles
++  muted: "#68737F", // texto tenue SOLO sobre surface (4.8:1 blanco)
++  textDim: "#49525D", // texto secundario (7.9:1)
++  text: "#1D242D", // texto principal
++  textStrong: "#0A101A", // titulares, números destacados
+ } as const;
+ 
+ export const fonts = {
+-  display: "var(--font-display)", // Space Grotesk — h1-h3, números de métricas, datos grandes
++  display: "var(--font-display)", // Archivo — h1-h3, números de métricas, datos grandes
+   sans: "var(--font-sans)", // Inter — el resto
+ } as const;
+ 
+ /**
+- * Subconjunto de `colors` para tema "Oscuro" en props INLINE de Recharts
+- * (grid/eje/cursor de tooltip) — el SVG de Recharts no puede leer las clases
+- * Tailwind `bg-surface2`/`border-borderSoft` que sí resuelven el resto de la
+- * UI vía CSS var (`app/globals.css` `.dark`); necesita un color final. NO
+- * usar directamente: siempre a través de `useChartGridColors()`
+- * (lib/theme.ts), igual que "clasico-excel" usa `chartGrid`/`chartText` de
+- * arriba. `bg`/`surface2`/`textStrong` etc. NO hacen falta aquí porque esos
+- * sí llegan a los gráficos vía clases Tailwind (ChartPanel, ChartTooltipBox).
++ * Neutros del tema OSCURO — espejo EXACTO de app/globals.css `.dark`. Como
++ * literal solo donde no llega la CSS var: props inline de Recharts
++ * (vía `useChartGridColors()`) y el preview de temas de Personalización.
+  */
+ export const colorsDark = {
+-  border: "#3A424D",
+-  borderSoft: "#242B34",
+-  textDim: "#ADB4BE",
+-  // Fondo/superficie del tema "Oscuro" — espejo EXACTO de app/globals.css
+-  // `.dark` (--background/--surface). Solo como literal donde no llega la CSS
+-  // var: el preview de temas de Personalización pinta los 3 temas a la vez sin
+-  // activar ninguno (ver components/personalizacion/seccion-apariencia.tsx).
+-  bg: "#0D1116",
+-  surface: "#161B22",
++  bg: "#0A0E14",
++  surface: "#11161E",
++  surfaceRaised: "#171D26",
++  border: "#29313C",
++  borderSoft: "#1D242E",
++  muted: "#8C96A3",
++  textDim: "#B3BAC4",
++  text: "#E4E8ED",
++  textStrong: "#F7F9FB",
++} as const;
++
++/**
++ * Rail de navegación — carbón constante en AMBOS temas (firma del rediseño:
++ * la marca vive en el rail; el contenido cambia de tema, el rail no).
++ * Espejo de las vars `--rail-*` de app/globals.css.
++ */
++export const rail = {
++  bg: "#0B1017",
++  hover: "#141A23",
++  border: "#1E2530",
++  muted: "#98A1AE", // 7.3:1 sobre rail.bg
++  text: "#E7EAEF", // 15.8:1
+ } as const;
+diff --git a/tailwind.config.ts b/tailwind.config.ts
+index ed00e91..6fb376e 100644
+--- a/tailwind.config.ts
++++ b/tailwind.config.ts
+@@ -66,36 +66,16 @@ const config: Config = {
+           DEFAULT: "hsl(var(--card))",
+           foreground: "hsl(var(--card-foreground))",
+         },
+-        chart: {
+-          1: "hsl(var(--chart-1))",
+-          2: "hsl(var(--chart-2))",
+-          3: "hsl(var(--chart-3))",
+-          4: "hsl(var(--chart-4))",
+-          5: "hsl(var(--chart-5))",
+-        },
+ 
+-        // Tokens exactos de lib/tokens.ts (hoja de cálculo del producto).
+-        // `brand.DEFAULT/tint/ink` viven en CSS vars (--brand*) porque son el
+-        // ÚNICO acento dinámico (Personalización > Apariencia, 6 opciones,
+-        // ver lib/personalizacion/acentos.ts) — `light`/`deep` no se usan hoy
+-        // en ningún componente, se dejan fijos. `bg/surface1/surface2/
+-        // borderSoft/textDim/textStrong` también van por CSS var para que el
+-        // tema "Oscuro" reteñina toda la UI sin tocar cada componente — ver
+-        // app/globals.css `.dark` y `border`/`card`/`popover`/`secondary`/
+-        // `muted` (ya eran CSS vars) más arriba en este mismo objeto `colors`.
++        // Tokens exactos de lib/tokens.ts. `brand.*` vive en CSS vars
++        // (--brand*): acento dinámico (Personalización > Apariencia) con
++        // variante oscura por tema (theme-effect.tsx). Neutros/superficies
++        // también por CSS var para que "Oscuro" reteñina toda la UI. `rail.*`
++        // es el rail de navegación carbón, constante en ambos temas.
+         brand: {
+           DEFAULT: "hsl(var(--brand))",
+-          light: "#67DBF6",
+           tint: "hsl(var(--brand-tint))",
+           ink: "hsl(var(--brand-ink))",
+-          deep: "#0062FF",
+-        },
+-        data: {
+-          primary: "#1DC4EB",
+-          compare: "#FF0000",
+-          good: "#00FF44",
+-          warn: "#FF9900",
+-          base: "#B7B7B7",
+         },
+         dataLight: {
+           primary: "#0891B2",
+@@ -104,21 +84,30 @@ const config: Config = {
+           warn: "#D97706",
+           base: "#64748B",
+         },
+-        chartBg: "#181C20",
+-        chartGrid: "#2E343A",
+-        chartText: "#C9CED4",
+         state: {
+           good: "#15803D",
+           warn: "#B45309",
+           bad: "#DC2626",
+         },
++        rail: {
++          DEFAULT: "hsl(var(--rail-bg))",
++          hover: "hsl(var(--rail-hover))",
++          border: "hsl(var(--rail-border))",
++          muted: "hsl(var(--rail-muted))",
++          text: "hsl(var(--rail-text))",
++        },
+         bg: "hsl(var(--background))",
+         surface1: "hsl(var(--surface))",
+         surface2: "hsl(var(--surface))",
++        surfaceRaised: "hsl(var(--surface-raised))",
+         borderSoft: "hsl(var(--border-soft))",
+         textDim: "hsl(var(--text-dim))",
+         textStrong: "hsl(var(--text-strong))",
+       },
++      boxShadow: {
++        card: "var(--shadow-card)",
++        pop: "var(--shadow-pop)",
++      },
+       borderRadius: {
+         lg: "var(--radius)",
+         md: "calc(var(--radius) - 2px)",
+-- 
+2.43.0
+
