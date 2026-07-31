@@ -4,138 +4,151 @@
 
 @layer base {
   /**
-   * Valores derivados EXACTAMENTE de lib/tokens.ts (hex → HSL). No inventar
-   * tonos aquí: si algo no cuadra con la paleta, corregir en lib/tokens.ts
-   * primero y luego re-derivar. UI clara — los colores PUROS de `data.*`
-   * viven solo dentro de paneles `chartBg` (ver StatCard/chart components),
-   * nunca en estas variables generales.
+   * Rediseño 2026-07 «estándar premium del sector». Valores derivados
+   * EXACTAMENTE de lib/tokens.ts (hex → HSL). No inventar tonos aquí: si
+   * algo no cuadra, corregir en lib/tokens.ts primero y re-derivar.
+   * Dos temas gemelos (claro ↔ oscuro) + rail de navegación carbón
+   * constante en ambos (--rail-*).
    */
   :root {
-    --background: 220 20% 97%; /* bg #F6F7F9 */
-    --foreground: 217 16% 16%; /* text #232830 */
+    --background: 214 26% 95%; /* bg #EEF1F5 */
+    --foreground: 214 22% 15%; /* text #1D242D */
 
-    /* Superficie elevada compartida (cards/sidebar/topbar/popovers/diálogos) — antes
-       4 valores idénticos por separado; ahora una sola var para que Oscuro los
-       cambie todos a la vez. Ver `surface1`/`surface2`/`card`/`popover` en tailwind.config.ts. */
+    /* Superficie elevada compartida (cards/topbar/popovers/diálogos) y su
+       nivel intermedio para hovers/inputs rellenos. */
     --surface: 0 0% 100%; /* surface1/surface2 #FFFFFF */
+    --surface-raised: 210 29% 97%; /* surfaceRaised #F6F8FA */
     --card: var(--surface);
-    --card-foreground: 217 16% 16%; /* text #232830 */
+    --card-foreground: 214 22% 15%;
 
     --popover: var(--surface);
-    --popover-foreground: 217 16% 16%; /* text #232830 */
+    --popover-foreground: 214 22% 15%;
 
-    /* Acento dinámico — Personalización > Apariencia. Por defecto cyan Fisiofles;
-       lo reescribe en runtime `components/theme/theme-effect.tsx` según
-       `config.acento` (ver lib/personalizacion/acentos.ts). NO varía con
-       Oscuro/Claro, solo con el acento elegido. */
-    --brand: 191 84% 52%; /* acentos.cyan.hsl.default */
-    --brand-tint: 194 85% 95%; /* acentos.cyan.hsl.tint */
-    --brand-ink: 192 89% 38%; /* acentos.cyan.hsl.ink */
+    /* Acento dinámico — Personalización > Apariencia. Por defecto cyan
+       Fisiofles; lo reescribe en runtime components/theme/theme-effect.tsx
+       según `config.acento` Y según el tema (tint/ink tienen variante
+       oscura, ver lib/personalizacion/acentos.ts). */
+    --brand: 191 84% 52%; /* acentos.cyan.hsl.default #1DC4EB */
+    --brand-tint: 194 81% 94%; /* #E3F6FC */
+    --brand-ink: 194 91% 31%; /* #077596 */
 
-    --primary: var(--brand);
-    --primary-foreground: 0 0% 100%; /* white — texto sobre botón de acento */
+    --primary: var(--brand-ink);
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 216 2% 94%; /* borderSoft #EEF0F3 */
-    --secondary-foreground: 217 16% 16%; /* text #232830 */
+    --secondary: 210 24% 93%; /* borderSoft #EAEEF2 */
+    --secondary-foreground: 214 22% 15%;
 
-    --muted: 216 2% 94%; /* borderSoft #EEF0F3 */
-    --muted-foreground: 214 7% 58%; /* muted #8B929B */
+    --muted: 210 24% 93%;
+    --muted-foreground: 211 10% 45%; /* muted #68737F */
 
     --accent: var(--brand-tint);
     --accent-foreground: var(--brand-ink);
 
     --destructive: 0 72% 51%; /* state.bad #DC2626 */
-    --destructive-foreground: 0 0% 100%; /* white */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214 14% 90%; /* border #E3E6EA */
-    --border-soft: 216 2% 94%; /* borderSoft #EEF0F3 (alias de --secondary para uso como borde) */
-    --input: 214 14% 90%; /* border #E3E6EA */
-    --ring: var(--brand);
+    --border: 213 21% 90%; /* border #DFE4EA */
+    --border-soft: 210 24% 93%; /* borderSoft #EAEEF2 */
+    --input: 213 21% 90%;
+    --ring: var(--brand-ink);
 
-    /* Texto — dos tonos que NO tienen equivalente shadcn (más oscuro/más
-       fuerte que --foreground/--muted-foreground). Ver `textDim`/`textStrong`
-       en tailwind.config.ts. */
-    --text-dim: 214 8% 39%; /* textDim #5B626B */
-    --text-strong: 216 28% 7%; /* textStrong #0D1117 */
+    --text-dim: 213 12% 33%; /* textDim #49525D */
+    --text-strong: 218 44% 7%; /* textStrong #0A101A */
 
-    /* Solo para uso dentro del tema "clasico-excel" — ver lib/tokens.ts `data.*` */
-    --chart-1: 191 84% 52%; /* data.primary #1DC4EB */
-    --chart-2: 0 100% 50%; /* data.compare #FF0000 */
-    --chart-3: 136 100% 50%; /* data.good #00FF44 */
-    --chart-4: 36 100% 50%; /* data.warn #FF9900 */
-    --chart-5: 0 0% 72%; /* data.base #B7B7B7 */
+    /* Paleta de datos del tema claro — ver lib/tokens.ts `dataLight.*` */
+    --data-light-primary: 192 91% 36%;
+    --data-light-compare: 0 72% 51%;
+    --data-light-good: 142 76% 36%;
+    --data-light-warn: 32 95% 44%;
+    --data-light-base: 215 16% 47%;
 
-    /* Paleta de datos sobre fondo claro — ver lib/tokens.ts `dataLight.*` */
-    --data-light-primary: 192 91% 36%; /* dataLight.primary #0891B2 */
-    --data-light-compare: 0 72% 51%; /* dataLight.compare #DC2626 */
-    --data-light-good: 142 76% 36%; /* dataLight.good #16A34A */
-    --data-light-warn: 32 95% 44%; /* dataLight.warn #D97706 */
-    --data-light-base: 215 16% 47%; /* dataLight.base #64748B */
+    /* Rail de navegación — constante en ambos temas (firma del rediseño). */
+    --rail-bg: 215 35% 7%; /* #0B1017 */
+    --rail-hover: 216 27% 11%; /* #141A23 */
+    --rail-border: 217 23% 15%; /* #1E2530 */
+    --rail-muted: 215 12% 64%; /* #98A1AE */
+    --rail-text: 218 20% 92%; /* #E7EAEF */
 
-    --radius: 0.5rem;
+    /* Elevación — sombras con offset + blur (nunca halo). El tema oscuro
+       las endurece porque la sombra sobre carbón necesita más peso. */
+    --shadow-card: 0 1px 2px hsl(215 30% 15% / 0.05), 0 2px 8px hsl(215 30% 15% / 0.05);
+    --shadow-pop: 0 4px 12px hsl(215 30% 15% / 0.08), 0 16px 40px hsl(215 30% 15% / 0.14);
+
+    --radius: 0.625rem;
   }
 
   /**
-   * Tema "Oscuro" (Personalización > Apariencia) — activado añadiendo la
-   * clase `dark` a <html> desde `components/theme/theme-effect.tsx` cuando
-   * `config.tema === "oscuro"`. Reescribe solo neutros/superficies/texto:
-   * el acento (--brand*), los estados (state.*) y las paletas de datos de
-   * los gráficos (dataLight/data) NO cambian con el tema claro/oscuro — ver
-   * CLAUDE.md > Estética y lib/theme.ts `useChartColors()`.
-   * "Clásico Excel" es independiente de esta clase: solo oscurece el panel
-   * de cada gráfico (`chartBg`), nunca el resto de la UI — ver ChartPanel.
+   * Tema "Oscuro" — clase `dark` en <html> vía theme-effect.tsx cuando
+   * `config.tema === "oscuro"`. Reescribe neutros/superficies/texto/sombras;
+   * el acento (--brand*) lo reescribe theme-effect con la variante oscura
+   * del acento activo; las paletas de datos de los gráficos van por
+   * `useChartColors()` (lib/theme.ts). El rail NO cambia: es constante.
    */
   .dark {
-    --background: 213 26% 7%; /* dark bg #0D1116 */
-    --foreground: 214 16% 91%; /* dark text #E5E8EC */
+    --background: 216 33% 6%; /* #0A0E14 */
+    --foreground: 213 20% 91%; /* #E4E8ED */
 
-    --surface: 215 21% 11%; /* dark surface #161B22 */
-    --card-foreground: 214 16% 91%;
-    --popover-foreground: 214 16% 91%;
+    --surface: 217 28% 9%; /* #11161E */
+    --surface-raised: 216 25% 12%; /* #171D26 */
+    --card-foreground: 213 20% 91%;
+    --popover-foreground: 213 20% 91%;
 
-    --secondary: 214 18% 15%; /* dark borderSoft #1F252D */
-    --secondary-foreground: 214 16% 91%;
+    --primary: var(--brand);
+    --primary-foreground: 216 33% 6%;
 
-    --muted: 214 18% 15%;
-    --muted-foreground: 215 10% 58%; /* dark muted #8A93A0 */
+    --secondary: 215 23% 15%; /* #1D242E */
+    --secondary-foreground: 213 20% 91%;
 
-    --border: 215 17% 20%; /* dark border #2B323C */
-    --border-soft: 214 18% 15%;
-    --input: 215 17% 20%;
+    --muted: 215 23% 15%;
+    --muted-foreground: 214 11% 59%; /* #8C96A3 */
 
-    --text-dim: 215 12% 71%; /* dark textDim #ADB4BE */
-    --text-strong: 216 33% 97%; /* dark textStrong #F5F7FA */
+    --border: 215 19% 20%; /* #29313C */
+    --border-soft: 215 23% 15%;
+    --input: 215 19% 20%;
+    --ring: var(--brand);
+
+    --text-dim: 215 13% 74%; /* #B3BAC4 */
+    --text-strong: 210 33% 98%; /* #F7F9FB */
+
+    --shadow-card: 0 1px 2px hsl(220 40% 2% / 0.6), 0 2px 10px hsl(220 40% 2% / 0.4);
+    --shadow-pop: 0 4px 16px hsl(220 40% 2% / 0.5), 0 16px 48px hsl(220 40% 2% / 0.6);
   }
 
   /**
    * Isla de tema CLARO dentro de cualquier tema — deshace `.dark` para su
-   * subárbol. Único uso: el documento del informe (`/clinica/informe`), que
-   * acaba en papel y por tanto es siempre claro. Espeja EXACTAMENTE las vars
-   * que `.dark` sobrescribe arriba, con los valores de `:root`: si tocas una
-   * allí, tócala aquí. El equivalente para los colores INLINE de Recharts
-   * (que no pasan por CSS vars) es `<TemaForzado>` en lib/theme.ts — los dos
-   * van siempre juntos.
+   * subárbol. Único uso: el documento del informe (/clinica/informe), que
+   * acaba en papel. Espeja EXACTAMENTE las vars que `.dark` sobrescribe,
+   * con los valores de :root. Emparejada con <TemaForzado> (lib/theme.ts)
+   * para los colores inline de Recharts.
    */
   .tema-claro {
-    --background: 220 20% 97%;
-    --foreground: 217 16% 16%;
+    --background: 214 26% 95%;
+    --foreground: 214 22% 15%;
 
     --surface: 0 0% 100%;
-    --card-foreground: 217 16% 16%;
-    --popover-foreground: 217 16% 16%;
+    --surface-raised: 210 29% 97%;
+    --card-foreground: 214 22% 15%;
+    --popover-foreground: 214 22% 15%;
 
-    --secondary: 216 2% 94%;
-    --secondary-foreground: 217 16% 16%;
+    --primary: var(--brand-ink);
+    --primary-foreground: 0 0% 100%;
 
-    --muted: 216 2% 94%;
-    --muted-foreground: 214 7% 58%;
+    --secondary: 210 24% 93%;
+    --secondary-foreground: 214 22% 15%;
 
-    --border: 214 14% 90%;
-    --border-soft: 216 2% 94%;
-    --input: 214 14% 90%;
+    --muted: 210 24% 93%;
+    --muted-foreground: 211 10% 45%;
 
-    --text-dim: 214 8% 39%;
-    --text-strong: 216 28% 7%;
+    --border: 213 21% 90%;
+    --border-soft: 210 24% 93%;
+    --input: 213 21% 90%;
+    --ring: var(--brand-ink);
+
+    --text-dim: 213 12% 33%;
+    --text-strong: 218 44% 7%;
+
+    --shadow-card: 0 1px 2px hsl(215 30% 15% / 0.05), 0 2px 8px hsl(215 30% 15% / 0.05);
+    --shadow-pop: 0 4px 12px hsl(215 30% 15% / 0.08), 0 16px 40px hsl(215 30% 15% / 0.14);
   }
 }
 
@@ -146,6 +159,15 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
+  /* La voz de datos: titulares y numerales en Archivo, con numerales
+     tabulares para que las cifras alineen en tablas y métricas. */
+  .font-display {
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: -0.01em;
+  }
+  ::selection {
+    background: hsl(var(--brand) / 0.25);
+  }
 }
 
 @layer utilities {
@@ -154,11 +176,8 @@
   }
 }
 
-/* Informe imprimible (FASE 7) — `/clinica/informe` no tiene sidebar/topbar
-   que ocultar (ver `app/(informe)/`), así que lo único que hace falta aquí
-   es el tamaño de página. El resto (ocultar toolbar, evitar cortes de
-   gráfica a la mitad) son utilidades Tailwind `print:hidden`/`break-inside-avoid`
-   directamente en `components/informe/paso-preview.tsx`. */
+/* Informe imprimible — /clinica/informe no tiene sidebar/topbar (ver
+   app/(informe)/); aquí solo el tamaño de página. */
 @media print {
   @page {
     size: A4;

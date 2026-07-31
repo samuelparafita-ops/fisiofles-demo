@@ -1,5 +1,5 @@
 import { Sparkles } from "lucide-react";
-import { colors } from "@/lib/tokens";
+import { colors, colorsDark, rail } from "@/lib/tokens";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/shared/stat-card";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -68,14 +68,17 @@ function Swatch({ name, hex }: { name: string; hex: string }) {
 
 function DarkSwatch({ name, hex }: { name: string; hex: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-chartGrid bg-chartBg p-3">
+    <div
+      className="flex items-center gap-3 rounded-xl border p-3"
+      style={{ background: colorsDark.surface, borderColor: colorsDark.border }}
+    >
       <div
-        className="size-10 shrink-0 rounded-lg border border-chartGrid"
-        style={{ background: hex }}
+        className="size-10 shrink-0 rounded-lg border"
+        style={{ background: hex, borderColor: colorsDark.border }}
       />
       <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-white">{name}</p>
-        <p className="font-mono text-xs text-chartText">{hex}</p>
+        <p className="truncate text-sm font-medium" style={{ color: colorsDark.textStrong }}>{name}</p>
+        <p className="font-mono text-xs" style={{ color: colorsDark.textDim }}>{hex}</p>
       </div>
     </div>
   );
@@ -122,10 +125,8 @@ export default function StyleguidePage() {
           title="Marca"
           swatches={[
             { name: "brand", hex: colors.brand },
-            { name: "brandLight", hex: colors.brandLight },
             { name: "brandTint", hex: colors.brandTint },
             { name: "brandInk", hex: colors.brandInk },
-            { name: "brandDeep", hex: colors.brandDeep },
           ]}
         />
         <SwatchGroup
@@ -162,23 +163,25 @@ export default function StyleguidePage() {
         />
         <SwatchGroup
           dark
-          title="data — puros del Excel (reservado: tema clasico-excel)"
-          note="Ya no se usan por defecto. Activables desde Personalización (fase posterior) junto al panel chartBg."
+          title="dataDark — paleta de datos (tema oscuro)"
+          note="Mismos 5 roles que dataLight, verificados ≥6:1 sobre la superficie oscura. Vía useChartColors()."
           swatches={[
-            { name: "data.primary", hex: colors.data.primary },
-            { name: "data.compare", hex: colors.data.compare },
-            { name: "data.good", hex: colors.data.good },
-            { name: "data.warn", hex: colors.data.warn },
-            { name: "data.base", hex: colors.data.base },
+            { name: "dataDark.primary", hex: colors.dataDark.primary },
+            { name: "dataDark.compare", hex: colors.dataDark.compare },
+            { name: "dataDark.good", hex: colors.dataDark.good },
+            { name: "dataDark.warn", hex: colors.dataDark.warn },
+            { name: "dataDark.base", hex: colors.dataDark.base },
           ]}
         />
         <SwatchGroup
           dark
-          title="Cockpit — superficie del tema clasico-excel"
+          title="Rail de navegación — carbón constante en ambos temas"
           swatches={[
-            { name: "chartBg", hex: colors.chartBg },
-            { name: "chartGrid", hex: colors.chartGrid },
-            { name: "chartText", hex: colors.chartText },
+            { name: "rail.bg", hex: rail.bg },
+            { name: "rail.hover", hex: rail.hover },
+            { name: "rail.border", hex: rail.border },
+            { name: "rail.muted", hex: rail.muted },
+            { name: "rail.text", hex: rail.text },
           ]}
         />
       </section>
@@ -190,18 +193,18 @@ export default function StyleguidePage() {
         </h2>
         <div className="space-y-3 rounded-xl border border-borderSoft bg-surface2 p-6 shadow-sm">
           <h1 className="font-display text-4xl font-bold tracking-tight text-textStrong">
-            H1 · Space Grotesk 700
+            H1 · Archivo 700
           </h1>
           <h2 className="font-display text-2xl font-bold tracking-tight text-textStrong">
-            H2 · Space Grotesk 700
+            H2 · Archivo 700
           </h2>
           <h3 className="font-display text-lg font-medium text-text">
-            H3 · Space Grotesk 500
+            H3 · Archivo 500
           </h3>
           <p className="font-display text-5xl font-bold text-brand-ink">
             128.4
             <span className="ml-2 text-lg font-medium text-muted-foreground">
-              número de métrica · Space Grotesk · brandInk (contrasta en claro)
+              número de métrica · Archivo · brandInk (contrasta en claro)
             </span>
           </p>
           <p className="text-base text-text">

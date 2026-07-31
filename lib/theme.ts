@@ -2,9 +2,9 @@
 
 /**
  * Paleta de datos activa según `state.config.tema`. Los gráficos consumen
- * SIEMPRE colores vía `useChartColors()`, nunca `colors.data`/`colors.dataLight`
- * directamente — así un cambio de tema en Personalización mueve las 4 gráficas
- * a la vez. Ver lib/tokens.ts para el detalle de cada paleta.
+ * SIEMPRE colores vía `useChartColors()`, nunca `colors.dataLight`/`dataDark`
+ * directamente — así un cambio de tema en Personalización mueve todas las
+ * gráficas a la vez. Ver lib/tokens.ts para el detalle de cada paleta.
  */
 
 import { createContext, createElement, useContext, type ReactNode } from "react";
@@ -49,16 +49,7 @@ export type ChartColors = {
 
 export function useChartColors(): ChartColors {
   const tema = useTemaEfectivo();
-
-  switch (tema) {
-    case "clasico-excel":
-      return colors.data;
-    case "oscuro":
-      return colors.dataDark;
-    case "fisiofles":
-    default:
-      return colors.dataLight;
-  }
+  return tema === "oscuro" ? colors.dataDark : colors.dataLight;
 }
 
 export type ChartGridColors = {
@@ -75,28 +66,16 @@ export type ChartGridColors = {
 /**
  * Colores de rejilla/eje para los 6 componentes de gráfico — el SVG de
  * Recharts necesita un color final en cada prop, no puede heredar las clases
- * Tailwind (`border-borderSoft`/`text-textDim`) que sí resuelven solas con
- * el tema vía CSS var. Mismo criterio que `useChartColors()`: "clasico-excel"
- * usa el cockpit oscuro (`chartGrid`/`chartText`); "oscuro" usa la
- * mini-paleta `colorsDark`; "fisiofles" usa los tokens claros de siempre.
+ * Tailwind que sí resuelven con el tema vía CSS var. Mismo criterio que
+ * `useChartColors()`: "oscuro" usa la mini-paleta `colorsDark`; "fisiofles"
+ * los tokens claros.
  */
 export function useChartGridColors(): ChartGridColors {
   const tema = useTemaEfectivo();
-
-  switch (tema) {
-    case "clasico-excel":
-      return { grid: colors.chartGrid, axis: colors.chartText, cursor: colors.chartGrid, line: colors.chartGrid };
-    case "oscuro":
-      return { grid: colorsDark.borderSoft, axis: colorsDark.textDim, cursor: colorsDark.borderSoft, line: colorsDark.border };
-    case "fisiofles":
-    default:
-      return { grid: colors.borderSoft, axis: colors.textDim, cursor: colors.borderSoft, line: colors.border };
+  if (tema === "oscuro") {
+    return { grid: colorsDark.borderSoft, axis: colorsDark.textDim, cursor: colorsDark.borderSoft, line: colorsDark.border };
   }
-}
-
-/** true solo para "clasico-excel" — el panel del gráfico pasa a cockpit oscuro (ver ChartPanel). */
-export function useCockpit(): boolean {
-  return useTemaEfectivo() === "clasico-excel";
+  return { grid: colors.borderSoft, axis: colors.textDim, cursor: colors.borderSoft, line: colors.border };
 }
 
 /**
@@ -104,9 +83,7 @@ export function useCockpit(): boolean {
  * inline (no llegan las clases Tailwind `text-state-*`/`bg-state-*` porque
  * se combinan con el hex en runtime, ej. `${color}1A` de fondo). `state.*`
  * está afinado para contrastar sobre BLANCO; en "oscuro" se sustituye por
- * `stateDark.*` (mismos tonos que `dataDark.compare/warn/good`). "clasico-excel"
- * no toca la UI general (solo el panel de cada gráfico, ver `useCockpit()`),
- * así que sigue usando `state.*`.
+ * `stateDark.*` (mismos tonos que `dataDark.compare/warn/good`).
  */
 export function useStateColors(): StateColors {
   return useTemaEfectivo() === "oscuro" ? colors.stateDark : colors.state;

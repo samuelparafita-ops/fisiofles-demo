@@ -9,21 +9,18 @@ import { ACENTOS, type AcentoId } from "@/lib/personalizacion/acentos";
 import { cn } from "@/lib/utils";
 
 const TEMAS: { id: Tema; label: string; descripcion: string }[] = [
-  { id: "fisiofles", label: "Fisiofles claro", descripcion: "Tema por defecto: fondo claro, gráficos con paleta AA sobre blanco." },
-  { id: "clasico-excel", label: "Clásico Excel", descripcion: "Homenaje al sistema original: colores puros sobre panel oscuro en cada gráfico." },
-  { id: "oscuro", label: "Oscuro", descripcion: "Toda la interfaz en modo oscuro, misma paleta de datos que Fisiofles claro." },
+  { id: "fisiofles", label: "Claro", descripcion: "Instrumento clínico: superficie blanca sobre gris frío, paleta de datos AA sobre blanco." },
+  { id: "oscuro", label: "Oscuro", descripcion: "Carbón azulado con la paleta de datos gemela, afinada para superficie oscura." },
 ];
 
 /** Mini maqueta de barras — representa cómo queda CADA tema sin tener que activarlo. */
 function PreviewTema({ tema }: { tema: Tema }) {
   const chrome = tema === "oscuro" ? colorsDark.bg : colors.bg;
-  const panel = tema === "clasico-excel" ? colors.chartBg : tema === "oscuro" ? colorsDark.surface : colors.surface2;
+  const panel = tema === "oscuro" ? colorsDark.surface : colors.surface2;
   const barras =
-    tema === "clasico-excel"
-      ? [colors.data.primary, colors.data.compare, colors.data.good, colors.data.warn]
-      : tema === "oscuro"
-        ? [colors.dataDark.primary, colors.dataDark.compare, colors.dataDark.good, colors.dataDark.warn]
-        : [colors.dataLight.primary, colors.dataLight.compare, colors.dataLight.good, colors.dataLight.warn];
+    tema === "oscuro"
+      ? [colors.dataDark.primary, colors.dataDark.compare, colors.dataDark.good, colors.dataDark.warn]
+      : [colors.dataLight.primary, colors.dataLight.compare, colors.dataLight.good, colors.dataLight.warn];
   const alturas = [55, 30, 70, 45];
 
   return (
@@ -69,7 +66,7 @@ export function SeccionApariencia() {
     >
       <div>
         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-textDim">Tema</p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {TEMAS.map((t) => {
             const activo = config.tema === t.id;
             return (

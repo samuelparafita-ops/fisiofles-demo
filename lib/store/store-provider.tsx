@@ -40,7 +40,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        dispatch({ type: "HYDRATE", payload: JSON.parse(raw) as AppState });
+        const payload = JSON.parse(raw) as AppState;
+        // Migración rediseño 2026-07: el tema "clasico-excel" se retiró. Un
+        // estado persistido con él (o cualquier valor desconocido) cae al
+        // tema claro por defecto.
+        const tema = payload?.config?.tema as string | undefined;
+        if (payload?.config && tema !== "fisiofles" && tema !== "oscuro") {
+          payload.config = { ...payload.config, tema: "fisiofles" };
+        }
+        dispatch({ type: "HYDRATE", payload });
       }
     } catch {
       // localStorage corrupto o inaccesible: seguimos con la semilla.

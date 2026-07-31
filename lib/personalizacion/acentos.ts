@@ -22,6 +22,15 @@ export type AcentoDef = {
   hex: string;
   /** "H S% L%" (mismo formato que las CSS vars de app/globals.css). */
   hsl: { default: string; tint: string; ink: string };
+  /**
+   * Variante para el tema OSCURO — `default` no cambia (los 6 acentos ya
+   * contrastan sobre carbón), pero `tint` (lavados casi blancos) e `ink`
+   * (tintas oscuras) se eligieron para fondo claro y son ilegibles sobre
+   * superficie oscura: aquí tint = campo profundo del mismo matiz e ink =
+   * tono claro-saturado para texto/enlaces (≥4.5:1 sobre #11161E).
+   * theme-effect.tsx elige hsl/hslDark según `config.tema`.
+   */
+  hslDark: { tint: string; ink: string };
 };
 
 export const ACENTOS: AcentoDef[] = [
@@ -30,36 +39,42 @@ export const ACENTOS: AcentoDef[] = [
     label: "Cyan Fisiofles",
     hex: "#1DC4EB",
     hsl: { default: "191 84% 52%", tint: "194 85% 95%", ink: "192 89% 38%" },
+    hslDark: { tint: "193 60% 14%", ink: "190 82% 62%" },
   },
   {
     id: "azul",
     label: "Azul",
     hex: "#2563EB",
     hsl: { default: "221 83% 53%", tint: "214 100% 97%", ink: "224 76% 48%" },
+    hslDark: { tint: "221 55% 17%", ink: "217 92% 72%" },
   },
   {
     id: "violeta",
     label: "Violeta",
     hex: "#7C3AED",
     hsl: { default: "262 83% 58%", tint: "250 100% 98%", ink: "263 70% 50%" },
+    hslDark: { tint: "262 45% 18%", ink: "258 90% 78%" },
   },
   {
     id: "rosa",
     label: "Rosa",
     hex: "#DB2777",
     hsl: { default: "333 71% 51%", tint: "327 73% 97%", ink: "335 78% 42%" },
+    hslDark: { tint: "333 45% 16%", ink: "330 81% 72%" },
   },
   {
     id: "teal",
     label: "Verde azulado",
     hex: "#0D9488",
     hsl: { default: "175 84% 32%", tint: "166 76% 97%", ink: "175 77% 26%" },
+    hslDark: { tint: "175 55% 11%", ink: "172 66% 55%" },
   },
   {
     id: "indigo",
     label: "Índigo",
     hex: "#4F46E5",
     hsl: { default: "243 75% 59%", tint: "226 100% 97%", ink: "245 58% 51%" },
+    hslDark: { tint: "240 45% 19%", ink: "234 89% 78%" },
   },
 ];
 
