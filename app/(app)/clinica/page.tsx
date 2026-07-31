@@ -1,6 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { PlantillaStats } from "@/components/clinica/plantilla-stats";
 import { CalendarioRenovaciones, type Renovacion } from "@/components/clinica/calendario-renovaciones";
@@ -13,6 +16,7 @@ import { useAtletas, useEntrenadores, type Atleta, type Suscripcion } from "@/li
 const UMBRAL_CADUCA_PRONTO_DIAS = 30;
 
 export default function ClinicaPage() {
+  const router = useRouter();
   const atletas = useAtletas();
   const entrenadores = useEntrenadores();
 
@@ -34,7 +38,16 @@ export default function ClinicaPage() {
 
   return (
     <>
-      <PageHeader title="Clínica" description="Métricas y estado del negocio." />
+      <PageHeader
+        title="Clínica"
+        description="Métricas y estado del negocio."
+        actions={
+          <Button type="button" onClick={() => router.push("/clinica/informe")}>
+            <FileText className="size-3.5" />
+            Generar informe
+          </Button>
+        }
+      />
 
       <PlantillaStats atletas={atletas} entrenadores={entrenadores} caducanPronto={caducanPronto} />
 
