@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { colors } from "@/lib/tokens";
+import { colorSemaforo, colorSemaforoTexto } from "@/lib/calculations";
 import { useStateColors } from "@/lib/theme";
-import { useEntrenador, useReadinessActual, type Atleta } from "@/lib/store";
+import { useEntrenador, useFaseDeAtleta, useReadinessActual, type Atleta } from "@/lib/store";
 import { AtletaAvatar } from "@/components/atletas/atleta-avatar";
 import { AtletaMenu } from "@/components/atletas/atleta-menu";
 import { estadoReadiness } from "@/components/atletas/readiness-utils";
@@ -18,6 +19,7 @@ const ESTADO_ATLETA_LABEL: Record<Atleta["estado"], string> = {
 function FilaAtleta({ atleta }: { atleta: Atleta }) {
   const router = useRouter();
   const entrenador = useEntrenador(atleta.entrenadorId);
+  const faseDe = useFaseDeAtleta(atleta);
   const readiness = useReadinessActual(atleta.id);
   const estado = useStateColors();
   const ESTADO_ATLETA_COLOR: Record<Atleta["estado"], string> = {
@@ -50,9 +52,21 @@ function FilaAtleta({ atleta }: { atleta: Atleta }) {
         {atleta.lesion}
       </td>
       <td className="px-4 py-3">
-        <Badge variant="secondary" className="min-w-0 max-w-[160px]">
-          <span className="block truncate">{atleta.fase}</span>
-        </Badge>
+        {faseDe ? (
+          <span
+            className="inline-block min-w-0 max-w-[160px] rounded-full px-2.5 py-0.5 text-xs font-semibold"
+            style={{
+              background: `${colorSemaforo(faseDe.indiceFase, faseDe.totalFases)}1A`,
+              color: colorSemaforoTexto(faseDe.indiceFase, faseDe.totalFases),
+            }}
+          >
+            <span className="block truncate">{faseDe.fase.nombre}</span>
+          </span>
+        ) : (
+          <Badge variant="secondary" className="min-w-0 max-w-[160px]">
+            <span className="block truncate">Sin fase asignada</span>
+          </Badge>
+        )}
       </td>
       <td className="whitespace-nowrap px-4 py-3 text-sm text-textDim">Sem. {atleta.semanaProceso}</td>
       <td className="px-4 py-3 text-sm font-semibold" style={{ color: readinessColorValue }}>

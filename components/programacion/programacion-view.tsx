@@ -3,8 +3,22 @@
 import { useState } from "react";
 import { CheckCircle2, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DIAS_SEMANA, type BloqueSemanalConSesiones, type Sesion } from "@/lib/store";
+import {
+  DIAS_SEMANA,
+  totalEjerciciosSesion,
+  useResumenAtleta,
+  type BloqueSemanalConSesiones,
+  type Sesion,
+} from "@/lib/store";
+import type { ZonaAcwr } from "@/lib/calculations";
+import { useStateColors } from "@/lib/theme";
 import { SesionDetalleCard } from "@/components/programacion/sesion-detalle-card";
+
+const ZONA_ACWR_LABEL: Record<ZonaAcwr, string> = {
+  insuficiente: "Insuficiente",
+  optima: "Óptima",
+  riesgo: "Riesgo",
+};
 
 function fmtFecha(iso: string) {
   const [, m, d] = iso.split("-");
@@ -43,7 +57,7 @@ function WeekStrip({ bloque }: { bloque: BloqueSemanalConSesiones }) {
                   )}
                 </div>
                 <p className="mt-0.5 text-[11px] text-brand-ink">
-                  {sesion.estado === "cancelada" ? "Cancelada" : `${sesion.ejercicios.length} ejerc.`}
+                  {sesion.estado === "cancelada" ? "Cancelada" : `${totalEjerciciosSesion(sesion)} ejerc.`}
                 </p>
               </>
             ) : (
@@ -52,6 +66,57 @@ function WeekStrip({ bloque }: { bloque: BloqueSemanalConSesiones }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * Cabecera extra del bloque (BLOCK OUTLINE, FASE 5): semana post-op de
+ * inicio, semanas de test marcadas y el resumen de ACWR ya calculado por
+ * `useResumenAtleta` (NO se recalcula nada aquí). El nº de semana del bloque
+ * ya viaja dentro de `bloque.nombre` ("Semana 14 · ...", ver seed) — no se
+ * duplica en un badge aparte.
+ */
+function CabeceraExtra({ bloque }: { bloque: BloqueSemanalConSesiones }) {
+  const resumen = useResumenAtleta(bloque.atletaId);
+  const estadoColores = useStateColors();
+
+  const inicio = new Date(`${bloque.fechaInicio}T00:00:00`);
+  const fin = new Date(`${bloque.fechaFin}T00:00:00`);
+  const totalSemanas = Math.max(1, Math.round((fin.getTime() - inicio.getTime()) / (7 * 86400000)) + 1);
+  const semanasTest = bloque.semanasTest ?? [];
+
+  const zonaColor: Record<ZonaAcwr, string> = {
+    insuficiente: estadoColores.bad,
+    optima: estadoColores.good,
+    riesgo: estadoColores.warn,
+  };
+
+  const hayAlgo =
+    bloque.semanaPostOpInicio !== undefined || semanasTest.length > 0 || (resumen?.ratioAcwr ?? null) !== null;
+  if (!hayAlgo) return null;
+
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+      {bloque.semanaPostOpInicio !== undefined && (
+        <span className="rounded-full border border-borderSoft px-2 py-0.5 text-[11px] font-medium text-textDim">
+          Semana {bloque.semanaPostOpInicio} post-op
+        </span>
+      )}
+      {semanasTest.length > 0 && (
+        <span className="rounded-full bg-brand-tint px-2 py-0.5 text-[11px] font-semibold text-brand-ink">
+          Semana de test
+          {totalSemanas > 1 && ` (semana ${semanasTest.map((i) => i + 1).join(", ")})`}
+        </span>
+      )}
+      {resumen?.ratioAcwr !== null && resumen?.ratioAcwr !== undefined && resumen.zonaAcwr && (
+        <span
+          className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+          style={{ background: `${zonaColor[resumen.zonaAcwr]}1A`, color: zonaColor[resumen.zonaAcwr] }}
+        >
+          ACWR {resumen.ratioAcwr.toFixed(2)} · {ZONA_ACWR_LABEL[resumen.zonaAcwr]}
+        </span>
+      )}
     </div>
   );
 }
@@ -81,6 +146,7 @@ export function ProgramacionView({
           <p className="mt-0.5 text-xs text-textDim">
             {fmtFecha(bloque.fechaInicio)} – {fmtFecha(bloque.fechaFin)}
           </p>
+          <CabeceraExtra bloque={bloque} />
         </div>
         <ChevronDown className={cn("size-4 shrink-0 text-textDim transition-transform", open && "rotate-180")} />
       </button>

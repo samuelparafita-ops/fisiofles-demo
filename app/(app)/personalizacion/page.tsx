@@ -1,13 +1,17 @@
 import { PageHeader } from "@/components/shared/page-header";
 import { SeccionApariencia } from "@/components/personalizacion/seccion-apariencia";
+import { SeccionLesiones } from "@/components/personalizacion/seccion-lesiones";
 import { SeccionMetricas } from "@/components/personalizacion/seccion-metricas";
 import { SeccionVariablesCalculo } from "@/components/personalizacion/seccion-variables-calculo";
+import { SeccionPerfilProfesional } from "@/components/personalizacion/seccion-perfil-profesional";
 import { SeccionDatosDemo } from "@/components/personalizacion/seccion-datos-demo";
 
 const SECCIONES = [
   { id: "apariencia", label: "Apariencia" },
+  { id: "lesiones-fases", label: "Lesiones y fases" },
   { id: "metricas-dashboard", label: "Métricas y dashboard" },
   { id: "variables-calculo", label: "Variables de cálculo" },
+  { id: "perfil-profesional", label: "Perfil profesional" },
   { id: "datos-demo", label: "Datos de la demo" },
 ];
 
@@ -34,8 +38,10 @@ export default function PersonalizacionPage() {
         </nav>
         <div className="min-w-0 space-y-6">
           <SeccionApariencia />
+          <SeccionLesiones />
           <SeccionMetricas />
           <SeccionVariablesCalculo />
+          <SeccionPerfilProfesional />
           <SeccionDatosDemo />
         </div>
       </div>

@@ -13,9 +13,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/shared/toast";
-import { EjerciciosSesionEditor } from "@/components/atletas/ficha/ejercicios-sesion-editor";
+import { BloquesEjerciciosEditor } from "@/components/atletas/ficha/bloques-ejercicios-editor";
+import { RpeSelector } from "@/components/programacion/rpe-selector";
+import { TipoSesionInput } from "@/components/programacion/tipo-sesion-input";
 import { diaSemanaDeIso } from "@/components/atletas/ficha/fecha-utils";
-import { accionActualizar, useDispatch, type EjercicioProgramado, type EstadoSesion, type Sesion } from "@/lib/store";
+import {
+  accionActualizar,
+  bloquesDeSesion,
+  useDispatch,
+  type BloqueEjercicios,
+  type EstadoSesion,
+  type Sesion,
+} from "@/lib/store";
 
 const selectClass =
   "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
@@ -28,8 +37,11 @@ const ESTADO_OPCIONES: { value: EstadoSesion; label: string }[] = [
 
 /**
  * Diálogo canónico de edición de sesión — se usa tanto en el tab Calendario
- * como en el tab Programación (misma pieza, mismo store: editar aquí es
- * editar allí, y también se refleja en Inicio si la sesión es de hoy).
+ * como en el tab Programación y en /programacion (mismo componente, mismo
+ * store: editar aquí es editar allí, y también se refleja en Inicio si la
+ * sesión es de hoy). Al guardar escribe `bloquesEjercicios` (formato v4) y
+ * mantiene `ejercicios` (plano, legado) como espejo aplanado para las vistas
+ * que todavía no leen vía `bloquesDeSesion()`.
  */
 export function SesionDetalleDialog({ sesion, onClose }: { sesion: Sesion; onClose: () => void }) {
   const dispatch = useDispatch();
@@ -38,14 +50,18 @@ export function SesionDetalleDialog({ sesion, onClose }: { sesion: Sesion; onClo
   const [nombre, setNombre] = useState(sesion.nombre);
   const [fecha, setFecha] = useState(sesion.fecha);
   const [estado, setEstado] = useState<EstadoSesion>(sesion.estado);
-  const [ejercicios, setEjercicios] = useState<EjercicioProgramado[]>(sesion.ejercicios);
+  const [tipo, setTipo] = useState(sesion.tipo ?? "");
+  const [rpeObjetivo, setRpeObjetivo] = useState(sesion.rpeObjetivo ?? 7);
+  const [bloques, setBloques] = useState<BloqueEjercicios[]>(bloquesDeSesion(sesion));
   const [notas, setNotas] = useState(sesion.notas ?? "");
 
   useEffect(() => {
     setNombre(sesion.nombre);
     setFecha(sesion.fecha);
     setEstado(sesion.estado);
-    setEjercicios(sesion.ejercicios);
+    setTipo(sesion.tipo ?? "");
+    setRpeObjetivo(sesion.rpeObjetivo ?? 7);
+    setBloques(bloquesDeSesion(sesion));
     setNotas(sesion.notas ?? "");
   }, [sesion]);
 
@@ -56,7 +72,10 @@ export function SesionDetalleDialog({ sesion, onClose }: { sesion: Sesion; onClo
         fecha,
         dia: diaSemanaDeIso(fecha),
         estado,
-        ejercicios,
+        tipo: tipo.trim() || undefined,
+        rpeObjetivo,
+        bloquesEjercicios: bloques,
+        ejercicios: bloques.flatMap((b) => b.ejercicios),
         notas: notas.trim() || undefined,
       })
     );
@@ -66,7 +85,7 @@ export function SesionDetalleDialog({ sesion, onClose }: { sesion: Sesion; onClo
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar sesión</DialogTitle>
           <DialogDescription>
@@ -91,25 +110,33 @@ export function SesionDetalleDialog({ sesion, onClose }: { sesion: Sesion; onClo
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="sesion-estado">Estado</Label>
-            <select
-              id="sesion-estado"
-              value={estado}
-              onChange={(e) => setEstado(e.target.value as EstadoSesion)}
-              className={selectClass}
-            >
-              {ESTADO_OPCIONES.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="sesion-tipo">Tipo</Label>
+              <TipoSesionInput id="sesion-tipo" value={tipo} onChange={setTipo} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="sesion-estado">Estado</Label>
+              <select
+                id="sesion-estado"
+                value={estado}
+                onChange={(e) => setEstado(e.target.value as EstadoSesion)}
+                className={selectClass}
+              >
+                {ESTADO_OPCIONES.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
+
+          <RpeSelector id="sesion-rpe" value={rpeObjetivo} onChange={setRpeObjetivo} />
 
           <div className="space-y-1.5">
             <Label>Ejercicios</Label>
-            <EjerciciosSesionEditor ejercicios={ejercicios} onChange={setEjercicios} />
+            <BloquesEjerciciosEditor bloques={bloques} onChange={setBloques} />
           </div>
 
           <div className="space-y-1.5">

@@ -5,7 +5,7 @@ import { CalendarCheck2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { cn } from "@/lib/utils";
-import { useEjercicios, useSesionesDeAtleta, type Sesion } from "@/lib/store";
+import { bloquesDeSesion, totalEjerciciosSesion, useEjercicios, useSesionesDeAtleta, type Sesion } from "@/lib/store";
 import { NuevaSesionDialog } from "@/components/atletas/ficha/nueva-sesion-dialog";
 import { SesionDetalleDialog } from "@/components/atletas/ficha/sesion-detalle-dialog";
 import { addDias, toIso } from "@/components/atletas/ficha/fecha-utils";
@@ -102,17 +102,20 @@ function VistaDia({
                   {ESTADO_LABEL[s.estado]}
                 </span>
               </div>
-              <p className="text-xs text-textDim">{s.ejercicios.length} ejercicio(s)</p>
-              {s.ejercicios.length > 0 && (
+              <p className="text-xs text-textDim">{totalEjerciciosSesion(s)} ejercicio(s)</p>
+              {totalEjerciciosSesion(s) > 0 && (
                 <div className="flex flex-wrap gap-1.5">
-                  {s.ejercicios.slice(0, 4).map((ej) => (
-                    <span
-                      key={ej.ejercicioId}
-                      className="rounded-full border border-borderSoft bg-surface2 px-2 py-0.5 text-[11px] text-textDim"
-                    >
-                      {ejercicios.find((e) => e.id === ej.ejercicioId)?.nombre ?? ej.ejercicioId}
-                    </span>
-                  ))}
+                  {bloquesDeSesion(s)
+                    .flatMap((b) => b.ejercicios)
+                    .slice(0, 4)
+                    .map((ej) => (
+                      <span
+                        key={ej.ejercicioId}
+                        className="rounded-full border border-borderSoft bg-surface2 px-2 py-0.5 text-[11px] text-textDim"
+                      >
+                        {ejercicios.find((e) => e.id === ej.ejercicioId)?.nombre ?? ej.ejercicioId}
+                      </span>
+                    ))}
                 </div>
               )}
             </button>

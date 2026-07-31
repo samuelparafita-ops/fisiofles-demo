@@ -106,6 +106,37 @@
     --text-dim: 215 12% 71%; /* dark textDim #ADB4BE */
     --text-strong: 216 33% 97%; /* dark textStrong #F5F7FA */
   }
+
+  /**
+   * Isla de tema CLARO dentro de cualquier tema — deshace `.dark` para su
+   * subárbol. Único uso: el documento del informe (`/clinica/informe`), que
+   * acaba en papel y por tanto es siempre claro. Espeja EXACTAMENTE las vars
+   * que `.dark` sobrescribe arriba, con los valores de `:root`: si tocas una
+   * allí, tócala aquí. El equivalente para los colores INLINE de Recharts
+   * (que no pasan por CSS vars) es `<TemaForzado>` en lib/theme.ts — los dos
+   * van siempre juntos.
+   */
+  .tema-claro {
+    --background: 220 20% 97%;
+    --foreground: 217 16% 16%;
+
+    --surface: 0 0% 100%;
+    --card-foreground: 217 16% 16%;
+    --popover-foreground: 217 16% 16%;
+
+    --secondary: 216 2% 94%;
+    --secondary-foreground: 217 16% 16%;
+
+    --muted: 216 2% 94%;
+    --muted-foreground: 214 7% 58%;
+
+    --border: 214 14% 90%;
+    --border-soft: 216 2% 94%;
+    --input: 214 14% 90%;
+
+    --text-dim: 214 8% 39%;
+    --text-strong: 216 28% 7%;
+  }
 }
 
 @layer base {
@@ -120,5 +151,17 @@
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+/* Informe imprimible (FASE 7) — `/clinica/informe` no tiene sidebar/topbar
+   que ocultar (ver `app/(informe)/`), así que lo único que hace falta aquí
+   es el tamaño de página. El resto (ocultar toolbar, evitar cortes de
+   gráfica a la mitad) son utilidades Tailwind `print:hidden`/`break-inside-avoid`
+   directamente en `components/informe/paso-preview.tsx`. */
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm 14mm;
   }
 }

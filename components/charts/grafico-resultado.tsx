@@ -1,6 +1,6 @@
 "use client";
 
-import { useChartColors, useChartGridColors, useComparisonColors } from "@/lib/theme";
+import { useChartColors, useChartGridColors, useComparisonColorsExtended } from "@/lib/theme";
 import {
   serieAcwr,
   serieCargaSemanal,
@@ -25,7 +25,7 @@ export type GraficoResultadoProps = {
   def: GraficoDef;
   /** Plantilla del "equipo" agregado (ya filtrada por deporte/fase). */
   atletas: Atleta[];
-  /** Ids resaltados/superpuestos — hasta 6, ver `useComparisonColors()`. */
+  /** Ids resaltados/superpuestos — sin tope, ver `useComparisonColorsExtended()`. */
   atletasSeleccionados?: string[];
   registros: RegistroTest[];
   catalogo: TestDef[];
@@ -60,13 +60,13 @@ export function GraficoResultado({
 }: GraficoResultadoProps) {
   const chartColors = useChartColors();
   const gridColors = useChartGridColors();
-  const comparisonColors = useComparisonColors();
+  const comparisonColors = useComparisonColorsExtended(atletasSeleccionados.length);
 
   const semanas = semanasDesdeRango(desde, hasta);
   const atletasSerie: AtletaSerie[] = atletasSeleccionados.map((atletaId, idx) => ({
     id: atletaId,
     nombre: atletas.find((a) => a.id === atletaId)?.nombre ?? atletaId,
-    color: comparisonColors[idx % comparisonColors.length],
+    color: comparisonColors[idx],
   }));
 
   switch (id) {

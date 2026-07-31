@@ -4,11 +4,11 @@
  * valores iniciales. Ver CLAUDE.md > "Única fuente de verdad".
  */
 
-import type { Capacidad, Sexo } from "@/lib/calculations";
+import type { Capacidad, IntensidadSesion, Sexo } from "@/lib/calculations";
 import type { Categoria, Fase, VariableMedible } from "@/lib/mock/ejercicios";
 import type { AcentoId } from "@/lib/personalizacion/acentos";
 
-export type { Categoria, Fase, VariableMedible, Capacidad, Sexo };
+export type { Categoria, Fase, VariableMedible, Capacidad, Sexo, IntensidadSesion };
 
 export const DIAS_SEMANA = [
   "Lunes",
@@ -32,6 +32,27 @@ export type Entrenador = {
   rol: string;
   /** Nº máximo de atletas que puede llevar — base del cálculo de saturación. */
   capacidadMaxima: number;
+};
+
+// ---------------------------------------------------------------------------
+// Lesiones y fases — entidades definidas por el profesional (no texto libre).
+// Alimentan el semáforo de proceso (lib/calculations/semaforo.ts).
+// ---------------------------------------------------------------------------
+
+export type FaseLesion = {
+  id: string;
+  nombre: string;
+  /** Criterios de progresión PARA ENTRAR en esta fase (informativos, checklist clínico). */
+  criterios?: string[];
+};
+
+export type TipoLesion = {
+  id: string;
+  nombre: string; // "LCA", "Pubalgia", "Esguince de tobillo"...
+  /** Orden del array = orden del proceso = orden del semáforo. */
+  fases: FaseLesion[];
+  /** Tipo especial "Rendimiento" para atletas sin lesión. No eliminable en UI. */
+  esRendimiento?: boolean;
 };
 
 // ---------------------------------------------------------------------------
@@ -92,9 +113,24 @@ export type Atleta = {
   id: string;
   nombre: string;
   deporte: string;
+  /**
+   * Descripción corta del caso concreto ("Fractura por estrés 2º metatarsiano").
+   * NO es el tipo de lesión del catálogo (`lesionId` → `TipoLesion.nombre`, ej.
+   * "Esguince de tobillo") ni el detalle clínico largo (`lesionDetalle`): son
+   * tres niveles distintos y ninguno se deriva de otro. Ver CLAUDE.md.
+   */
   lesion: string;
   lesionDetalle?: string;
-  fase: string;
+  /**
+   * Modelo v4 de lesiones/fases (ver `TipoLesion`/`FaseLesion`) — única fuente
+   * de verdad de la fase desde FASE 8. Opcionales porque el catálogo es
+   * editable: borrar un tipo obliga a reasignar (`EliminarLesionDialog`), pero
+   * un estado hidratado de una versión anterior puede no traerlos. Resuélvelos
+   * SIEMPRE con `useFaseDeAtleta`/`resolverFaseDeAtleta`, que devuelven `null`
+   * si no resuelven.
+   */
+  lesionId?: string;
+  faseId?: string;
   semanaProceso: number;
   avatarInitials: string;
   sexo: Sexo;
@@ -133,6 +169,16 @@ export type EjercicioProgramado = {
   carga: string;
   variablesAMedir: VariableMedible[];
   notas?: string;
+  rpeObjetivo?: number;
+  descanso?: string; // texto: "90s", "2min"
+  ratioSeries?: string; // ratio pierna lesionada:sana, texto: "2:1"
+};
+
+/** Sub-bloque ordenado de una sesión (Preparación → Activación → Bloque principal 1..n). */
+export type BloqueEjercicios = {
+  id: string;
+  nombre: string; // "Preparación", "Activación", "Bloque principal 1"...
+  ejercicios: EjercicioProgramado[];
 };
 
 export type EstadoSesion = "programada" | "completada" | "cancelada";
@@ -146,6 +192,15 @@ export type Sesion = {
   ejercicios: EjercicioProgramado[];
   estado: EstadoSesion;
   notas?: string;
+  tipo?: string; // texto corto: "Gym", "Campo", "Readaptación"...
+  rpeObjetivo?: number; // 0-10, admite medios (6.5) — intensidad se CALCULA de aquí, nunca se guarda
+  /**
+   * Sub-bloques v4 (ver `bloquesDeSesion()` en lib/store/sesiones.ts). Legado
+   * `ejercicios` (plano) se mantiene para no romper las vistas actuales ni el
+   * diálogo "Nueva sesión" (aún no migrado) — opcional a propósito: "si existe
+   * y tiene contenido" es la fuente de verdad, si no, se envuelve `ejercicios`.
+   */
+  bloquesEjercicios?: BloqueEjercicios[];
 };
 
 export type BloqueSemanal = {
@@ -156,6 +211,10 @@ export type BloqueSemanal = {
   fechaFin: string;
   objetivo: string;
   sesionIds: string[];
+  /** Del BLOCK OUTLINE del Excel: nº de semana post-operatoria en la que arranca el bloque. */
+  semanaPostOpInicio?: number;
+  /** Índices 0-based de semanas del bloque que son "semana de test". */
+  semanasTest?: number[];
 };
 
 /** Forma "resuelta" de un bloque con sus sesiones embebidas — la que consumen
@@ -252,6 +311,17 @@ export type FormularioEnvio = {
 };
 
 // ---------------------------------------------------------------------------
+// Notas de calendario (clínica)
+// ---------------------------------------------------------------------------
+
+export type NotaCalendario = {
+  id: string;
+  fecha: string; // ISO yyyy-mm-dd
+  texto: string;
+  atletaId?: string; // opcional: nota ligada a un atleta ("Marcos de vacaciones")
+};
+
+// ---------------------------------------------------------------------------
 // Notificaciones
 // ---------------------------------------------------------------------------
 
@@ -287,9 +357,31 @@ export type UmbralesConfig = {
   simetriaObjetivo: number;
   simetriaAceptable: number;
   dolorAlerta: number;
+  /** Umbrales de `intensidadSesion()` (lib/calculations/intensidad.ts). */
+  rpeLow: number;
+  rpeHigh: number;
 };
 
 export type VistaAtletas = "grid" | "lista";
+
+/** Cabecera del informe (FASE 7). Datos ficticios editables como el resto de config. */
+export type PerfilProfesional = {
+  nombre: string;
+  rol: string;
+  numColegiado: string;
+  clinica: string;
+};
+
+/** Ids de métrica válidos para `Config["fichaMetricas"]` (FASE 4). */
+export type MetricaFicha =
+  | "readiness"
+  | "dolor"
+  | "carga-semanal"
+  | "acwr"
+  | "simetria"
+  | "adherencia"
+  | "semana-proceso"
+  | "proxima-sesion";
 
 export type Config = {
   tema: Tema;
@@ -297,6 +389,9 @@ export type Config = {
   acento: AcentoId;
   umbrales: UmbralesConfig;
   vistaAtletas: VistaAtletas;
+  perfilProfesional: PerfilProfesional;
+  /** Ids de `MetricaFicha` — métricas visibles del header de la ficha, por defecto 5 (ver FASE 4). */
+  fichaMetricas: string[];
   /**
    * Gráficos visibles del dashboard v3. Ids `test:<testId>` (uno por test del
    * catálogo) y `resultado:<id>` para los derivados — ver lib/dashboard/graficos.ts.
@@ -321,6 +416,7 @@ export type Config = {
 export type AppState = {
   atletas: Atleta[];
   entrenadores: Entrenador[];
+  tiposLesion: TipoLesion[];
   sesiones: Sesion[];
   bloques: BloqueSemanal[];
   ejercicios: import("@/lib/mock/ejercicios").Ejercicio[];
@@ -331,5 +427,6 @@ export type AppState = {
   formulariosDef: FormularioDef[];
   formulariosEnvios: FormularioEnvio[];
   notificaciones: Notificacion[];
+  notasCalendario: NotaCalendario[];
   config: Config;
 };

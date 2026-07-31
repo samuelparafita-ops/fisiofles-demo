@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Dumbbell } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Dumbbell, Tag } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { cn } from "@/lib/utils";
 import { EjercicioCard } from "@/components/ejercicios/ejercicio-card";
 import { NuevoEjercicioDialog } from "@/components/ejercicios/nuevo-ejercicio-dialog";
+import { SelectorFiltro, type OpcionFiltro } from "@/components/dashboard/selector-filtro";
 import { CATEGORIAS, FASES, type Categoria, type Fase } from "@/lib/mock/ejercicios";
 import { useEjercicios } from "@/lib/store";
 
@@ -17,14 +18,31 @@ export default function EjerciciosPage() {
   const ejercicios = useEjercicios();
   const [categoria, setCategoria] = useState<Categoria | "Todas">("Todas");
   const [fase, setFase] = useState<Fase | "Todas">("Todas");
+  const [etiquetasSel, setEtiquetasSel] = useState<string[]>([]);
+
+  // Solo etiquetas EN USO por algún ejercicio de la librería — si ninguna
+  // carta lleva "CORE", no aparece la opción (misma filosofía que el filtro
+  // de lesión de /dashboard).
+  const etiquetasOpciones: OpcionFiltro[] = useMemo(() => {
+    const todas = ejercicios.flatMap((e) => e.etiquetas ?? []);
+    return Array.from(new Set(todas))
+      .sort((a, b) => a.localeCompare(b))
+      .map((t) => ({ value: t, label: t }));
+  }, [ejercicios]);
+
+  useEffect(() => {
+    setEtiquetasSel((prev) => prev.filter((t) => etiquetasOpciones.some((o) => o.value === t)));
+  }, [etiquetasOpciones]);
 
   const filtrados = useMemo(() => {
     return ejercicios.filter((e) => {
       const matchCategoria = categoria === "Todas" || e.categoria === categoria;
       const matchFase = fase === "Todas" || e.fasesSugeridas.includes(fase);
-      return matchCategoria && matchFase;
+      const matchEtiquetas =
+        etiquetasSel.length === 0 || (e.etiquetas ?? []).some((t) => etiquetasSel.includes(t));
+      return matchCategoria && matchFase && matchEtiquetas;
     });
-  }, [categoria, fase, ejercicios]);
+  }, [categoria, fase, etiquetasSel, ejercicios]);
 
   return (
     <>
@@ -75,6 +93,14 @@ export default function EjerciciosPage() {
               </option>
             ))}
           </select>
+
+          <SelectorFiltro
+            label="Etiquetas"
+            icon={Tag}
+            opciones={etiquetasOpciones}
+            seleccionados={etiquetasSel}
+            onChange={setEtiquetasSel}
+          />
         </div>
 
         <NuevoEjercicioDialog />

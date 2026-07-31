@@ -77,7 +77,7 @@ function crearTooltip(
 
 /**
  * Gráfico genérico "agregado + superpuestos" de /dashboard: una serie
- * agregada de la plantilla activa (área sutil gris) con hasta 6 atletas
+ * agregada de la plantilla activa (área sutil gris) con atletas (sin tope)
  * superpuestos como líneas de color propio. Lo usan los `resultado:*` de
  * tipo "linea" (ACWR, dolor, readiness) vía `GraficoResultado` — ver
  * `lib/dashboard/graficos.ts` y `components/charts/grafico-resultado.tsx`.

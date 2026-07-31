@@ -2,16 +2,26 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Activity, CalendarDays, ClipboardList, Dumbbell, History, UserX } from "lucide-react";
+import {
+  Activity,
+  CalendarDays,
+  ClipboardList,
+  Dumbbell,
+  FileQuestion,
+  History,
+  NotebookText,
+  UserX,
+} from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FichaHeader } from "@/components/atletas/ficha/ficha-header";
-import { DatosGeneralesFicha } from "@/components/atletas/ficha/datos-generales";
+import { TabAnamnesis } from "@/components/atletas/ficha/tab-anamnesis";
 import { TabHistorial } from "@/components/atletas/ficha/tab-historial";
 import { TabCalendario } from "@/components/atletas/ficha/tab-calendario";
 import { TabDatos } from "@/components/atletas/ficha/tab-datos";
 import { TabProgramacion } from "@/components/atletas/ficha/tab-programacion";
 import { TabFormularios } from "@/components/atletas/ficha/tab-formularios";
+import { NotasClinicas } from "@/components/atletas/ficha/notas-clinicas";
 import { CajaHallazgos } from "@/components/atletas/caja-hallazgos";
 import {
   useAtleta,
@@ -26,15 +36,20 @@ import { generarHallazgos } from "@/lib/insights";
 // El value del tab "Historial" se mantiene como "general" (antiguo nombre):
 // los enlaces de notificaciones/hallazgos (`lib/notificaciones/desde-hallazgos.ts`)
 // enlazan por defecto a `?tab=general` y no hace falta migrar esos enlaces.
+// Orden pedido por el cliente (FASE 4): Calendario primero (es el que consulta
+// a diario) y es el tab por defecto al entrar sin `?tab=` en la URL.
 const TABS = [
-  { value: "general", label: "Historial", icon: History },
   { value: "calendario", label: "Calendario", icon: CalendarDays },
+  { value: "anamnesis", label: "Anamnesis", icon: FileQuestion },
   { value: "datos", label: "Datos", icon: Activity },
   { value: "programacion", label: "Programación", icon: Dumbbell },
+  { value: "general", label: "Historial", icon: History },
   { value: "formularios", label: "Formularios", icon: ClipboardList },
+  { value: "notas", label: "Notas clínicas", icon: NotebookText },
 ];
 
 const TAB_VALUES = TABS.map((t) => t.value);
+const TAB_DEFECTO = "calendario";
 
 export default function AtletaDetailPage({ params }: { params: { id: string } }) {
   const atleta = useAtleta(params.id);
@@ -50,7 +65,7 @@ export default function AtletaDetailPage({ params }: { params: { id: string } })
   // página (mismo segmento dinámico, solo cambia la query string).
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
-  const [tab, setTab] = useState(() => (tabParam && TAB_VALUES.includes(tabParam) ? tabParam : "general"));
+  const [tab, setTab] = useState(() => (tabParam && TAB_VALUES.includes(tabParam) ? tabParam : TAB_DEFECTO));
 
   useEffect(() => {
     if (tabParam && TAB_VALUES.includes(tabParam)) {
@@ -84,17 +99,6 @@ export default function AtletaDetailPage({ params }: { params: { id: string } })
     <>
       <FichaHeader atleta={atleta} />
 
-      <DatosGeneralesFicha atleta={atleta} />
-
-      <CajaHallazgos
-        hallazgos={hallazgosAtleta}
-        titulo="Hallazgos"
-        mostrarAtleta={false}
-        className="mb-6"
-        vacioTitulo="Sin hallazgos"
-        vacioDescripcion="No hay hallazgos registrados para este atleta ahora mismo."
-      />
-
       <Tabs value={tab} onValueChange={setTab}>
         <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
           <TabsList className="w-max">
@@ -107,11 +111,11 @@ export default function AtletaDetailPage({ params }: { params: { id: string } })
           </TabsList>
         </div>
 
-        <TabsContent value="general" className="mt-6">
-          <TabHistorial atleta={atleta} />
-        </TabsContent>
         <TabsContent value="calendario" className="mt-6">
           <TabCalendario atletaId={atleta.id} />
+        </TabsContent>
+        <TabsContent value="anamnesis" className="mt-6">
+          <TabAnamnesis atleta={atleta} />
         </TabsContent>
         <TabsContent value="datos" className="mt-6">
           <TabDatos atleta={atleta} />
@@ -119,10 +123,26 @@ export default function AtletaDetailPage({ params }: { params: { id: string } })
         <TabsContent value="programacion" className="mt-6">
           <TabProgramacion atletaId={atleta.id} />
         </TabsContent>
+        <TabsContent value="general" className="mt-6">
+          <TabHistorial atleta={atleta} />
+        </TabsContent>
         <TabsContent value="formularios" className="mt-6">
           <TabFormularios atleta={atleta} />
         </TabsContent>
+        <TabsContent value="notas" className="mt-6">
+          <NotasClinicas atleta={atleta} />
+        </TabsContent>
       </Tabs>
+
+      <CajaHallazgos
+        hallazgos={hallazgosAtleta}
+        titulo="Hallazgos"
+        mostrarAtleta={false}
+        className="mt-6"
+        colapsableInicial
+        vacioTitulo="Sin hallazgos"
+        vacioDescripcion="No hay hallazgos registrados para este atleta ahora mismo."
+      />
     </>
   );
 }

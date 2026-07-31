@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useChartGridColors, useComparisonColors } from "@/lib/theme";
+import { useChartGridColors, useComparisonColorsExtended } from "@/lib/theme";
 import { UMBRALES_DEFECTO } from "@/lib/personalizacion/umbrales";
 import type { GraficoDef } from "@/lib/dashboard/graficos";
 import { serieTest, ultimoValorPorAtleta, puntosCuadranteFV } from "@/lib/dashboard/series-tests";
@@ -18,7 +18,7 @@ export type GraficoTestProps = {
   catalogo: TestDef[];
   /** Plantilla activa completa (el agregado se calcula sobre todos ellos). */
   atletas: Atleta[];
-  /** Ids resaltados/superpuestos — hasta 6, ver `useComparisonColors()`. */
+  /** Ids resaltados/superpuestos — sin tope, ver `useComparisonColorsExtended()`. */
   atletasSeleccionados?: string[];
   /** Siempre `state.config.umbrales` en la app real (ver CLAUDE.md); por defecto solo para no romper llamadas sueltas. */
   umbrales?: UmbralesConfig;
@@ -131,7 +131,7 @@ function GraficoTestBarras({
   hasta,
   className,
 }: GraficoTestProps) {
-  const comparisonColors = useComparisonColors();
+  const comparisonColors = useComparisonColorsExtended(atletasSeleccionados.length);
   const [variableId, setVariableId] = useState(def.variablePorDefecto);
   const [modo, setModo] = useState<Modo>("comparativa");
 
@@ -163,7 +163,7 @@ function GraficoTestBarras({
     const atletasSerie: AtletaSerie[] = atletasSeleccionados.map((id, idx) => ({
       id,
       nombre: nombreDe(atletas, id),
-      color: comparisonColors[idx % comparisonColors.length],
+      color: comparisonColors[idx],
     }));
     return (
       <BarrasTemporal

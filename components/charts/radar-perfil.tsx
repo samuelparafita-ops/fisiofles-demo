@@ -11,6 +11,7 @@ import {
   Tooltip,
   type TooltipContentProps,
 } from "recharts";
+import { cn } from "@/lib/utils";
 import { useChartColors, useChartGridColors } from "@/lib/theme";
 import { perfilRadar, type Capacidad, type Sexo } from "@/lib/calculations";
 import { ChartPanel, LegendChip, ChartTooltipBox } from "./chart-panel";
@@ -23,6 +24,13 @@ export type RadarPerfilProps = {
   ejesVisibles?: Capacidad[];
   /** Control extra en la cabecera, junto a "Comparar con inicial" (ej. selector de ejes en la ficha). */
   accionExtra?: ReactNode;
+  /**
+   * Versión reducida (cabecera de la ficha, FASE 4): panel más pequeño y de
+   * proporción vertical — menos padding, gráfico más bajo, sin descripción,
+   * leyenda ni toggle "Comparar con inicial" (ruido innecesario a ese tamaño).
+   * `outerRadius` se mantiene en 55% (nota CLAUDE.md) también en este modo.
+   */
+  compact?: boolean;
   className?: string;
 };
 
@@ -51,7 +59,14 @@ function RadarTooltip({ active, payload, label }: TooltipContentProps) {
  * NO recalcula nada: llama a `perfilRadar()` de `lib/calculations/radar.ts`.
  * Por defecto solo muestra Actual vs. Objetivo; "Inicial" es opcional (toggle).
  */
-export function RadarPerfil({ perfilFisico, sexo, ejesVisibles, accionExtra, className }: RadarPerfilProps) {
+export function RadarPerfil({
+  perfilFisico,
+  sexo,
+  ejesVisibles,
+  accionExtra,
+  compact = false,
+  className,
+}: RadarPerfilProps) {
   const [compararInicial, setCompararInicial] = useState(false);
   const chartColors = useChartColors();
   const gridColors = useChartGridColors();
@@ -82,37 +97,39 @@ export function RadarPerfil({ perfilFisico, sexo, ejesVisibles, accionExtra, cla
   return (
     <ChartPanel
       title="Perfil físico"
-      description="12 capacidades vs. población de referencia (z-score)"
-      className={className}
+      description={compact ? undefined : "12 capacidades vs. población de referencia (z-score)"}
+      className={cn(compact && "p-4", className)}
       action={
         <div className="flex flex-wrap items-center gap-2">
           {accionExtra}
-          <button
-            type="button"
-            onClick={() => setCompararInicial((v) => !v)}
-            className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors"
-            style={{
-              borderColor: compararInicial ? chartColors.base : gridColors.grid,
-              color: compararInicial ? chartColors.base : gridColors.axis,
-              background: compararInicial ? `${chartColors.base}14` : "transparent",
-            }}
-          >
-            <span
-              className="inline-block size-2 rounded-full"
-              style={{ background: compararInicial ? chartColors.base : gridColors.line }}
-            />
-            Comparar con inicial
-          </button>
+          {!compact && (
+            <button
+              type="button"
+              onClick={() => setCompararInicial((v) => !v)}
+              className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors"
+              style={{
+                borderColor: compararInicial ? chartColors.base : gridColors.grid,
+                color: compararInicial ? chartColors.base : gridColors.axis,
+                background: compararInicial ? `${chartColors.base}14` : "transparent",
+              }}
+            >
+              <span
+                className="inline-block size-2 rounded-full"
+                style={{ background: compararInicial ? chartColors.base : gridColors.line }}
+              />
+              Comparar con inicial
+            </button>
+          )}
         </div>
       }
     >
-      <div className="h-96 w-full">
+      <div className={cn("w-full", compact ? "h-56" : "h-96")}>
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={data} outerRadius="55%">
             <PolarGrid stroke={gridColors.grid} />
             <PolarAngleAxis
               dataKey="eje"
-              tick={{ fill: gridColors.axis, fontSize: 10 }}
+              tick={{ fill: gridColors.axis, fontSize: compact ? 8 : 10 }}
             />
             <PolarRadiusAxis
               domain={[-5, 3]}
@@ -165,13 +182,15 @@ export function RadarPerfil({ perfilFisico, sexo, ejesVisibles, accionExtra, cla
           </RadarChart>
         </ResponsiveContainer>
       </div>
-      <div className="mt-3 flex flex-wrap gap-4">
-        <LegendChip color={chartColors.primary} label="Actual" />
-        <LegendChip color={chartColors.good} label="Objetivo RTP" dashed />
-        {compararInicial && (
-          <LegendChip color={chartColors.base} label="Inicial" />
-        )}
-      </div>
+      {!compact && (
+        <div className="mt-3 flex flex-wrap gap-4">
+          <LegendChip color={chartColors.primary} label="Actual" />
+          <LegendChip color={chartColors.good} label="Objetivo RTP" dashed />
+          {compararInicial && (
+            <LegendChip color={chartColors.base} label="Inicial" />
+          )}
+        </div>
+      )}
     </ChartPanel>
   );
 }

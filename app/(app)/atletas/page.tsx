@@ -10,7 +10,6 @@ import { AtletaCard } from "@/components/atletas/atleta-card";
 import { AtletasTabla } from "@/components/atletas/atletas-tabla";
 import { NuevoAtletaDialog } from "@/components/atletas/nuevo-atleta-dialog";
 import { CajaHallazgos } from "@/components/atletas/caja-hallazgos";
-import { fasePrefijo, ordenarFases } from "@/components/atletas/fase-utils";
 import {
   useAtletas,
   useCatalogoTests,
@@ -20,6 +19,7 @@ import {
   useFormulariosEnvios,
   useRegistrosTests,
   useSesiones,
+  useTiposLesion,
   type EstadoAtleta,
 } from "@/lib/store";
 import { generarHallazgos } from "@/lib/insights";
@@ -39,6 +39,7 @@ const SIN_ASIGNAR_FILTRO = "sin-asignar";
 export default function AtletasPage() {
   const atletas = useAtletas();
   const entrenadores = useEntrenadores();
+  const tiposLesion = useTiposLesion();
   const sesiones = useSesiones();
   const registrosTests = useRegistrosTests();
   const catalogoTests = useCatalogoTests();
@@ -48,26 +49,31 @@ export default function AtletasPage() {
 
   const [busqueda, setBusqueda] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoAtleta | "todos">("todos");
-  const [faseFiltro, setFaseFiltro] = useState<string>("todas");
+  const [lesionFiltro, setLesionFiltro] = useState<string>("todas");
   const [entrenadorFiltro, setEntrenadorFiltro] = useState<string>("todos");
 
-  const fasesDisponibles = useMemo(
-    () => ordenarFases(Array.from(new Set(atletas.map((a) => fasePrefijo(a.fase))))),
-    [atletas]
-  );
+  // Mismo criterio derivado que /dashboard y /programacion: solo tipos de
+  // lesión con al menos un atleta asignado. La fase ya no es filtrable "en
+  // global" — desde v4 cada fase pertenece a UNA lesión, así que "Fase 3" no
+  // significa lo mismo en dos procesos distintos; el badge de cada fila la
+  // muestra con su color de semáforo.
+  const lesionesDisponibles = useMemo(() => {
+    const presentes = new Set(atletas.map((a) => a.lesionId).filter(Boolean));
+    return tiposLesion.filter((t) => presentes.has(t.id));
+  }, [atletas, tiposLesion]);
 
   const atletasFiltrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
     return atletas.filter((a) => {
       const matchBusqueda = !q || a.nombre.toLowerCase().includes(q);
       const matchEstado = estadoFiltro === "todos" || a.estado === estadoFiltro;
-      const matchFase = faseFiltro === "todas" || fasePrefijo(a.fase) === faseFiltro;
+      const matchLesion = lesionFiltro === "todas" || a.lesionId === lesionFiltro;
       const matchEntrenador =
         entrenadorFiltro === "todos" ||
         (entrenadorFiltro === SIN_ASIGNAR_FILTRO ? !a.entrenadorId : a.entrenadorId === entrenadorFiltro);
-      return matchBusqueda && matchEstado && matchFase && matchEntrenador;
+      return matchBusqueda && matchEstado && matchLesion && matchEntrenador;
     });
-  }, [busqueda, atletas, estadoFiltro, faseFiltro, entrenadorFiltro]);
+  }, [busqueda, atletas, estadoFiltro, lesionFiltro, entrenadorFiltro]);
 
   const hallazgos = useMemo(
     () =>
@@ -137,14 +143,14 @@ export default function AtletasPage() {
           </div>
 
           <select
-            value={faseFiltro}
-            onChange={(e) => setFaseFiltro(e.target.value)}
+            value={lesionFiltro}
+            onChange={(e) => setLesionFiltro(e.target.value)}
             className={selectClass}
           >
-            <option value="todas">Todas las fases</option>
-            {fasesDisponibles.map((f) => (
-              <option key={f} value={f}>
-                {f}
+            <option value="todas">Todas las lesiones</option>
+            {lesionesDisponibles.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.nombre}
               </option>
             ))}
           </select>
