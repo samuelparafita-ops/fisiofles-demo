@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +15,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/shared/toast";
+import { EtiquetasInput } from "@/components/ejercicios/etiquetas-input";
 import { CATEGORIAS, FASES, type Categoria, type Fase } from "@/lib/mock/ejercicios";
-import { accionCrear, useDispatch } from "@/lib/store";
+import { accionCrear, useDispatch, useEjercicios } from "@/lib/store";
 
 const selectClass =
   "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
@@ -32,8 +33,20 @@ function slugify(texto: string): string {
 
 export function NuevoEjercicioDialog() {
   const [open, setOpen] = useState(false);
+  const [etiquetas, setEtiquetas] = useState<string[]>([]);
   const toast = useToast();
   const dispatch = useDispatch();
+  const libreria = useEjercicios();
+
+  const etiquetasExistentes = useMemo(() => {
+    const todas = libreria.flatMap((e) => e.etiquetas ?? []);
+    return Array.from(new Set(todas)).sort((a, b) => a.localeCompare(b));
+  }, [libreria]);
+
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) setEtiquetas([]);
+  }
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -43,6 +56,7 @@ export function NuevoEjercicioDialog() {
     const fase = String(form.get("fase") || FASES[0]) as Fase;
     const patron = String(form.get("patron") || "").trim();
     const material = String(form.get("material") || "").trim();
+    const enlaceVideo = String(form.get("enlaceVideo") || "").trim();
 
     dispatch(
       accionCrear("ejercicios", {
@@ -54,15 +68,18 @@ export function NuevoEjercicioDialog() {
         fasesSugeridas: [fase],
         variables: [],
         descripcion: "",
+        etiquetas: etiquetas.length > 0 ? etiquetas : undefined,
+        enlaceVideo: enlaceVideo || undefined,
       })
     );
     toast("Ejercicio añadido", `${nombre} se ha añadido a la librería de ejercicios.`);
     e.currentTarget.reset();
+    setEtiquetas([]);
     setOpen(false);
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="size-4" />
@@ -113,10 +130,23 @@ export function NuevoEjercicioDialog() {
               <Label htmlFor="material">Material</Label>
               <Input id="material" name="material" placeholder="Ej. Banda elástica" required />
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="etiquetas-nuevo-ejercicio">Etiquetas</Label>
+              <EtiquetasInput
+                id="etiquetas-nuevo-ejercicio"
+                value={etiquetas}
+                onChange={setEtiquetas}
+                sugerencias={etiquetasExistentes}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="enlaceVideo">Enlace de vídeo (opcional)</Label>
+              <Input id="enlaceVideo" name="enlaceVideo" type="url" placeholder="https://..." />
+            </div>
           </div>
 
           <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancelar
             </Button>
             <Button type="submit">Añadir ejercicio</Button>

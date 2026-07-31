@@ -38,7 +38,10 @@ export function BloquesEjerciciosEditor({
   const [expandido, setExpandido] = useState<Record<string, boolean>>({});
 
   const libreriaFiltrada = busqueda.trim()
-    ? libreria.filter((l) => l.nombre.toLowerCase().includes(busqueda.trim().toLowerCase()))
+    ? libreria.filter((l) => {
+        const q = busqueda.trim().toLowerCase();
+        return l.nombre.toLowerCase().includes(q) || (l.etiquetas ?? []).some((t) => t.toLowerCase().includes(q));
+      })
     : libreria;
 
   function actualizarBloque(bloqueIdx: number, patch: Partial<BloqueEjercicios>) {

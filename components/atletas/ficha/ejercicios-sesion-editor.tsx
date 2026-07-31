@@ -29,7 +29,9 @@ export function EjerciciosSesionEditor({
   const libreriaFiltrada = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
     if (!q) return libreria;
-    return libreria.filter((l) => l.nombre.toLowerCase().includes(q));
+    return libreria.filter(
+      (l) => l.nombre.toLowerCase().includes(q) || (l.etiquetas ?? []).some((t) => t.toLowerCase().includes(q))
+    );
   }, [busqueda, libreria]);
 
   function actualizar(i: number, patch: Partial<EjercicioProgramado>) {
